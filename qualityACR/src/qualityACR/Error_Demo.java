@@ -13,7 +13,7 @@ public class Error_Demo implements PlugIn {
 		ImagePlus imp1 = IJ.openImage();
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
-
+		// prova provata provoletta
 		// TODO Auto-generated method stub
 		int width = imp2.getWidth();
 		int height = imp2.getHeight();

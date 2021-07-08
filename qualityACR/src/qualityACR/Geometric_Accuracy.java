@@ -146,11 +146,15 @@ public class Geometric_Accuracy implements PlugIn {
 		for (int i1 = 0; i1 < width; i1++) { // era i1 +=3
 			int a1 = i1;
 			int[] out1 = verticalSearch(imp2, max2, a1);
-			if (out1[0] > 0 && out1[1] > 0) {
-				List<Integer> pointXY = new ArrayList<Integer>();
-				pointXY.add(out1[0]);
-				pointXY.add(out1[1]);
-				pointArrayXY.add(pointXY);
+			if (out1[0] > 0) {
+				List<Integer> pointXY1 = new ArrayList<Integer>();
+				pointXY1.add(a1);
+				pointXY1.add(out1[0]);
+				pointArrayXY.add(pointXY1);
+				List<Integer> pointXY2 = new ArrayList<Integer>();
+				pointXY2.add(a1);
+				pointXY2.add(out1[1]);
+				pointArrayXY.add(pointXY2);
 			}
 		}
 		//
@@ -159,13 +163,18 @@ public class Geometric_Accuracy implements PlugIn {
 		// toglierli!)
 		//
 		for (int i1 = 0; i1 < height; i1++) { // era i1 +=3
-			int a1 = i1;
-			int[] out1 = horizontalSearch(imp2, max2, a1);
-			if (out1[0] > 0 && out1[1] > 0) {
-				List<Integer> pointXY = new ArrayList<Integer>();
-				pointXY.add(out1[0]);
-				pointXY.add(out1[1]);
-				pointArrayXY.add(pointXY);
+			int b1 = i1;
+			int[] out2 = horizontalSearch(imp2, max2, b1);
+
+			if (out2[0] > 0) {
+				List<Integer> pointXY3 = new ArrayList<Integer>();
+				pointXY3.add(out2[0]);
+				pointXY3.add(b1);
+				pointArrayXY.add(pointXY3);
+				List<Integer> pointXY4 = new ArrayList<Integer>();
+				pointXY4.add(out2[1]);
+				pointXY4.add(b1);
+				pointArrayXY.add(pointXY4);
 			}
 		}
 		//
@@ -194,21 +203,79 @@ public class Geometric_Accuracy implements PlugIn {
 				vetPoints[i1][i2] = rotatedPoints[i2][i1];
 			}
 		}
-		ACRlog.logMatrix(vetPoints, "vetPoints");
-		ACRlog.waitHere("SALVARE IL LOG");
-
 
 		for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
 			// IJ.log("lower= " + lowerArrayA.get(i1) + "," + lowerArrayB.get(i1));
-			imp2.setRoi(new PointRoi(rotatedPoints[i1][0], rotatedPoints[i1][1], "small red hybrid"));
+			imp2.setRoi(new PointRoi(rotatedPoints[i1][0], rotatedPoints[i1][1], "medium yellow dot"));
 			over2.addElement(imp2.getRoi());
 			imp2.killRoi();
 		}
-		
-		
-		ACRlog.waitHere();
 
-//		ACRlog.waitHere("003");
+		// mi piacciono i rotatedPoints perche'li posso impunemente importare in
+		// excel2003, altrimenti dovrei utilizzare excel2007 perche'ha piu'colonne!
+		ACRlog.logMatrix(rotatedPoints, "rotatedPoints");
+		//
+		// lo strano problema dei punti non coincidenti con i vertici pare esser dato
+		// dal fatto che esistono piu'punti con la coordinata massima (o minima).
+		// Bisogna in questo caso il minimo o massimo dell'altra coordinata
+		//
+		// estraggo l'arrayX ed arrayY dalle coordinate dei punti
+
+		int[] vetX = new int[rotatedPoints.length];
+		int[] vetY = new int[rotatedPoints.length];
+		for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
+			vetX[i1] = rotatedPoints[i1][0];
+			vetY[i1] = rotatedPoints[i1][1];
+		}
+
+		int minx = ACRutils.minsearch(vetX);
+		int maxx = ACRutils.maxsearch(vetX);
+		int miny = ACRutils.minsearch(vetY);
+		int maxy = ACRutils.maxsearch(vetY);
+
+		imp2.setRoi(minx, miny, maxx - minx, maxy - miny);
+		over2.addElement(imp2.getRoi());
+		imp2.killRoi();
+
+		ACRlog.waitHere("Bounding Rectangle");
+
+		int key = 0;
+		int other = 1;
+		int[][] sortedPoints = ACRutils.minsort(rotatedPoints, key);
+		//
+		// ora che ho ordinato secondo X, cerco il min ed il max di x, saranno
+		// certamente piu'di un punto, tra questi punti scegliero' quello che ha il min
+		// Y eccetera. Spero che il tutto mi fornisca le coordinate dei vertici del
+		// rettangolo ruotato.
+		//
+		key = 0;
+		other = 1;
+		int[][] out1 = ACRutils.searchValue(sortedPoints, maxx, key);
+		int[] aux1 = ACRutils.outValue(out1, other);
+		int CX = out1[0][0];
+		int CY = ACRutils.maxsearch(aux1);
+		ACRlog.logMatrix(out1, "out1 maxx");
+
+		int[][] out2 = ACRutils.searchValue(sortedPoints, minx, key);
+		int[] aux2 = ACRutils.outValue(out1, other);
+		int AX = out2[0][0];
+		int AY = ACRutils.minsearch(aux2);
+		ACRlog.logMatrix(out2, "out2 minx");
+		key = 1;
+		other = 0;
+		int[][] out3 = ACRutils.searchValue(sortedPoints, maxy, key);
+		int[] aux3 = ACRutils.outValue(out3, other);
+		int BY = out3[0][1];
+		int BX = ACRutils.minsearch(aux3);
+		ACRlog.logMatrix(out3, "out3 maxy");
+
+		int[][] out4 = ACRutils.searchValue(sortedPoints, miny, key);
+		int[] aux4 = ACRutils.outValue(out4, other);
+		int DY = out4[0][1];
+		int DX = ACRutils.minsearch(aux3);
+
+		ACRlog.logMatrix(out4, "out4 miny");
+
 //
 //		int[] vetX = ACRcalc.arrayListToArrayInt(pointArrayX);
 //		int[] vetY = ACRcalc.arrayListToArrayInt(pointArrayY);
@@ -234,15 +301,13 @@ public class Geometric_Accuracy implements PlugIn {
 //		ACRlog.logVector(vetX, "vetX");
 //		ACRlog.logVector(vetY, "vetY");
 //		ACRlog.waitHere();
-//
-//		// per trovare il bounding rectangle devo cercare il minimo e massimo su LX (e
-//		// la relativa coordinata LY)
-//		// lo stesso procedimento su LY. cosi' trovo i 4 vertici del rotated rectangle
-//
-//		int minx = Integer.MAX_VALUE;
-//		int maxx = Integer.MIN_VALUE;
-//		int miny = Integer.MAX_VALUE;
-//		int maxy = Integer.MIN_VALUE;
+		// dopo una lunga lotta con i vetPoints, adesso si continua, per trovare i
+		// vertici
+
+		// per trovare il bounding rectangle devo cercare il minimo e massimo su LX (e
+		// la relativa coordinata LY)
+		// lo stesso procedimento su LY. cosi' trovo i 4 vertici del rotated rectangle
+
 //		int AX = 0;
 //		int AY = 0;
 //		int BX = 0;
@@ -252,15 +317,13 @@ public class Geometric_Accuracy implements PlugIn {
 //		int DX = 0;
 //		int DY = 0;
 //
-//		for (int i1 = 0; i1 < vetY.length; i1++) {
-//			if (vetY[i1] < miny) {
-//				miny = vetY[i1];
-//				AX = vetX[i1];
-//				AY = vetY[i1];
+//		for (int i1 = 0; i1 < vetX.length; i1++) {
+//			if (vetX[i1] < minx) {
+//				minx = vetX[i1];
+//				DX = vetX[i1];
+//				DY = vetY[i1];
 //			}
 //		}
-//
-////		ACRlog.waitHere("AX= " + AX + " AY= " + AY);
 //
 //		for (int i1 = 0; i1 < vetX.length; i1++) {
 //			if (vetX[i1] > maxx) {
@@ -269,7 +332,14 @@ public class Geometric_Accuracy implements PlugIn {
 //				BY = vetY[i1];
 //			}
 //		}
-////		ACRlog.waitHere("BX= " + BX + " BY= " + BY);
+//
+//		for (int i1 = 0; i1 < vetY.length; i1++) {
+//			if (vetY[i1] < miny) {
+//				miny = vetY[i1];
+//				AX = vetX[i1];
+//				AY = vetY[i1];
+//			}
+//		}
 //
 //		for (int i1 = 0; i1 < vetY.length; i1++) {
 //			if (vetY[i1] > maxy) {
@@ -279,25 +349,11 @@ public class Geometric_Accuracy implements PlugIn {
 //			}
 //		}
 //
-//		for (int i1 = 0; i1 < vetX.length; i1++) {
-//			if (vetX[i1] < minx) {
-//				minx = vetX[i1];
-//				DX = vetX[i1];
-//				DY = vetY[i1];
-//			}
-//		}
 //
-////		ACRlog.waitHere("AX= " + AX + " AY= " + AY + " BX= " + BX + " BY= " + BY + " CX= " + CX + " CY= " + CY + " DX= "
-////				+ DX + " DY= " + DY);
-//
-////		pr2.setPointType(2);
-////		PointRoi pr2 = new PointRoi();
-////		pr2.setSize(4);
-//
-//		ACRutils.plotPoints(imp2, over2, (int) AX, (int) AY, 4);
-//		ACRutils.plotPoints(imp2, over2, (int) BX, (int) BY, 4);
-//		ACRutils.plotPoints(imp2, over2, (int) CX, (int) CY, 4);
-//		ACRutils.plotPoints(imp2, over2, (int) DX, (int) DY, 4);
+		ACRutils.plotPoints(imp2, over2, (int) AX, (int) AY, Color.GREEN);
+		ACRutils.plotPoints(imp2, over2, (int) BX, (int) BY, Color.YELLOW);
+		ACRutils.plotPoints(imp2, over2, (int) CX, (int) CY, Color.RED);
+		ACRutils.plotPoints(imp2, over2, (int) DX, (int) DY, Color.CYAN);
 //
 ////		imp2.setRoi(new PointRoi(AX, AY));
 ////		imp2.getRoi().setFillColor(Color.GREEN);
@@ -486,29 +542,29 @@ public class Geometric_Accuracy implements PlugIn {
 		Roi roi1 = imp1.getRoi();
 		double[] profi1 = ((Line) roi1).getPixels();
 		boolean valido1 = false;
-		int upperpoint = -1;
+		int startpoint = -1;
 		for (int j1 = 0; j1 < profi1.length; j1++) {
 			if (profi1[j1] < halfwater)
 				valido1 = true;
 			if (valido1 && (profi1[j1] > halfwater)) {
-				upperpoint = j1;
+				startpoint = j1;
 				break;
 			}
 		}
-		int lowerpoint = -1;
+		int endpoint = -1;
 		boolean valido2 = false;
 		for (int j1 = height - 1; j1 >= 0; j1--) {
 			if (profi1[j1] < halfwater)
 				valido2 = true;
 			if (valido2 && (profi1[j1] > halfwater)) {
-				lowerpoint = j1;
+				endpoint = j1;
 				break;
 			}
 		}
 
 		int[] out1 = new int[2];
-		out1[0] = lowerpoint;
-		out1[1] = upperpoint;
+		out1[0] = endpoint;
+		out1[1] = startpoint;
 		return out1;
 	}
 
@@ -530,29 +586,29 @@ public class Geometric_Accuracy implements PlugIn {
 		Roi roi1 = imp1.getRoi();
 		double[] profi1 = ((Line) roi1).getPixels();
 		boolean valido1 = false;
-		int upperpoint = -1;
+		int startpoint = -1;
 		for (int j1 = 0; j1 < profi1.length; j1++) {
 			if (profi1[j1] < halfwater)
 				valido1 = true;
 			if (valido1 && (profi1[j1] > halfwater)) {
-				upperpoint = j1;
+				startpoint = j1;
 				break;
 			}
 		}
-		int lowerpoint = -1;
+		int endpoint = -1;
 		boolean valido2 = false;
 		for (int j1 = width - 1; j1 >= 0; j1--) {
 			if (profi1[j1] < halfwater)
 				valido2 = true;
 			if (valido2 && (profi1[j1] > halfwater)) {
-				lowerpoint = j1;
+				endpoint = j1;
 				break;
 			}
 		}
 
 		int[] out1 = new int[2];
-		out1[0] = lowerpoint;
-		out1[1] = upperpoint;
+		out1[0] = endpoint;
+		out1[1] = startpoint;
 		return out1;
 	}
 

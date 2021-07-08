@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import ij.IJ;
@@ -792,12 +793,13 @@ public class ACRutils {
 	// }
 
 	/**
-	 * effettua l'ordinamento di un array a due dimensioni. LO SO CHE JAVA8 FA ANCHE
-	 * IL CAFFE' MA A NOI NON (CI) PIACE VINCERE FACILE!
+	 * effettua l'ordinamento di un array a due dimensioni, secondo la chiave
+	 * fornita (0 o 1). LO SO CHE JAVA8 FA TUTTO CON UNA ISTRUZIONE, MA IO IGNORO E
+	 * ME NE F8!
 	 * 
-	 * @param tableIn array da ordinare
+	 * @param tableIn matrice da ordinare
 	 * @param key     chiave di ordinamento
-	 * @return array ordinato
+	 * @return matrice ordinata
 	 */
 	public static double[][] minsort(double[][] tableIn, int key) {
 
@@ -847,6 +849,152 @@ public class ACRutils {
 		}
 
 		return tableOut;
+	}
+
+	/**
+	 * minsort per matrice di interi
+	 * 
+	 * @param tableIn matrice da ordinare
+	 * @param key     chiave ordinamento
+	 * @return matrice ordinata
+	 */
+	public static int[][] minsort(int[][] tableIn, int key) {
+
+		int[][] tableOut = new int[tableIn.length][tableIn[0].length];
+		for (int i1 = 0; i1 < tableIn.length; i1++) {
+			for (int i2 = 0; i2 < tableIn[0].length; i2++) {
+				tableOut[i1][i2] = tableIn[i1][i2];
+			}
+		}
+		//
+		// per mia lazzaronaggine creo un array con i valori di key ed inoltre un array
+		// indice
+		//
+		int[] vetKey = new int[tableOut[0].length];
+		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
+			vetKey[i1] = tableOut[key][i1];
+		}
+		int[] vetIndex = new int[tableOut[0].length];
+		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
+			vetIndex[i1] = i1;
+		}
+		//
+		// lo battezzo algoritmo di Tone&Batista
+		//
+		int aux1 = 0;
+		int aux2 = 0;
+		for (int i1 = 0; i1 < vetKey.length; i1++) {
+			for (int i2 = i1 + 1; i2 < vetKey.length; i2++) {
+				if (vetKey[i2] < vetKey[i1]) {
+					aux1 = vetKey[i1];
+					vetKey[i1] = vetKey[i2];
+					vetKey[i2] = aux1;
+					// ----
+					aux2 = vetIndex[i1];
+					vetIndex[i1] = vetIndex[i2];
+					vetIndex[i2] = aux2;
+				}
+			}
+		}
+
+		// a questo punto usando il vetIndex di Tone&Batista, riordino tabella in un
+		// unica passata
+		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
+			for (int i2 = 0; i2 < vetIndex.length; i2++) {
+				tableOut[i2][i1] = tableIn[vetIndex[i2]][i1];
+			}
+		}
+
+		return tableOut;
+	}
+
+	/**
+	 * Cerca tutte me occorrenze del valore nell'elemento selezionato con key
+	 * 
+	 * @param vetIn matrice di ingreso
+	 * @param value valore cercato
+	 * @param key   selezione
+	 * @return matrice occorrenze trovate
+	 */
+	public static int[][] searchValue(int[][] vetIn, int value, int key) {
+		ArrayList<Integer> outX = new ArrayList<>();
+		ArrayList<Integer> outY = new ArrayList<>();
+		for (int i1 = 0; i1 < vetIn.length; i1++) {
+			if (vetIn[i1][key] == value) {
+				outX.add(vetIn[i1][0]);
+				outY.add(vetIn[i1][1]);
+			}
+		}
+		int[] myX = arrayListToArrayInt(outX);
+		int[] myY = arrayListToArrayInt(outY);
+		int[][] out1 = new int[myX.length][2];
+		for (int i1 = 0; i1 < myX.length; i1++) {
+			out1[i1][0] = myX[i1];
+			out1[i1][1] = myY[i1];
+		}
+		return out1;
+	}
+
+	/**
+	 * estrae dalla matrice uno dei due array, selezionato da key
+	 * 
+	 * @param selectedPoints matrice input
+	 * @param key            selezione
+	 * @return array output
+	 */
+	public static int[] outValue(int[][] selectedPoints, int key) {
+		int[] out1 = new int[selectedPoints.length];
+		for (int i1 = 0; i1 < selectedPoints.length; i1++) {
+			out1[i1] = selectedPoints[i1][key];
+		}
+		return out1;
+	}
+
+	/**
+	 * Conversion from arrayList<Integer> to int[]
+	 * 
+	 * @param inArrayList arrayList input
+	 * @return String[] output
+	 */
+	public static int[] arrayListToArrayInt(ArrayList<Integer> inArrayList) {
+		int[] outIntArr = new int[inArrayList.size()];
+		int i1 = 0;
+		for (Integer n : inArrayList) {
+			outIntArr[i1++] = n;
+		}
+		return outIntArr;
+	}
+
+	/**
+	 * ricerca del minimo
+	 * 
+	 * @param vetIn array input
+	 * @return minimo
+	 */
+	public static int minsearch(int[] vetIn) {
+		int min = Integer.MAX_VALUE;
+		for (int i1 = 0; i1 < vetIn.length; i1++) {
+			if (vetIn[i1] < min) {
+				min = vetIn[i1];
+			}
+		}
+		return min;
+	}
+
+	/**
+	 * ricerca del massimo
+	 * 
+	 * @param vetIn array input
+	 * @return massimo
+	 */
+	public static int maxsearch(int[] vetIn) {
+		int max = Integer.MIN_VALUE;
+		for (int i1 = 0; i1 < vetIn.length; i1++) {
+			if (vetIn[i1] > max) {
+				max = vetIn[i1];
+			}
+		}
+		return max;
 	}
 
 }
