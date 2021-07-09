@@ -584,6 +584,29 @@ public class ACRutils {
 		imp1.killRoi();
 		return;
 	}
+	
+	public static void plotPoints(ImagePlus imp1, Overlay over1, int xPoints1, int yPoints1, Color color, int type, int size) {
+
+		float[] xPoints = new float[1];
+		float[] yPoints = new float[1];
+
+		xPoints[0] = (float) xPoints1;
+		yPoints[0] = (float) yPoints1;
+		// logVector(xPoints, "xPoints");
+		// logVector(yPoints, "yPoints");
+		// ACRutils.waitHere();
+
+		PointRoi pr1 = new PointRoi(xPoints, yPoints, xPoints.length);
+		pr1.setPointType(type);
+		pr1.setSize(size);
+
+		imp1.setRoi(pr1);
+		imp1.getRoi().setStrokeColor(color);
+		over1.addElement(imp1.getRoi());
+		imp1.killRoi();
+		return;
+	}
+
 
 	private static final int PIXEL_DATA = 0x7FE00010;
 	private static final int NON_IMAGE = 0x7FE10010;
