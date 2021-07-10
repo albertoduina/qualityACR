@@ -584,8 +584,9 @@ public class ACRutils {
 		imp1.killRoi();
 		return;
 	}
-	
-	public static void plotPoints(ImagePlus imp1, Overlay over1, int xPoints1, int yPoints1, Color color, int type, int size) {
+
+	public static void plotPoints(ImagePlus imp1, Overlay over1, int xPoints1, int yPoints1, Color color, int type,
+			int size) {
 
 		float[] xPoints = new float[1];
 		float[] yPoints = new float[1];
@@ -606,7 +607,6 @@ public class ACRutils {
 		imp1.killRoi();
 		return;
 	}
-
 
 	private static final int PIXEL_DATA = 0x7FE00010;
 	private static final int NON_IMAGE = 0x7FE10010;
@@ -959,13 +959,13 @@ public class ACRutils {
 	}
 
 	/**
-	 * estrae dalla matrice uno dei due array, selezionato da key
+	 * estrae dalla matrice uno degli array, selezionato da key
 	 * 
 	 * @param selectedPoints matrice input
 	 * @param key            selezione
 	 * @return array output
 	 */
-	public static int[] outValue(int[][] selectedPoints, int key) {
+	public static int[] matrixExtractor(int[][] selectedPoints, int key) {
 		int[] out1 = new int[selectedPoints.length];
 		for (int i1 = 0; i1 < selectedPoints.length; i1++) {
 			out1[i1] = selectedPoints[i1][key];
@@ -988,36 +988,53 @@ public class ACRutils {
 		return outIntArr;
 	}
 
+	
 	/**
 	 * ricerca del minimo
 	 * 
 	 * @param vetIn array input
-	 * @return minimo
+	 * @return minimo ed indice del minimo
 	 */
-	public static int minsearch(int[] vetIn) {
+	public static int[] minsearch(int[] vetIn) {
 		int min = Integer.MAX_VALUE;
+		int index=0;
 		for (int i1 = 0; i1 < vetIn.length; i1++) {
 			if (vetIn[i1] < min) {
 				min = vetIn[i1];
+				index=i1;
 			}
 		}
-		return min;
+		int[] out1= new int[2];
+		out1[0]=min;
+		out1[1]=index;
+		
+		return out1;
 	}
+
+	
 
 	/**
 	 * ricerca del massimo
 	 * 
 	 * @param vetIn array input
-	 * @return massimo
+	 * @return massimo ed indice del massimo
 	 */
-	public static int maxsearch(int[] vetIn) {
+	public static int[] maxsearch(int[] vetIn) {
 		int max = Integer.MIN_VALUE;
+		int index=0;
 		for (int i1 = 0; i1 < vetIn.length; i1++) {
 			if (vetIn[i1] > max) {
 				max = vetIn[i1];
+				index=i1;
 			}
 		}
-		return max;
+		int[] out1= new int[2];
+		out1[0]=max;
+		out1[1]=index;
+		return out1;
 	}
+	
+
+
 
 }

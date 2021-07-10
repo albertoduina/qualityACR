@@ -548,6 +548,37 @@ public class ACRlog {
 		}
 		IJ.log("---------------------------------------------");
 	}
+	 
+	public static void printMatrix(int mat[][], String nome) {
+		String stri = "";
+		int rows = 0;
+		int columns = 0;
+		if (mat == null) {
+			ACRlog.waitThere("Warning matrix " + nome + " = null");
+			return;
+		} else {
+			rows = mat.length;
+			if (rows == 0) {
+				ACRlog.waitThere("Warning matrix " + nome + " length=0");
+				return;
+			}
+
+			columns = mat[0].length;
+			// IJ.log("rows=" + rows + " columns= " + columns);
+
+			IJ.log("---- " + nome + " [ " + rows + "x" + columns + " ] ----");
+			for (int i1 = 0; i1 < rows; i1++) {
+				stri = "";
+				for (int i2 = 0; i2 < columns; i2++) {
+										
+					stri += String.format("%04d", mat[i1][i2]) + " ,  ";
+				}
+				IJ.log(stri);
+			}
+		}
+		IJ.log("---------------------------------------------");
+	}
+
 
 	public static void logMatrix(String mat[][], String nome) {
 		String stri = "";

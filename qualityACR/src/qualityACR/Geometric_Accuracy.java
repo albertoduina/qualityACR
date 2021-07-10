@@ -126,7 +126,7 @@ public class Geometric_Accuracy implements PlugIn {
 		// IJ.run(imp2, "Rotate... ", "angle=6 grid=1 interpolation=Bilinear");
 		//
 		//
-		// IJ.run(imp2, "Rotate... ", "angle=-6 grid=1 interpolation=Bilinear");
+		IJ.run(imp2, "Rotate... ", "angle=-6 grid=1 interpolation=Bilinear");
 		//
 		// ===============================================
 		//
@@ -158,10 +158,30 @@ public class Geometric_Accuracy implements PlugIn {
 				List<Integer> pointXY1 = new ArrayList<Integer>();
 				pointXY1.add(a1);
 				pointXY1.add(out1[0]);
+				pointXY1.add(1);
+				pointXY1.add(2);
+				pointXY1.add(3);
+				pointXY1.add(4);
+				pointXY1.add(5);
+				pointXY1.add(6);
+				pointXY1.add(7);
+				pointXY1.add(8);
+				pointXY1.add(9);
+				pointXY1.add(10);
 				pointArrayXY.add(pointXY1);
 				List<Integer> pointXY2 = new ArrayList<Integer>();
 				pointXY2.add(a1);
 				pointXY2.add(out1[1]);
+				pointXY2.add(1);
+				pointXY2.add(2);
+				pointXY2.add(3);
+				pointXY2.add(4);
+				pointXY2.add(5);
+				pointXY2.add(6);
+				pointXY2.add(7);
+				pointXY2.add(8);
+				pointXY2.add(9);
+				pointXY2.add(10);
 				pointArrayXY.add(pointXY2);
 			}
 		}
@@ -178,22 +198,49 @@ public class Geometric_Accuracy implements PlugIn {
 				List<Integer> pointXY3 = new ArrayList<Integer>();
 				pointXY3.add(out2[0]);
 				pointXY3.add(b1);
+				pointXY3.add(1);
+				pointXY3.add(2);
+				pointXY3.add(3);
+				pointXY3.add(4);
+				pointXY3.add(5);
+				pointXY3.add(6);
+				pointXY3.add(7);
+				pointXY3.add(8);
+				pointXY3.add(9);
+				pointXY3.add(10);
 				pointArrayXY.add(pointXY3);
 				List<Integer> pointXY4 = new ArrayList<Integer>();
 				pointXY4.add(out2[1]);
 				pointXY4.add(b1);
+				pointXY4.add(1);
+				pointXY4.add(2);
+				pointXY4.add(3);
+				pointXY4.add(4);
+				pointXY4.add(5);
+				pointXY4.add(6);
+				pointXY4.add(7);
+				pointXY4.add(8);
+				pointXY4.add(9);
+				pointXY4.add(10);
 				pointArrayXY.add(pointXY4);
 			}
 		}
 		//
 		//
 		//
+		// ACRlog.waitHere("pointArrayXY.size= " + pointArrayXY.size());
+
 		List<Integer> pointList = new ArrayList<>();
 		int count = 0;
 		int[][] rotatedPoints = new int[pointArrayXY.size()][];
+		boolean shot = true;
 
 		for (List<Integer> tempor : pointArrayXY) {
 			pointList = tempor;
+			if (shot) {
+				ACRlog.waitHere("pointList.size()= " + pointList.size());
+				shot = false;
+			}
 			int[] vetOut = new int[pointList.size()];
 			int i1 = 0;
 			for (Integer n : pointList) {
@@ -212,18 +259,18 @@ public class Geometric_Accuracy implements PlugIn {
 			}
 		}
 
-//		for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
-//			// IJ.log("lower= " + lowerArrayA.get(i1) + "," + lowerArrayB.get(i1));
-//			imp2.setRoi(new PointRoi(rotatedPoints[i1][0], rotatedPoints[i1][1], "small yellow dot"));
-//			over2.addElement(imp2.getRoi());
-//			imp2.killRoi();
-//		}
+		for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
+			// IJ.log("lower= " + lowerArrayA.get(i1) + "," + lowerArrayB.get(i1));
+			imp2.setRoi(new PointRoi(rotatedPoints[i1][0], rotatedPoints[i1][1], "tiny red dot"));
+			over2.addElement(imp2.getRoi());
+			imp2.killRoi();
+		}
 		// mi piacciono i rotatedPoints perche'li posso impunemente importare in
 		// excel2003, altrimenti dovrei utilizzare excel2007 perche'ha piu'colonne!
-		ACRlog.logMatrix(rotatedPoints, "rotatedPoints");
+		// ma alla lunga ho ceduto
 		//
-		// lo strano problema dei punti non coincidenti con i vertici NON E? AFFATTO
-		// LEGATO AI DOPIONI, che sono troppo pigro per cercare di rimuovere, e poi
+		// lo strano problema dei punti non coincidenti con i vertici NON E' AFFATTO
+		// LEGATO AI DOPPIONI, che sono troppo pigro per cercare di rimuovere, e poi
 		// "esercitano" il programma!
 		//
 		// estraggo l'arrayX ed arrayY dalle coordinate dei punti
@@ -235,22 +282,107 @@ public class Geometric_Accuracy implements PlugIn {
 			vetY[i1] = rotatedPoints[i1][1];
 		}
 
-		int minx = ACRutils.minsearch(vetX);
-		int maxx = ACRutils.maxsearch(vetX);
-		int miny = ACRutils.minsearch(vetY);
-		int maxy = ACRutils.maxsearch(vetY);
+		int minx = ACRutils.minsearch(vetX)[0];
+		int maxx = ACRutils.maxsearch(vetX)[0];
+		int miny = ACRutils.minsearch(vetY)[0];
+		int maxy = ACRutils.maxsearch(vetY)[0];
+
+		int px = 0;
+		int py = 0;
+		int ax = 0;
+		int ay = 0;
+		int bx = 191;
+		int by = 0;
+		int cx = 191;
+		int cy = 191;
+		int dx = 0;
+		int dy = 191;
+
 		//
-		// disegno la boundingbox orizzontale pèer ricavarne il centerOfMass
+		// FORSE HO TROVATO IL MODO: PER OGNI PUNTO SI CALCOLA:
+		// ABS(distanza da un vertice su X)+ABS(distanza da un vertice su Y)
+		// si hanno cosi' 4 colonne, coincidenti con le coordinate X efd Y del punto.
+		// Il minimo per ogni colonna rappresenta quel particolare vertice
+		//
+		// SE FUNZIONA E'UNA FIGATA, PURE ELEGANTE E LOGICA COME SOLUZIONE!
+		//
+		//
+		for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
+			px = rotatedPoints[i1][0];
+			py = rotatedPoints[i1][1];
+			//
+			rotatedPoints[i1][2] = 0;
+			rotatedPoints[i1][3] = Math.abs(px - ax) + Math.abs(py - ay); // vertice a
+			rotatedPoints[i1][4] = Math.abs(px - bx) + Math.abs(py - by); // vertice b
+			rotatedPoints[i1][5] = Math.abs(px - cx) + Math.abs(py - cy); // vertice c
+			rotatedPoints[i1][6] = Math.abs(px - dx) + Math.abs(py - dy); // vertice d
+			rotatedPoints[i1][7] = 0;
+			rotatedPoints[i1][8] = i1;
+			rotatedPoints[i1][9] = 0;
+			rotatedPoints[i1][10] = 0;
+//
+//			STRANAMENTE il calcolo qui sopra da'risultati migliori del calcolo dell'ipotenusa			
+//
+//			rotatedPoints[i1][2] = 0;
+//			rotatedPoints[i1][3] = (int) Math.sqrt((px - ax) * (px - ax) + (py - ay) * (py - ay)); // vertice a
+//			rotatedPoints[i1][4] = (int) Math.sqrt((px - bx) * (px - bx) + (py - by) * (py - by)); // vertice b
+//			rotatedPoints[i1][5] = (int) Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy)); // vertice c
+//			rotatedPoints[i1][6] = (int) Math.sqrt((px - dx) * (px - dx) + (py - dy) * (py - dy)); // vertice d
+//			rotatedPoints[i1][7] = 0;
+//			rotatedPoints[i1][8] = i1;
+//			rotatedPoints[i1][9] = 0;
+//			rotatedPoints[i1][10] = 0;
+		}
+
+		ACRlog.printMatrix(rotatedPoints, "rotatedPoints");
+		//
+		// disegno la boundingbox parallela agli assi, per ricavarne il centerOfMass che
+		// in seguito mi serve per capire in che direzione e' ruotato il fantoccio
 		//
 		imp2.setRoi(minx, miny, maxx - minx, maxy - miny);
 		ImageProcessor ip2 = imp2.getProcessor();
 
 		ImageStatistics stat2 = ip2.getStatistics();
-		double cx = stat2.xCenterOfMass;
-		double cy = stat2.yCenterOfMass;
+		double mx = stat2.xCenterOfMass;
+		double my = stat2.yCenterOfMass;
 
-//		over2.addElement(imp2.getRoi());
+		imp2.getRoi().setStrokeColor(Color.GREEN);
+		over2.addElement(imp2.getRoi());
 		imp2.killRoi();
+
+		// estraggo dalla matrice gli array con il calcolo per i vertici
+		int[] vertexa = ACRutils.matrixExtractor(rotatedPoints, 3);
+		int[] vertexb = ACRutils.matrixExtractor(rotatedPoints, 4);
+		int[] vertexc = ACRutils.matrixExtractor(rotatedPoints, 5);
+		int[] vertexd = ACRutils.matrixExtractor(rotatedPoints, 6);
+
+		ACRlog.logVector(vertexa, "vertexa");
+		ACRlog.logVector(vertexb, "vertexb");
+		ACRlog.logVector(vertexc, "vertexc");
+		ACRlog.logVector(vertexd, "vertexd");
+
+		int[] posmina = ACRutils.minsearch(vertexa);
+		int[] posminb = ACRutils.minsearch(vertexb);
+		int[] posminc = ACRutils.minsearch(vertexc);
+		int[] posmind = ACRutils.minsearch(vertexd);
+
+		ACRlog.logVector(posmina, "posmina");
+		ACRlog.logVector(posminb, "posminb");
+		ACRlog.logVector(posminc, "posminc");
+		ACRlog.logVector(posmind, "posmind");
+
+		// VERDE
+		int AX = rotatedPoints[posmina[1]][0];
+		int AY = rotatedPoints[posmina[1]][1];
+		// GIALLO
+		int BX = rotatedPoints[posminb[1]][0];
+		int BY = rotatedPoints[posminb[1]][1];
+		// ROSSO
+		int CX = rotatedPoints[posminc[1]][0];
+		int CY = rotatedPoints[posminc[1]][1];
+		// AZZURRO
+		int DX = rotatedPoints[posmind[1]][0];
+		int DY = rotatedPoints[posmind[1]][1];
 
 		// int[][] sortedPoints = null;
 		//
@@ -265,80 +397,87 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		// ROSSO VERTICE con maxima x e relativa minima y
 		//
-		int selX = 0;
-		int selY = 1;
-		int[][] out1 = ACRutils.searchValue(rotatedPoints, maxx, selX);
-		ACRlog.logMatrix(out1, "ROSSO out1 maxx");
-		int CX = out1[0][0];
-		IJ.log("CX= " + CX);
-		int[] aux1 = ACRutils.outValue(out1, selY);
-		int CY = 0;
-		if (aux1[0] < cy)
-			CY = ACRutils.minsearch(aux1);
-		else
-			CY = ACRutils.maxsearch(aux1);
-		//
-		// VERDE VERTICE con minima x e relativa minima y
-		//
-		int[][] out2 = ACRutils.searchValue(rotatedPoints, minx, selX);
-		ACRlog.logMatrix(out2, "VERDE out2 minx");
-		int AX = out2[0][0];
-		IJ.log("AX= " + AX);
-		int[] aux2 = ACRutils.outValue(out2, selY);
-		int AY = 0;
-		if (aux2[0] > cy)
-			AY = ACRutils.maxsearch(aux2);
-		else
-			AY = ACRutils.minsearch(aux2);
-		//
-		// GIALLO VERTICE con maxima y e relativa massima x
-		//
-		int[][] out3 = ACRutils.searchValue(rotatedPoints, maxy, selY);
-		ACRlog.logMatrix(out3, "GIALLO out3 maxy");
-		int BY = out3[0][1];
-		IJ.log("BY= " + BY);
-		int[] aux3 = ACRutils.outValue(out3, selX);
-		int BX = 0;
-		if (aux3[0] < cx)
-			BX = ACRutils.minsearch(aux3);
-		else
-			BX = ACRutils.maxsearch(aux3);
-		//
-		// AZZURRO VERTICE con maxima y e relativa minima x
-		//
-		int[][] out4 = ACRutils.searchValue(rotatedPoints, miny, selY);
-		ACRlog.logMatrix(out4, "AZZURRO out4 miny");
-		int DY = out4[0][1];
-		IJ.log("DY= " + DY);
-		int[] aux4 = ACRutils.outValue(out4, selX);
-		int DX = 0;
-		if (aux4[0] < cx)
-			DX = ACRutils.minsearch(aux4);
-		else
-			DX = ACRutils.maxsearch(aux4);
-
-		IJ.log("boundingCenter= " + cx + "," + cy);
+//		int selX = 0;
+//		int selY = 1;
+//		int[][] out1 = ACRutils.searchValue(rotatedPoints, maxx, selX);
+//		ACRlog.logMatrix(out1, "ROSSO out1 maxx");
+//		int CX = out1[0][0];
+//		IJ.log("CX= " + CX);
+//		int[] aux10 = ACRutils.matrixExtractor(out1, selY);
+//		int CY = 0;
 //
+//		IJ.log("guardo se " + CX + " minore di " + cx);
+//		if (CX < cx) {
+//			CY = ACRutils.maxsearch(aux10)[0];
+//			IJ.log("cerco il massimo su Y e trovo= " + CY);
+//		} else {
+//			CY = ACRutils.minsearch(aux10)[0];
+//			IJ.log("cerco il minimo su Y e trovo= " + CY);
+//		}
+//		//
+//		// VERDE VERTICE con minima x e relativa minima y
+//		//
+//		int[][] out2 = ACRutils.searchValue(rotatedPoints, minx, selX);
+//		ACRlog.logMatrix(out2, "VERDE out2 minx");
+//		int AX = out2[0][0];
+//		IJ.log("AX= " + AX);
+//		int[] aux20 = ACRutils.matrixExtractor(out2, selY);
+//		int AY = 0;
+//		if (AX > cx)
+//			AY = ACRutils.maxsearch(aux20)[0];
+//		else
+//			AY = ACRutils.minsearch(aux20)[0];
+//		//
+//		// GIALLO VERTICE con maxima y e relativa massima x
+//		//
+//		int[][] out3 = ACRutils.searchValue(rotatedPoints, maxy, selY);
+//		ACRlog.logMatrix(out3, "GIALLO out3 maxy");
+//		int BY = out3[0][1];
+//		IJ.log("BY= " + BY);
+//		int[] aux30 = ACRutils.matrixExtractor(out3, selX);
+//		int BX = 0;
+//		if (BY < cy)
+//			BX = ACRutils.minsearch(aux30)[0];
+//		else
+//			BX = ACRutils.maxsearch(aux30)[0];
+//		//
+//		// AZZURRO VERTICE con maxima y e relativa minima x
+//		//
+//		int[][] out4 = ACRutils.searchValue(rotatedPoints, miny, selY);
+//		ACRlog.logMatrix(out4, "AZZURRO out4 miny");
+//		int DY = out4[0][1];
+//		IJ.log("DY= " + DY);
+//		int[] aux40 = ACRutils.matrixExtractor(out4, selX);
+//		int DX = 0;
+//		if (DY < cy)
+//			DX = ACRutils.minsearch(aux40)[0];
+//		else
+//			DX = ACRutils.maxsearch(aux40)[0];
 //
-		ACRutils.plotPoints(imp2, over2, (int) AX, (int) AY, Color.GREEN, 4, 2);
-		ACRutils.plotPoints(imp2, over2, (int) BX, (int) BY, Color.YELLOW, 4, 2);
-		ACRutils.plotPoints(imp2, over2, (int) CX, (int) CY, Color.RED, 4, 2);
-		ACRutils.plotPoints(imp2, over2, (int) DX, (int) DY, Color.CYAN, 4, 2);
+//		IJ.log("boundingCenter= " + cx + "," + cy);
+////
 //
-
-		ACRlog.waitHere("minX= " + AX + "," + AY + " maxX=" + CX + "," + CY + " minY= " + DX + "," + DY + " maxY=" + BX
-				+ "," + BY);
+		ACRutils.plotPoints(imp2, over2, (int) AX, (int) AY, Color.GREEN, 4, 3);
+		ACRutils.plotPoints(imp2, over2, (int) BX, (int) BY, Color.YELLOW, 4, 3);
+		ACRutils.plotPoints(imp2, over2, (int) CX, (int) CY, Color.RED, 4, 3);
+		ACRutils.plotPoints(imp2, over2, (int) DX, (int) DY, Color.CYAN, 4, 3);
+//
+		ACRlog.waitHere("VERDE= " + AX + " , " + AY + " GIALLO= " + BX + " , " + BY + " ROSSO= " + CX + " , " + CY
+				+ " AZZURRO= " + DX + " , " + DY);
 
 ////		ACRlog.waitHere();
 		//
-		// ora vado a calcolare i dati del RotatedRectangle
+		// ora vado a calcolare i dati del RotatedRectangle VERIFICARE SE CON I DOUBLE MIGLIORA!
 		//
 
-		double MX = (CX + DX) / 2;
-		double MY = (CY + DY) / 2;
-		double PX = (AX + BX) / 2;
-		double PY = (AY + BY) / 2;
+		double MX = Math.round((double) (CX + DX) / 2.0);
+		double MY = Math.round((double) (CY + DY) / 2.0);
+		double PX = Math.round((double) (AX + BX) / 2.0);
+		double PY = Math.round((double) (AY + BY) / 2.0);
 		double LL = Math.sqrt((AX - BX) * (AX - BX) + (AY - BY) * (AX - BY));
+
+		ACRutils.plotPoints(imp2, over2, (int) MX, (int) MY, Color.ORANGE, 3, 4);
+		ACRutils.plotPoints(imp2, over2, (int) PX, (int) PY, Color.ORANGE, 3, 4);
 
 		imp2.setRoi(new RotatedRectRoi(MX, MY, PX, PY, LL));
 
