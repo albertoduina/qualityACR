@@ -70,17 +70,20 @@ public class ACRgraphic {
 			}
 			r = q / p;
 			if (p == 0 && q < 0) {
+				ACRlog.waitHere("linea esterna 001");
 				IJ.log("null 001");
 				return null; // Don't draw line at all. (parallel line outside)
 			}
 			if (p < 0) {
 				if (r > t1) {
+					ACRlog.waitHere("linea esterna 002");
 					IJ.log("null 002");
 					return null; // Don't draw line at all.
 				} else if (r > t0)
 					t0 = r; // Line is clipped!
 			} else if (p > 0) {
 				if (r < t0) {
+					ACRlog.waitHere("linea esterna 003");
 					IJ.log("null 003");
 					return null; // Don't draw line at all.
 				} else if (r < t1)
