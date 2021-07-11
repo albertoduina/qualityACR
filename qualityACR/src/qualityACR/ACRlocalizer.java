@@ -11,6 +11,7 @@ import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Plot;
 import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
 public class ACRlocalizer {
@@ -859,40 +860,35 @@ public class ACRlocalizer {
 		// scansione per righe
 		for (int y1 = 1; y1 < height - 1; y1++) {
 			IJ.log("riga " + y1);
-			ip1.getRow(0, y1, rowpixels, width);
-			out2 = profileSearch(rowpixels, threshold);
-			if (out2 == null) {
-				IJ.log("null");
-				continue;
-			}
+
+			out2 = horizontalSearch(imp1, threshold, y1);
 			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
-			xpoint = out2[0];
-			ypoint = y1;
-			int size = 1;
-			int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
-			ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
-			xpoint = out2[1];
-			ypoint = y1;
-			ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
+			if (out2 != null) {
+				xpoint = out2[0];
+				ypoint = y1;
+				int size = 4;
+				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
+				ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
+				xpoint = out2[1];
+				ypoint = y1;
+				ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
+			}
 		}
 		// scansione per colonne
-		for (int y1 = 1; y1 < height - 1; y1++) {
-			IJ.log("riga " + y1);
-			ip1.getRow(0, y1, rowpixels, width);
-			out2 = profileSearch(rowpixels, threshold);
-			if (out2 == null) {
-				IJ.log("null");
-				continue;
+		for (int x1 = 1; x1 < height - 1; x1++) {
+			IJ.log("riga " + x1);
+			out2 = verticalSearch(imp1, threshold, x1);
+			if (out2 != null) {
+				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
+				xpoint = x1;
+				ypoint = out2[0];
+				int size = 4;
+				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
+				ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
+				xpoint = x1;
+				ypoint = out2[1];
+				ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
 			}
-			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
-			xpoint = out2[0];
-			ypoint = y1;
-			int size = 1;
-			int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
-			ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
-			xpoint = out2[1];
-			ypoint = y1;
-			ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
 		}
 
 //  utilizzando un double intermedio
@@ -907,7 +903,7 @@ public class ACRlocalizer {
 			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
 			xpoint = out1[0];
 			ypoint = (double) y1;
-			int size = 1;
+			int size = 4;
 			int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
 //			ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN);
 //			xpoint = out1[1];
@@ -994,7 +990,7 @@ public class ACRlocalizer {
 	 * Ricerca lungo i pixel di un profilo, in pratica una specie di FWHM non
 	 * utilizzo il primo e l'ultimo pixel del profilo, per evitare pixel strani
 	 * dovuti a difetti digitali delle immagini. Restituisce il valore del pixel che
-	 * supera od eguaglia il threshold.
+	 * supera od eguaglia il threshold. Integer
 	 * 
 	 * @param profi1 profilo da elaborare
 	 * @param water  presunto segnale dell'acqua
@@ -1016,6 +1012,45 @@ public class ACRlocalizer {
 //		boolean valido2 = false;
 		for (int j1 = profi1.length - 2; j1 >= 0; j1--) {
 			if (profi1[j1] >= threshold) {
+				endpoint = j1;
+				break;
+			}
+		}
+		if (startpoint < 1 || endpoint < 1 || endpoint > profi1.length - 2)
+			return null;
+
+		int[] out1 = new int[2];
+		out1[0] = startpoint;
+		out1[1] = endpoint;
+		return out1;
+	}
+
+	/**
+	 * Ricerca lungo i pixel di un profilo, in pratica una specie di FWHM non
+	 * utilizzo il primo e l'ultimo pixel del profilo, per evitare pixel strani
+	 * dovuti a difetti digitali delle immagini. Restituisce il valore del pixel che
+	 * supera od eguaglia il threshold. DoublePrecision
+	 * 
+	 * @param profi1 profilo da elaborare
+	 * @param water  presunto segnale dell'acqua
+	 * @return int[] out1 con startpoint ed endpoint per il profilo[]
+	 */
+	public static int[] profileSearch(double[] profi1, double threshold) {
+
+//		boolean valido1 = false;
+		int startpoint = -1;
+		// testo
+		for (int j1 = 1; j1 < profi1.length - 1; j1++) {
+			if (Double.compare(profi1[j1], threshold) >= 0) {
+				startpoint = j1;
+				break;
+			}
+		}
+
+		int endpoint = -1;
+//		boolean valido2 = false;
+		for (int j1 = profi1.length - 2; j1 >= 0; j1--) {
+			if (Double.compare(profi1[j1], threshold) >= 0) {
 				endpoint = j1;
 				break;
 			}
@@ -1351,7 +1386,7 @@ public class ACRlocalizer {
 			slope = (y2 - y1) / (x2 - x1);
 			if (verbose) {
 				IJ.log("slope= " + slope);
-				ACRlog.waitHere("slope= " + slope);
+				// ACRlog.waitHere("slope= " + slope);
 			}
 			double xoffset = line3[0][0];
 			double yoffset = line3[1][0];
@@ -1693,6 +1728,48 @@ public class ACRlocalizer {
 		out1[2][1] = rightz;
 		out1[3][1] = rightw;
 
+		return out1;
+	}
+
+	public static int[] verticalSearch(ImagePlus imp1, double water, int xposition) {
+		//
+		// faccio la scansione verticale per localizzare il fantoccio
+		//
+		double halfwater = water / 2;
+		int spessore = 1;
+		imp1.deleteRoi();
+		int height = imp1.getHeight();
+		Line.setWidth(spessore);
+		int x1 = xposition;
+		int y1 = 0;
+		int x2 = xposition;
+		int y2 = height;
+		imp1.setRoi(new Line(x1, y1, x2, y2));
+		imp1.updateAndDraw();
+		Roi roi1 = imp1.getRoi();
+		double[] profi1 = ((Line) roi1).getPixels();
+		int[] out1 = profileSearch(profi1, halfwater);
+		return out1;
+	}
+
+	public static int[] horizontalSearch(ImagePlus imp1, double water, int yposition) {
+		//
+		// faccio la scansione verticale per localizzare il fantoccio
+		//
+		double halfwater = water / 2;
+		int spessore = 1;
+		imp1.deleteRoi();
+		int width = imp1.getWidth();
+		Line.setWidth(spessore);
+		int x1 = 0;
+		int y1 = yposition;
+		int x2 = width;
+		int y2 = yposition;
+		imp1.setRoi(new Line(x1, y1, x2, y2));
+		imp1.updateAndDraw();
+		Roi roi1 = imp1.getRoi();
+		double[] profi1 = ((Line) roi1).getPixels();
+		int[] out1 = profileSearch(profi1, halfwater);
 		return out1;
 	}
 
