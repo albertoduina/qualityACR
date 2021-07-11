@@ -92,9 +92,14 @@ public class Ghosting_ implements PlugIn {
 				IJ.log("mainGhosting001 > elaborazione slice T1 numero " + i1);
 				ImagePlus imp1 = ACRgraphic.openImageNoDisplay(sortedListT1[i1], false);
 				ACRlocalizer.gridLocalizer1(imp1, step, fast, verbose, timeout);
-
+				
+//				int xphantom = (int) out2[0];
+//				int yphantom = (int) out2[1];
+//				int dphantom = (int) out2[2];
+//
+//
 //				int[] phantomCircle = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout1);
-//				sliceGhost(sortedListT1[i1], phantomCircle, i1, step, fast, verbose);
+////				sliceGhost(sortedListT1[i1], phantomCircle, i1, step, fast, verbose);
 			}
 		}
 

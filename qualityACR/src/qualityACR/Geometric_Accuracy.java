@@ -161,7 +161,7 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		for (int i1 = 0; i1 < width; i1++) { // era i1 +=3
 			int a1 = i1;
-			int[] out1 = ACRlocalizer.verticalSearch(imp2, max2, a1);
+			int[] out1 = ACRlocalizer.verticalSearch(imp2, max2, a1, false);
 			if (out1 != null) {
 				List<Integer> pointXY1 = new ArrayList<Integer>();
 				pointXY1.add(a1);
@@ -189,7 +189,7 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		for (int i1 = 0; i1 < height; i1++) { // era i1 +=3
 			int b1 = i1;
-			int[] out2 = ACRlocalizer.horizontalSearch(imp2, max2, b1);
+			int[] out2 = ACRlocalizer.horizontalSearch(imp2, max2, b1, false);
 
 			if (out2 != null) {
 				List<Integer> pointXY3 = new ArrayList<Integer>();

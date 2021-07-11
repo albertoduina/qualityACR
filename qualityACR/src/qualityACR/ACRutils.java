@@ -441,15 +441,15 @@ public class ACRutils {
 	}
 
 	/**
-	 * Esegue l'interpolazione lineare tra due punti dati, conoscendo la y dep punto
-	 * interpolato
+	 * Esegue l'interpolazione lineare tra due punti dati, conoscendo il valore di y
+	 * "a mezza altezza" del punto interpolato
 	 * 
 	 * @param ay coordinata y del primo punto
 	 * @param ax coordinata x del primo punto
 	 * @param bx coordinata x del secondo punto
 	 * @param by coordinata y del secondo punto
-	 * @param cy cordinata y del punto da intermedio
-	 * @return
+	 * @param cy cordinata y del punto da interpolare
+	 * @return coordinata x del punto interpolato
 	 */
 	public static double xLinearInterpolation(double ax, double ay, double bx, double by, double cy) {
 		// ax coordinata x su plot del primo punto
@@ -459,7 +459,8 @@ public class ACRutils {
 		// cy cordinata y del punto da trovare
 
 		double cx = bx - ((bx - ax) * (by - cy) / (by - ay));
-		IJ.log("xinterpolato cx= " + cx + " ax= " + ax + " ay=" + ay + " bx= " + bx + " by= " + by + " cy=" + cy);
+		// IJ.log("xinterpolato cx= " + cx + " ax= " + ax + " ay=" + ay + " bx= " + bx +
+		// " by= " + by + " cy=" + cy);
 		// coordinata x su immagine calcolata
 		return cx;
 	}
@@ -988,7 +989,6 @@ public class ACRutils {
 		return outIntArr;
 	}
 
-	
 	/**
 	 * ricerca del minimo
 	 * 
@@ -997,21 +997,19 @@ public class ACRutils {
 	 */
 	public static int[] minsearch(int[] vetIn) {
 		int min = Integer.MAX_VALUE;
-		int index=0;
+		int index = 0;
 		for (int i1 = 0; i1 < vetIn.length; i1++) {
 			if (vetIn[i1] < min) {
 				min = vetIn[i1];
-				index=i1;
+				index = i1;
 			}
 		}
-		int[] out1= new int[2];
-		out1[0]=min;
-		out1[1]=index;
-		
+		int[] out1 = new int[2];
+		out1[0] = min;
+		out1[1] = index;
+
 		return out1;
 	}
-
-	
 
 	/**
 	 * ricerca del massimo
@@ -1021,20 +1019,17 @@ public class ACRutils {
 	 */
 	public static int[] maxsearch(int[] vetIn) {
 		int max = Integer.MIN_VALUE;
-		int index=0;
+		int index = 0;
 		for (int i1 = 0; i1 < vetIn.length; i1++) {
 			if (vetIn[i1] > max) {
 				max = vetIn[i1];
-				index=i1;
+				index = i1;
 			}
 		}
-		int[] out1= new int[2];
-		out1[0]=max;
-		out1[1]=index;
+		int[] out1 = new int[2];
+		out1[0] = max;
+		out1[1] = index;
 		return out1;
 	}
-	
-
-
 
 }

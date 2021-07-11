@@ -2,6 +2,7 @@ package qualityACR;
 
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.util.ArrayList;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -822,13 +823,23 @@ public class ACRlocalizer {
 	 * sufficientemente veloce sarebbe interessante eseguirla per ogni riga ed ogni
 	 * colonna.
 	 */
-	public static void gridLocalizer1(ImagePlus imp1, boolean step, boolean fast, boolean verbose, int timeout) {
+	public static int[] gridLocalizer1(ImagePlus imp1, boolean step, boolean fast, boolean verbose, int timeout) {
+
+		boolean verbose2 = false;
 
 		// ricerca del valore massimo di segnale sull'intera immagine mediato su di una
 		// ROI quadrata 11x11, utilizzo questo segnale come valore dell'acqua, per la
 		// ricerca e localizzazione del fantoccio
 		imp1.show();
+
 		ACRutils.zoom(imp1);
+
+//		imp1.setRoi(17, 18, 164, 160);
+//		imp1.cut();
+//		imp1.setRoi(3, 2, 164, 160);
+//		imp1.paste();
+//		imp1.killRoi();
+
 		IJ.log("gridLocalizer1_001 > ");
 		int latoROI = 11;
 		int width = imp1.getWidth();
@@ -852,71 +863,138 @@ public class ACRlocalizer {
 		int[] rowpixels = new int[width];
 		double[] out1 = new double[4];
 		int[] out2 = new int[4];
-		double xpoint = 0;
-		double ypoint = 0;
+		double[] out3 = new double[4];
+		double xpoint1 = 0;
+		double ypoint1 = 0;
+		double xpoint2 = 0;
+		double ypoint2 = 0;
 		int xp = 0;
 		int yp = 0;
 
+		ArrayList<Integer> arrX = new ArrayList<>();
+		ArrayList<Integer> arrY = new ArrayList<>();
+
 		// scansione per righe
 		for (int y1 = 1; y1 < height - 1; y1++) {
-			IJ.log("riga " + y1);
-
-			out2 = horizontalSearch(imp1, threshold, y1);
-			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
+			verbose2 = false;
+			out2 = horizontalSearch(imp1, threshold, y1, verbose2);
+			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili,
 			if (out2 != null) {
-				xpoint = out2[0];
-				ypoint = y1;
-				int size = 4;
+				xpoint1 = out2[0];
+				ypoint1 = y1;
+				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
-				ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
-				xpoint = out2[1];
-				ypoint = y1;
-				ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
+				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.YELLOW, false);
+				xpoint1 = out2[1];
+				ypoint1 = y1;
+				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.YELLOW, false);
 			}
 		}
+		ACRlog.waitHere("scansione orizzontale su interi colore giallo");
+
 		// scansione per colonne
-		for (int x1 = 1; x1 < height - 1; x1++) {
-			IJ.log("riga " + x1);
-			out2 = verticalSearch(imp1, threshold, x1);
+		for (int x1 = 1; x1 < width - 1; x1++) {
+			verbose2 = false;
+			out2 = verticalSearch(imp1, threshold, x1, verbose2);
 			if (out2 != null) {
 				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
-				xpoint = x1;
-				ypoint = out2[0];
-				int size = 4;
+				xpoint1 = x1;
+				ypoint1 = out2[0];
+				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
-				ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
-				xpoint = x1;
-				ypoint = out2[1];
-				ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN, true);
+				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
+				xpoint1 = x1;
+				ypoint1 = out2[1];
+				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
 			}
 		}
+		ACRlog.waitHere("scansione verticale su interi colore blu");
 
-//  utilizzando un double intermedio
+		// scansione per righe
 		for (int y1 = 1; y1 < height - 1; y1++) {
-			IJ.log("riga " + y1);
-			ip1.getRow(0, y1, rowpixels, width);
-			out1 = profileSearchInterpolated(rowpixels, threshold);
-			if (out1 == null) {
-				IJ.log("null");
-				continue;
+			verbose2 = false;
+			out3 = horizontalSearchInterpolated(imp1, threshold, y1, verbose2);
+			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili ma
+			// arrotondando all'intero per essere nelle stesse condizioni finali
+			if (out3 != null) {
+				xpoint2 = Math.round(out3[0]);
+				ypoint2 = y1;
+				arrX.add((int) Math.round(out3[0]));
+				arrY.add(y1);
+				int size = 1;
+				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
+				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.RED, true);
+				xpoint2 = Math.round(out3[1]);
+				ypoint2 = y1;
+				arrX.add((int) Math.round(out3[1]));
+				arrY.add(y1);
+				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.RED, true);
 			}
-			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
-			xpoint = out1[0];
-			ypoint = (double) y1;
-			int size = 4;
-			int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
-//			ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN);
-//			xpoint = out1[1];
-//			ypoint = y1;
-//			ACRutils.plotPoints(imp1, over1, xpoint, ypoint, type, size, Color.GREEN);
-			xp = (int) Math.round(out1[0]);
-			yp = (int) Math.round(y1);
-			ACRutils.plotPoints(imp1, over1, xp, yp, type, size, Color.RED, false);
-			xp = (int) Math.round(out1[1]);
-			yp = (int) Math.round(y1);
-			ACRutils.plotPoints(imp1, over1, xp, yp, type, size, Color.RED, false);
-
 		}
+		ACRlog.waitHere("scansione orizzontale interpolata colore rosso");
+
+		// scansione per colonne
+		for (int x1 = 1; x1 < width - 1; x1++) {
+			verbose2 = false;
+			out3 = verticalSearchInterpolated(imp1, threshold, x1, verbose2);
+			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili ma
+			// arrotondando all'intero per essere nelle stesse condizioni finali
+			if (out3 != null) {
+				xpoint2 = x1;
+				ypoint2 = Math.round(out3[0]);
+				arrX.add(x1);
+				arrY.add((int) Math.round(out3[0]));
+				int size = 1;
+				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
+				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.GREEN, true);
+				xpoint2 = x1;
+				ypoint2 = Math.round(out3[1]);
+				arrX.add(x1);
+				arrY.add((int) Math.round(out3[1]));
+				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.GREEN, true);
+			}
+		}
+
+		ACRlog.waitHere("scansione verticale interpolata colore verde");
+
+		// ora raduno tutti i punti che abbiamo determinato, ad esempio con la ricerca
+		// interpolata, e li passo al fitter
+		int[] vetX = ACRutils.arrayListToArrayInt(arrX);
+		int[] vetY = ACRutils.arrayListToArrayInt(arrY);
+		
+		PointRoi pr12 = new PointRoi(vetX, vetY, vetX.length);
+		pr12.setPointType(2);
+		pr12.setSize(4);
+		imp1.updateAndDraw();
+		
+		
+		
+		// ---------------------------------------------------
+		// eseguo ora fitCircle per trovare centro e dimensione grossolana del
+		// fantoccio. FitCircle è copiato da ImageJ ed era a sua volta derivato dal
+		// programma BoneJ
+		// ---------------------------------------------------
+		imp1.setRoi(new PointRoi(vetX, vetY, vetX.length));
+		ACRgraphic.fitCircle(imp1);
+		if (true) {
+			imp1.getRoi().setStrokeColor(Color.GREEN);
+			over1.addElement(imp1.getRoi());
+		}
+		if (verbose) {
+			ACRlog.waitHere("La circonferenza risultante dal fit e' mostrata in verde", true, timeout, fast);
+			ACRlog.waitHere();
+		}
+		Rectangle boundRec = imp1.getProcessor().getRoi();
+		int xCenterCircle = Math.round(boundRec.x + boundRec.width / 2);
+		int yCenterCircle = Math.round(boundRec.y + boundRec.height / 2);
+		int diamCircle = boundRec.width;
+
+		int[] out4 = new int[3];
+		out4[0] = xCenterCircle;
+		out4[1] = yCenterCircle;
+		out4[2] = diamCircle;
+
+		return out4;
 
 	}
 
@@ -1035,7 +1113,7 @@ public class ACRlocalizer {
 	 * @param water  presunto segnale dell'acqua
 	 * @return int[] out1 con startpoint ed endpoint per il profilo[]
 	 */
-	public static int[] profileSearch(double[] profi1, double threshold) {
+	public static int[] profileSearch(double[] profi1, double threshold, boolean stampa) {
 
 //		boolean valido1 = false;
 		int startpoint = -1;
@@ -1057,6 +1135,8 @@ public class ACRlocalizer {
 		}
 		if (startpoint < 1 || endpoint < 1 || endpoint > profi1.length - 2)
 			return null;
+		if (stampa)
+			IJ.log("profileSearch startpoint= " + startpoint + " endpoint= " + endpoint);
 
 		int[] out1 = new int[2];
 		out1[0] = startpoint;
@@ -1074,7 +1154,7 @@ public class ACRlocalizer {
 	 * @param water  frazione del presunto segnale dell'acqua
 	 * @return int[] out1 con startpoint ed endpoint per il profilo[]
 	 */
-	public static double[] profileSearchInterpolated(int[] profi1, int threshold) {
+	public static double[] profileSearchInterpolated(int[] profi1, int threshold, boolean stampa) {
 
 		int startpoint = -1;
 		for (int j1 = 1; j1 < profi1.length - 1; j1++) {
@@ -1098,8 +1178,72 @@ public class ACRlocalizer {
 		double value3 = (double) profi1[endpoint];
 		double value4 = (double) profi1[endpoint + 1];
 		double endmedpoint = ACRutils.xLinearInterpolation(endpoint, value3, endpoint + 1, value4, threshold);
+		if (startmedpoint < 1 || endmedpoint >= profi1.length || endmedpoint > profi1.length - 2)
+			return null;
+
+		if (stampa) {
+			IJ.log("profileSearchInterpolated startpoint= " + startpoint + " endpoint= " + endpoint);
+			IJ.log("profileSearchInterpolated startmedpoint= " + startmedpoint + " endmedpoint= " + endmedpoint);
+		}
+
+		double[] out1 = new double[2];
+		out1[0] = startmedpoint;
+		out1[1] = endmedpoint;
+		return out1;
+	}
+
+	/**
+	 * Ricerca lungo i pixel di un profilo, in pratica una specie di FWHM non
+	 * utilizzo il primo e l'ultimo pixel del profilo, per evitare pixel strani
+	 * dovuti a difetti digitali delle immagini. Restituisce il valore interpolato
+	 * tra pixel che supera od uguaglia threshold ed il pixel precedente.
+	 * 
+	 * @param profi1 profilo da elaborare
+	 * @param water  frazione del presunto segnale dell'acqua
+	 * @return int[] out1 con startpoint ed endpoint per il profilo[]
+	 */
+	public static double[] profileSearchInterpolated(double[] profi1, double threshold, boolean stampa) {
+
+		int startpoint = -1;
+		// determino quale sia il primo pixel a uguagliare o superare il threshold, si
+		// trova a sinistra nel profilo
+		for (int j1 = 1; j1 < profi1.length - 1; j1++) {
+			if (Double.compare(profi1[j1], threshold) >= 0) {
+				startpoint = j1;
+				break;
+			}
+		}
+		if (startpoint < 1)
+			return null;
+		double value1 = (double) profi1[startpoint];
+		double value2 = (double) profi1[startpoint - 1];
+		// faccio l'interpolazione lineare tra il pixel che supera il threshold ed il
+		// pixel precedente
+		double startmedpoint = ACRutils.xLinearInterpolation(startpoint, value1, startpoint - 1, value2, threshold);
+		int endpoint = -1;
+		// partendo dalla fine ed andando all'indietro determino quale sia il primo
+		// pixel a uguagliare o superare il threshold, si trova a destra nel profilo
+		for (int j1 = profi1.length - 2; j1 >= 0; j1--) {
+			if (profi1[j1] >= threshold) {
+				endpoint = j1;
+				break;
+			}
+		}
+		double value3 = (double) profi1[endpoint];
+		double value4 = (double) profi1[endpoint + 1];
+		// faccio l'interpolazione lineare tra il pixel che supera il threshold ed il
+		// pixel precedente (ma andiampo all'indietro e sara' il seguente
+
+		double endmedpoint = ACRutils.xLinearInterpolation(endpoint, value3, endpoint + 1, value4, threshold);
 		if (startmedpoint < 1 || endmedpoint < 1 || endmedpoint > profi1.length - 2)
 			return null;
+
+		if (stampa) {
+			IJ.log("profileSearchInterpolated(double) startpoint= " + startpoint + " endpoint= " + endpoint);
+			IJ.log("profileSearchInterpolated(double) startmedpoint= " + startmedpoint + " endmedpoint= "
+					+ endmedpoint);
+		}
+
 		double[] out1 = new double[2];
 		out1[0] = startmedpoint;
 		out1[1] = endmedpoint;
@@ -1731,7 +1875,7 @@ public class ACRlocalizer {
 		return out1;
 	}
 
-	public static int[] verticalSearch(ImagePlus imp1, double water, int xposition) {
+	public static int[] verticalSearch(ImagePlus imp1, double water, int xposition, boolean verbose) {
 		//
 		// faccio la scansione verticale per localizzare il fantoccio
 		//
@@ -1748,11 +1892,41 @@ public class ACRlocalizer {
 		imp1.updateAndDraw();
 		Roi roi1 = imp1.getRoi();
 		double[] profi1 = ((Line) roi1).getPixels();
-		int[] out1 = profileSearch(profi1, halfwater);
+		if (verbose)
+			ACRlog.logVector(profi1, "verticalSearch profi1");
+		int[] out1 = profileSearch(profi1, halfwater, verbose);
+		if (verbose)
+			ACRlog.logVector(out1, "verticalSearch out1");
 		return out1;
 	}
 
-	public static int[] horizontalSearch(ImagePlus imp1, double water, int yposition) {
+	public static double[] verticalSearchInterpolated(ImagePlus imp1, double water, int xposition, boolean verbose) {
+		//
+		// faccio la scansione verticale per localizzare il fantoccio
+		//
+		double halfwater = water / 2;
+		int spessore = 1;
+		imp1.deleteRoi();
+		int height = imp1.getHeight();
+		Line.setWidth(spessore);
+		int x1 = xposition;
+		int y1 = 0;
+		int x2 = xposition;
+		int y2 = height;
+		imp1.setRoi(new Line(x1, y1, x2, y2));
+		imp1.updateAndDraw();
+		Roi roi1 = imp1.getRoi();
+		double[] profi1 = ((Line) roi1).getPixels();
+		if (verbose)
+			ACRlog.logVector(profi1, "verticalSearchInterpolated profi1");
+
+		double[] out1 = profileSearchInterpolated(profi1, halfwater, verbose);
+		if (verbose)
+			ACRlog.logVector(out1, "verticalSearchInterpolated out1");
+		return out1;
+	}
+
+	public static int[] horizontalSearch(ImagePlus imp1, double water, int yposition, boolean verbose) {
 		//
 		// faccio la scansione verticale per localizzare il fantoccio
 		//
@@ -1769,7 +1943,37 @@ public class ACRlocalizer {
 		imp1.updateAndDraw();
 		Roi roi1 = imp1.getRoi();
 		double[] profi1 = ((Line) roi1).getPixels();
-		int[] out1 = profileSearch(profi1, halfwater);
+		if (verbose)
+			ACRlog.logVector(profi1, "horizontalSearch profi1");
+		int[] out1 = profileSearch(profi1, halfwater, verbose);
+		if (verbose)
+			ACRlog.logVector(out1, "horizontalSearch out1");
+
+		return out1;
+	}
+
+	public static double[] horizontalSearchInterpolated(ImagePlus imp1, double water, int yposition, boolean verbose) {
+		//
+		// faccio la scansione verticale per localizzare il fantoccio
+		//
+		double halfwater = water / 2;
+		int spessore = 1;
+		imp1.deleteRoi();
+		int width = imp1.getWidth();
+		Line.setWidth(spessore);
+		int x1 = 0;
+		int y1 = yposition;
+		int x2 = width;
+		int y2 = yposition;
+		imp1.setRoi(new Line(x1, y1, x2, y2));
+		imp1.updateAndDraw();
+		Roi roi1 = imp1.getRoi();
+		double[] profi1 = ((Line) roi1).getPixels();
+		if (verbose)
+			ACRlog.logVector(profi1, "horizontalSearchInterpolated profi1");
+		double[] out1 = profileSearchInterpolated(profi1, halfwater, verbose);
+		if (verbose)
+			ACRlog.logVector(out1, "horizontalSearchInterpolated out1");
 		return out1;
 	}
 
