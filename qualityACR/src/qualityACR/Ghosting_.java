@@ -91,15 +91,10 @@ public class Ghosting_ implements PlugIn {
 				IJ.log("mainGhosting001 >==================");
 				IJ.log("mainGhosting001 > elaborazione slice T1 numero " + i1);
 				ImagePlus imp1 = ACRgraphic.openImageNoDisplay(sortedListT1[i1], false);
-				ACRlocalizer.gridLocalizer1(imp1, step, fast, verbose, timeout);
-				
-//				int xphantom = (int) out2[0];
-//				int yphantom = (int) out2[1];
-//				int dphantom = (int) out2[2];
-//
+				double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp1, step, fast, verbose, timeout);
 //
 //				int[] phantomCircle = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout1);
-////				sliceGhost(sortedListT1[i1], phantomCircle, i1, step, fast, verbose);
+				roiGhost(imp1, ACRutils.toInt(phantomCircle), i1, step, fast, verbose);
 			}
 		}
 
@@ -166,13 +161,11 @@ public class Ghosting_ implements PlugIn {
 		return out2;
 	}
 
-	public static void sliceGhost(String path1, int[] phantomCircle, int slice, boolean step, boolean fast,
+	public static void roiGhost(ImagePlus imp1, int[] phantomCircle, int slice, boolean step, boolean fast,
 			boolean verbose) {
 		double maxFitError = +20;
 		// eseguite
 		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
-
-		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 
 //		double[] out2 = ACRlocalizer.positionSearch1(imp1, maxFitError, maxBubbleGapLimit, step, fast, verbose, timeout1);
 
@@ -187,12 +180,17 @@ public class Ghosting_ implements PlugIn {
 		int xphantom = phantomCircle[0];
 		int yphantom = phantomCircle[1];
 
-//		int dphantom = phantomCircle[2];
+		int dphantom = phantomCircle[2];
+		// in realta' il nostro fantoccio e'piu'grande di quanto abbiamo misurato,
+		// infatti la nostra misura e'falsata dal fatto che queste slices non sono
+		// completamente piene di liquido. Quindi potremmo utilizzare il diametro
+		// nominale del fantoccio che e'di 100 mm
+		// Questo raggio viene anche indicato nelle istruzioni come R0
 
-		int dphantom = (int) Math.round(100 / dimPixel);
+		int involucro = (int) Math.round(100 / dimPixel);
 // =========================================
-		Overlay over1 = new Overlay(); // con questo definisco un overlay trasparente per i disegni
-		imp1.setOverlay(over1);
+		Overlay over1 = imp1.getOverlay(); // con questo definisco un overlay trasparente per i disegni
+		over1.clear();
 // -----------------------------------------------------------------
 // Visualizzo sull'immagine il posizionamento, ricevuto da  positionSearch1, che verra' utilizzato: 
 // cerchio esterno fantoccio in rosso
@@ -204,24 +202,29 @@ public class Ghosting_ implements PlugIn {
 				if (big)
 					ACRutils.zoom(imp1);
 			}
-			imp1.setRoi(new OvalRoi(xphantom - dphantom / 2, yphantom - dphantom / 2, dphantom, dphantom));
+			imp1.setRoi(new OvalRoi(xphantom - involucro / 2, yphantom - involucro / 2, involucro, involucro));
 			imp1.getRoi().setStrokeColor(Color.RED);
 			over1.addElement(imp1.getRoi());
 			imp1.killRoi();
-			ACRlog.waitHere("MainUnifor> cerchio esterno rosso, fantoccio rilevato da positionSearch1", step, timeout,
-					fast);
+
+			ACRlog.waitHere("SliceGhost> cerchio esterno blu, involucro esterno fantoccio", step, timeout, fast);
 		}
 
 // -----------------------------------------------------------------
 // Visualizzo sull'immagine il posizionamento che verra' utilizzato
 // MROI in verde
 // -----------------------------------------------------------------
+//
+		// devo posizionare una area di 54-56 cmq quindi ne calcolo il diametro in
+		// pixels.
+		// L'area del cerchio e'esplicitamente suggerita in "ACR small phantom guidance"
+		// a pag 24 " Place a large, circular ROI on the image as shown in Figure 17.
+		// This ROI must have an area of between 54 cm2 and 56 cm2 (5,400 to 5,600 mm2)
+		//
 
-		// devo posizionare una area di 54-56 cmq
-		// quindi ne calcolo il diametro in pixels
-		double area = 5600;
-		double diam = 2 * Math.sqrt(area / Math.PI);
-		double diampix = diam / dimPixel;
+		double area = 5600; // 5600 mm2 sono stabiliti dal protocollo
+		double diam = 2 * Math.sqrt(area / Math.PI); // stabilito dalla geometria
+		double diampix = diam / dimPixel; // trasformo in pixel
 		int xmroi = (int) phantomCircle[0];
 		int ymroi = (int) phantomCircle[1];
 		int dmroi = (int) Math.round(diampix);
@@ -243,9 +246,6 @@ public class Ghosting_ implements PlugIn {
 		MROIcircle[1] = ymroi;
 		MROIcircle[2] = dmroi;
 
-		// applico al centro del fantoccio una ROI di area 54-56 cmq
-		// calcolo e memorizzo la media
-
 		// disegno 4 ROI rettangolari ai bordi dell'immagine, tale ROI deve avere un
 		// area di 3 cmq ed un rapporto lunghezza/larghezza 8:1
 		/*
@@ -262,20 +262,28 @@ public class Ghosting_ implements PlugIn {
 		 * different for each one of the four (4) rectangular ROIs, denoted as HR, HL,
 		 * HU, and HD.
 		 */
+
+		// le istruzioni parlano sempre di raggio, ma per il nostro uso viene comodo
+		// adottare sempre il diametro, in pratica non cambia nulla
+
 		int width = imp1.getWidth();
 		int height = imp1.getHeight();
-		double diamUFOV = 0.8 * dphantom;
-		double gapFromOther = 0.1 * dphantom;
-		double sxgap = xphantom - dphantom / 2;
-		double dxgap = width - xphantom - dphantom / 2;
-		double upgap = yphantom - dphantom / 2;
-		double logap = height - yphantom - dphantom / 2;
-		int guard = (int) dmroi / 50;
-		double roimm = 300;
-		int roipix = (int) Math.round((roimm / dimPixel) / dimPixel);
+		double diamUFOV = 0.8 * involucro;
+		double gapFromOther = 0.1 * involucro;
+		double sxgap = xphantom - involucro / 2; // spazio tra fantoccio e lato immagine
+		double dxgap = width - xphantom - involucro / 2; // spazio tra fantoccio e lato immagine
+		double upgap = yphantom - involucro / 2; // spazio tra fantoccio e lato immagine
+		double logap = height - yphantom - involucro / 2; // spazio tra fantoccio e lato immagine
+		int guard = 3; // potrei mettere 2 o 3 pixel anzichè calcolarlo?)
+//		int guard = (int) dmroi/50;		// spazio di rispetto attorno alle ROI
+		double roimm = 300; // 300 mm2 sono stabiliti dal protocollo
+		int roipix = (int) Math.round((roimm / dimPixel) / dimPixel); // lavoriamo sempre in pixel
+		// se voglio usare le ellissi uso i valori con la E
 
 		double sxroiwidth = sxgap - 2 * guard;
 		double sxroiheight = roipix / sxroiwidth;
+		double sxroiheightE = (roipix * Math.PI) / (sxroiwidth * 2); /// NON NE SONO POI TAAAANTO SICURO!!!!!
+		ACRlog.waitHere("diametro maggiore ellisse" + sxroiheightE);
 //		double dxroiwidth = dxgap - gapFromOther * 2;
 		double dxroiwidth = dxgap - 2 * guard;
 		double dxroiheight = roipix / dxroiwidth;
@@ -287,13 +295,18 @@ public class Ghosting_ implements PlugIn {
 		double loroiheight = logap - 2 * guard;
 		double loroiwidth = roipix / loroiheight;
 
+		double areaX = sxroiwidth * sxroiheightE / 4 * Math.PI * dimPixel * dimPixel;
+		IJ.log("areaX= " + areaX);
+		double areaY = dxroiwidth * dxroiheight * dimPixel * dimPixel;
+		IJ.log("areaY= " + areaX);
+
 		// adesso cerco di disegnare la ROI
 
-		imp1.setRoi(guard, yphantom - (int) sxroiheight / 2, (int) sxroiwidth, (int) sxroiheight);
-		imp1.getRoi().setStrokeColor(Color.BLUE);
+		imp1.setRoi(new OvalRoi((int) guard, yphantom - (int) sxroiheightE / 2, (int) sxroiwidth, (int) sxroiheightE));
+		imp1.getRoi().setStrokeColor(Color.GREEN);
 		over1.addElement(imp1.getRoi());
 		imp1.killRoi();
-		imp1.setRoi(xphantom + dphantom / 2 + guard, yphantom - (int) sxroiheight / 2, (int) dxroiwidth,
+		imp1.setRoi(xphantom + involucro / 2 + guard, yphantom - (int) sxroiheight / 2, (int) dxroiwidth,
 				(int) dxroiheight);
 		imp1.getRoi().setStrokeColor(Color.BLUE);
 		over1.addElement(imp1.getRoi());
@@ -304,7 +317,7 @@ public class Ghosting_ implements PlugIn {
 		over1.addElement(imp1.getRoi());
 		imp1.killRoi();
 
-		imp1.setRoi(xphantom - (int) loroiwidth / 2, yphantom + dphantom / 2 + guard, (int) loroiwidth,
+		imp1.setRoi(xphantom - (int) loroiwidth / 2, yphantom + involucro / 2 + guard, (int) loroiwidth,
 				(int) loroiheight);
 		imp1.getRoi().setStrokeColor(Color.BLUE);
 		over1.addElement(imp1.getRoi());

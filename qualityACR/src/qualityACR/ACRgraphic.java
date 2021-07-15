@@ -572,7 +572,7 @@ public class ACRgraphic {
 		double[] out = new double[4];
 		out[0] = CenterX;
 		out[1] = CenterY;
-		out[2] = radius;
+		out[2] = radius*2;
 		out[3] = DET;
 		return out;
 	}

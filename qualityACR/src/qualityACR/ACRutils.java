@@ -989,6 +989,26 @@ public class ACRutils {
 		return outIntArr;
 	}
 
+	public static float[] arrayListToArrayFloat(List<Float> inArrayList) {
+
+		float[] outIntArr = new float[inArrayList.size()];
+		int i1 = 0;
+		for (Float n : inArrayList) {
+			outIntArr[i1++] = n;
+		}
+		return outIntArr;
+	}
+
+	public static double[] arrayListToArrayDouble(List<Double> inArrayList) {
+
+		double[] outIntArr = new double[inArrayList.size()];
+		int i1 = 0;
+		for (Double n : inArrayList) {
+			outIntArr[i1++] = n;
+		}
+		return outIntArr;
+	}
+
 	/**
 	 * ricerca del minimo
 	 * 
@@ -1030,6 +1050,21 @@ public class ACRutils {
 		out1[0] = max;
 		out1[1] = index;
 		return out1;
+	}
+
+	public static double[] toDouble(float[] vetIn) {
+		double[] vetOut = new double[vetIn.length];
+		for (int i1 = 0; i1 < vetIn.length; i1++) {
+			vetOut[i1] = (double) vetIn[i1];
+		}
+		return vetOut;
+	}
+	public static int[] toInt(double[] vetIn) {
+		int[] vetOut = new int[vetIn.length];
+		for (int i1 = 0; i1 < vetIn.length; i1++) {
+			vetOut[i1] = (int) Math.round(vetIn[i1]);
+		}
+		return vetOut;
 	}
 
 }

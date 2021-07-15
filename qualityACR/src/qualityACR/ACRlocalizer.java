@@ -237,8 +237,10 @@ public class ACRlocalizer {
 						ACRgraphic.plotPoints(imp12, over12, (int) (myPeaks[3][i2]), (int) (myPeaks[4][i2]), colore1,
 								8.1);
 						imp12.updateAndDraw();
-						if (imp12.isVisible())
-							imp12.getWindow().toFront();
+						if (imp12.isVisible()) {
+							ImageWindow aa = imp12.getWindow();
+							aa.toFront();
+						}
 					}
 				}
 			}
@@ -823,7 +825,7 @@ public class ACRlocalizer {
 	 * sufficientemente veloce sarebbe interessante eseguirla per ogni riga ed ogni
 	 * colonna.
 	 */
-	public static int[] gridLocalizer1(ImagePlus imp1, boolean step, boolean fast, boolean verbose, int timeout) {
+	public static double[] gridLocalizer1(ImagePlus imp1, boolean step, boolean fast, boolean verbose, int timeout) {
 
 		boolean verbose2 = false;
 
@@ -871,6 +873,8 @@ public class ACRlocalizer {
 		int xp = 0;
 		int yp = 0;
 
+		ArrayList<Float> arrIntX = new ArrayList<>();
+		ArrayList<Float> arrIntY = new ArrayList<>();
 		ArrayList<Integer> arrX = new ArrayList<>();
 		ArrayList<Integer> arrY = new ArrayList<>();
 
@@ -882,11 +886,16 @@ public class ACRlocalizer {
 			if (out2 != null) {
 				xpoint1 = out2[0];
 				ypoint1 = y1;
+				arrX.add(out2[0]);
+				arrY.add(y1);
+
 				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.YELLOW, false);
 				xpoint1 = out2[1];
 				ypoint1 = y1;
+				arrX.add(out2[1]);
+				arrY.add(y1);
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.YELLOW, false);
 			}
 		}
@@ -900,11 +909,17 @@ public class ACRlocalizer {
 				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
 				xpoint1 = x1;
 				ypoint1 = out2[0];
+				arrX.add(x1);
+				arrY.add(out2[0]);
+
 				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
 				xpoint1 = x1;
 				ypoint1 = out2[1];
+				xpoint1 = x1;
+				ypoint1 = out2[1];
+
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
 			}
 		}
@@ -914,20 +929,18 @@ public class ACRlocalizer {
 		for (int y1 = 1; y1 < height - 1; y1++) {
 			verbose2 = false;
 			out3 = horizontalSearchInterpolated(imp1, threshold, y1, verbose2);
-			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili ma
-			// arrotondando all'intero per essere nelle stesse condizioni finali
 			if (out3 != null) {
-				xpoint2 = Math.round(out3[0]);
-				ypoint2 = y1;
-				arrX.add((int) Math.round(out3[0]));
-				arrY.add(y1);
+				xpoint2 = out3[0];
+				ypoint2 = (double) y1;
+				arrIntX.add((float) out3[0]);
+				arrIntY.add((float) y1);
 				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
 				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.RED, true);
-				xpoint2 = Math.round(out3[1]);
+				xpoint2 = out3[1];
 				ypoint2 = y1;
-				arrX.add((int) Math.round(out3[1]));
-				arrY.add(y1);
+				arrIntX.add((float) out3[1]);
+				arrIntY.add((float) y1);
 				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.RED, true);
 			}
 		}
@@ -937,59 +950,145 @@ public class ACRlocalizer {
 		for (int x1 = 1; x1 < width - 1; x1++) {
 			verbose2 = false;
 			out3 = verticalSearchInterpolated(imp1, threshold, x1, verbose2);
-			// qui intendo plottare sull'overlay, per vedere i risultati ottenibili ma
-			// arrotondando all'intero per essere nelle stesse condizioni finali
 			if (out3 != null) {
-				xpoint2 = x1;
-				ypoint2 = Math.round(out3[0]);
-				arrX.add(x1);
-				arrY.add((int) Math.round(out3[0]));
+				xpoint2 = (double) x1;
+				ypoint2 = out3[0];
+				arrIntX.add((float) x1);
+				arrIntY.add((float) out3[0]);
 				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
 				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.GREEN, true);
-				xpoint2 = x1;
-				ypoint2 = Math.round(out3[1]);
-				arrX.add(x1);
-				arrY.add((int) Math.round(out3[1]));
+				xpoint2 = (double) x1;
+				ypoint2 = out3[1];
+				arrIntX.add((float) x1);
+				arrIntY.add((float) out3[1]);
 				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.GREEN, true);
 			}
 		}
 
 		ACRlog.waitHere("scansione verticale interpolata colore verde");
 
-		// ora raduno tutti i punti che abbiamo determinato, ad esempio con la ricerca
-		// interpolata, e li passo al fitter
-		int[] vetX = ACRutils.arrayListToArrayInt(arrX);
-		int[] vetY = ACRutils.arrayListToArrayInt(arrY);
-		
-		PointRoi pr12 = new PointRoi(vetX, vetY, vetX.length);
+		ACRlog.waitHere("ora ripuliamo glio overlay e disegnamo il cerchio calcolato con le interpolazioni");
+		over1.clear();
+
+		float[] vetX = ACRutils.arrayListToArrayFloat(arrIntX);
+		float[] vetY = ACRutils.arrayListToArrayFloat(arrIntY);
+
+		PointRoi pr12 = new PointRoi(vetX, vetY);
 		pr12.setPointType(2);
 		pr12.setSize(4);
 		imp1.updateAndDraw();
-		
-		
-		
+
 		// ---------------------------------------------------
 		// eseguo ora fitCircle per trovare centro e dimensione grossolana del
 		// fantoccio. FitCircle è copiato da ImageJ ed era a sua volta derivato dal
 		// programma BoneJ
 		// ---------------------------------------------------
 		imp1.setRoi(new PointRoi(vetX, vetY, vetX.length));
-		ACRgraphic.fitCircle(imp1);
-		if (true) {
-			imp1.getRoi().setStrokeColor(Color.GREEN);
-			over1.addElement(imp1.getRoi());
-		}
-		if (verbose) {
-			ACRlog.waitHere("La circonferenza risultante dal fit e' mostrata in verde", true, timeout, fast);
-			ACRlog.waitHere();
-		}
-		Rectangle boundRec = imp1.getProcessor().getRoi();
-		int xCenterCircle = Math.round(boundRec.x + boundRec.width / 2);
-		int yCenterCircle = Math.round(boundRec.y + boundRec.height / 2);
-		int diamCircle = boundRec.width;
+		double[] out5 = ACRgraphic.fitCircleNew(imp1);
+		ACRlog.logVector(out5, "out5");
 
-		int[] out4 = new int[3];
+		double xCenterCircle = out5[0];
+		double yCenterCircle = out5[1];
+		double diamCircle = out5[2];
+
+		imp1.setRoi(
+				new OvalRoi(xCenterCircle - diamCircle / 2, yCenterCircle - diamCircle / 2, diamCircle, diamCircle));
+
+		imp1.getRoi().setStrokeColor(Color.YELLOW);
+		over1.addElement(imp1.getRoi());
+		imp1.killRoi();
+
+		if (verbose) {
+			ACRlog.waitHere("La circonferenza risultante dal fit non interpolato e' mostrata in GIALLO", true, timeout,
+					fast);
+		}
+
+//		imp1.killRoi();
+
+		// ora raduno tutti i punti che abbiamo determinato, ad esempio con la ricerca
+		// interpolata, e li passo al fitter
+		float[] vetX2 = ACRutils.arrayListToArrayFloat(arrIntX);
+		float[] vetY2 = ACRutils.arrayListToArrayFloat(arrIntY);
+
+		PointRoi pr22 = new PointRoi(vetX2, vetY2, vetX2.length);
+		pr22.setPointType(2);
+		pr22.setSize(4);
+		imp1.updateAndDraw();
+
+//		ACRlog.waitHere("ora ripuliamo gli overlay e disegnamo il cerchio calcolato con le interpolazioni");
+
+		// ---------------------------------------------------
+		// eseguo ora fitCircle per trovare centro e dimensione grossolana del
+		// fantoccio. FitCircle è copiato da ImageJ ed era a sua volta derivato dal
+		// programma BoneJ
+		// ---------------------------------------------------
+		imp1.setRoi(new PointRoi(vetX2, vetY2, vetX2.length));
+		double[] out6 = ACRgraphic.fitCircleNew(imp1);
+		ACRlog.logVector(out6, "out6");
+
+		double xCenterCircle2 = out6[0];
+		double yCenterCircle2 = out6[1];
+		double diamCircle2 = out6[2];
+
+		imp1.setRoi(new OvalRoi(xCenterCircle2 - diamCircle2 / 2, yCenterCircle2 - diamCircle2 / 2, diamCircle2,
+				diamCircle2));
+
+		imp1.getRoi().setStrokeColor(Color.GREEN);
+		over1.addElement(imp1.getRoi());
+		imp1.killRoi();
+
+		if (verbose) {
+			ACRlog.waitHere("La circonferenza risultante dal fit interpolato e' mostrata in VERDE", true, timeout,
+					fast);
+		}
+
+		float[] vetX3 = ACRutils.arrayListToArrayFloat(arrIntX);
+		float[] vetY3 = ACRutils.arrayListToArrayFloat(arrIntY);
+		double[][] points3 = new double[vetX3.length][2];
+		for (int i1 = 0; i1 < vetX3.length; i1++) {
+			points3[i1][0] = (double) vetX3[i1];
+			points3[i1][1] = (double) vetY3[i1];
+		}
+
+		double[] out7 = BoneJ_FitCircle.hyperStable(points3);
+		double xCenterCircle3 = out7[0];
+		double yCenterCircle3 = out7[1];
+		double diamCircle3 = out7[2] * 2;
+
+		imp1.setRoi(new OvalRoi(xCenterCircle3 - diamCircle3 / 2, yCenterCircle3 - diamCircle3 / 2, diamCircle3,
+				diamCircle3));
+
+		imp1.getRoi().setStrokeColor(Color.RED);
+		over1.addElement(imp1.getRoi());
+		imp1.killRoi();
+		if (verbose) {
+			ACRlog.waitHere("La circonferenza risultante dal fit interpolato e' mostrata in ROSSO", true, timeout,
+					fast);
+		}
+
+		double[] dvetX3 = ACRutils.toDouble(vetX3);
+		double[] dvetY3 = ACRutils.toDouble(vetY3);
+
+		double[] out8 = CircleFitter.myCircle(dvetX3, dvetY3);
+		double xCenterCircle4 = out8[0];
+		double yCenterCircle4 = out8[1];
+		double diamCircle4 = out8[2];
+
+		imp1.setRoi(new OvalRoi(xCenterCircle4 - diamCircle4 / 2, yCenterCircle4 - diamCircle4 / 2, diamCircle4,
+				diamCircle4));
+
+		imp1.getRoi().setStrokeColor(Color.BLUE);
+		over1.addElement(imp1.getRoi());
+		imp1.killRoi();
+		ACRlog.waitHere("La circonferenza risultante dal fit interpolato e' mostrata in BLU", true, timeout, fast);
+
+		ACRlog.waitHere("i risultati dei vari algoritmi sono i seguenti:\nGIALLO_= " + xCenterCircle + " , "
+				+ yCenterCircle + " , " + diamCircle + "\nVERDE_= " + xCenterCircle2 + " , " + yCenterCircle2 + " , "
+				+ diamCircle2 + "\nROSSO_= " + xCenterCircle3 + " , " + yCenterCircle3 + " , " + diamCircle3
+				+ "\nBLU____= " + xCenterCircle4 + " , " + yCenterCircle4 + " , " + diamCircle4);
+
+		double[] out4 = new double[3];
 		out4[0] = xCenterCircle;
 		out4[1] = yCenterCircle;
 		out4[2] = diamCircle;
@@ -1900,32 +1999,6 @@ public class ACRlocalizer {
 		return out1;
 	}
 
-	public static double[] verticalSearchInterpolated(ImagePlus imp1, double water, int xposition, boolean verbose) {
-		//
-		// faccio la scansione verticale per localizzare il fantoccio
-		//
-		double halfwater = water / 2;
-		int spessore = 1;
-		imp1.deleteRoi();
-		int height = imp1.getHeight();
-		Line.setWidth(spessore);
-		int x1 = xposition;
-		int y1 = 0;
-		int x2 = xposition;
-		int y2 = height;
-		imp1.setRoi(new Line(x1, y1, x2, y2));
-		imp1.updateAndDraw();
-		Roi roi1 = imp1.getRoi();
-		double[] profi1 = ((Line) roi1).getPixels();
-		if (verbose)
-			ACRlog.logVector(profi1, "verticalSearchInterpolated profi1");
-
-		double[] out1 = profileSearchInterpolated(profi1, halfwater, verbose);
-		if (verbose)
-			ACRlog.logVector(out1, "verticalSearchInterpolated out1");
-		return out1;
-	}
-
 	public static int[] horizontalSearch(ImagePlus imp1, double water, int yposition, boolean verbose) {
 		//
 		// faccio la scansione verticale per localizzare il fantoccio
@@ -1974,6 +2047,32 @@ public class ACRlocalizer {
 		double[] out1 = profileSearchInterpolated(profi1, halfwater, verbose);
 		if (verbose)
 			ACRlog.logVector(out1, "horizontalSearchInterpolated out1");
+		return out1;
+	}
+
+	public static double[] verticalSearchInterpolated(ImagePlus imp1, double water, int xposition, boolean verbose) {
+		//
+		// faccio la scansione verticale per localizzare il fantoccio
+		//
+		double halfwater = water / 2;
+		int spessore = 1;
+		imp1.deleteRoi();
+		int height = imp1.getHeight();
+		Line.setWidth(spessore);
+		int x1 = xposition;
+		int y1 = 0;
+		int x2 = xposition;
+		int y2 = height;
+		imp1.setRoi(new Line(x1, y1, x2, y2));
+		imp1.updateAndDraw();
+		Roi roi1 = imp1.getRoi();
+		double[] profi1 = ((Line) roi1).getPixels();
+		if (verbose)
+			ACRlog.logVector(profi1, "verticalSearchInterpolated profi1");
+
+		double[] out1 = profileSearchInterpolated(profi1, halfwater, verbose);
+		if (verbose)
+			ACRlog.logVector(out1, "verticalSearchInterpolated out1");
 		return out1;
 	}
 
