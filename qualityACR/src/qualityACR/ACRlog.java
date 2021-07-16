@@ -6,7 +6,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -14,7 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 import ij.IJ;
 import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.gui.WaitForUserDialog;
+import ij.gui.YesNoCancelDialog;
 
 public class ACRlog {
 
@@ -25,6 +31,23 @@ public class ACRlog {
 			f1.delete();
 		}
 		return;
+	}
+
+	public static boolean initLog(String path) {
+		File f1 = new File(path);
+		if (f1.exists()) {
+			GenericDialog gd1 = new GenericDialog("REPORT");
+			gd1.addMessage("Per proseguire devo cancellare il report precedente, procedo?");
+			gd1.enableYesNoCancel("Continua", "No");
+			gd1.hideCancelButton();
+			gd1.showDialog();
+			if (gd1.wasOKed())
+				f1.delete();
+			if (gd1.wasCanceled())
+				return false;
+		}
+		appendLog(path, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		return true;
 	}
 
 	public static void appendLog(String completePath, String linea) {
@@ -548,7 +571,7 @@ public class ACRlog {
 		}
 		IJ.log("---------------------------------------------");
 	}
-	 
+
 	public static void printMatrix(int mat[][], String nome) {
 		String stri = "";
 		int rows = 0;
@@ -570,7 +593,7 @@ public class ACRlog {
 			for (int i1 = 0; i1 < rows; i1++) {
 				stri = "";
 				for (int i2 = 0; i2 < columns; i2++) {
-										
+
 					stri += String.format("%04d", mat[i1][i2]) + " ,  ";
 				}
 				IJ.log(stri);
@@ -578,7 +601,6 @@ public class ACRlog {
 		}
 		IJ.log("---------------------------------------------");
 	}
-
 
 	public static void logMatrix(String mat[][], String nome) {
 		String stri = "";

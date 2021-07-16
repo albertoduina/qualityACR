@@ -7,6 +7,8 @@ import java.util.List;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.io.Opener;
+import ij.plugin.DICOM;
 import ij.process.ImageProcessor;
 
 public class ACRinputOutput {
@@ -78,7 +80,7 @@ public class ACRinputOutput {
 
 	/**
 	 * Legge ricorsivamente la directory e relative sottodirectory copied from
-	 * www.javapractices.com (Alex Wong
+	 * www.javapractices.com (Alex Wong)
 	 * 
 	 * @param startingDir directory "radice"
 	 * @return lista dei path dei file
@@ -87,9 +89,10 @@ public class ACRinputOutput {
 		List<File> result = new ArrayList<File>();
 		File[] filesAndDirs = startingDir.listFiles();
 		if (filesAndDirs == null) {
-			IJ.log("fiesAndDirs==null");
+			IJ.log("filesAndDirs==null");
 			return null;
 		}
+
 		List<File> filesDirs = Arrays.asList(filesAndDirs);
 		if (filesDirs == null) {
 			IJ.log("filesDirs==null");
@@ -103,7 +106,9 @@ public class ACRinputOutput {
 				List<File> deeperList = getFileListing(file);
 				result.addAll(deeperList);
 			} else {
-				result.add(file);
+				if (isImage(file)) {
+					result.add(file);
+				} 
 			}
 		}
 		return result;
@@ -256,7 +261,7 @@ public class ACRinputOutput {
 			}
 		}
 		String msg = "";
-		if (count <1) {
+		if (count < 1) {
 			IJ.error("ATTENZIONE, manca il file " + nome1 + "xxx.jar");
 		}
 		if (count > 1) {
@@ -292,5 +297,32 @@ public class ACRinputOutput {
 		}
 		return result;
 	}
+
+	/***
+	 * Testa se e' un immagine visualizzabile
+	 * 
+	 * @param fileName1 nome immagine
+	 * @return true se tiff
+	 */
+	public static boolean isImage(String fileName1) {
+		IJ.redirectErrorMessages(true);
+		ImagePlus imp1 = new Opener().openImage(fileName1);
+		IJ.redirectErrorMessages(false);
+		if (imp1 == null) {
+			return false;
+		}
+		return true;
+	}
+
+	public static boolean isImage(File file1) {
+		IJ.redirectErrorMessages(true);
+		ImagePlus imp1 = new Opener().openImage(file1.getPath());
+		IJ.redirectErrorMessages(false);
+		if (imp1 == null) {
+			return false;
+		}
+		return true;
+	}
+
 
 }

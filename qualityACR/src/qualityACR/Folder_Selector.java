@@ -50,6 +50,12 @@ public class Folder_Selector implements PlugIn {
 		IJ.log("startingDir3= "+ startingDir3);
 		if (startingDir3 == null)
 			return;
+		DirectoryChooser od4 = new DirectoryChooser("SELEZIONARE LA CARTELLA DI OUTPUT");
+		String outDir = od4.getDirectory();
+		IJ.log("outDir= "+ outDir);
+		if (outDir == null)
+			return;
+
 
 		// ora devo leggere i nomi di tutti i file contenuti nelle due cartelle
 		// la prima cartella
@@ -114,6 +120,10 @@ public class Folder_Selector implements PlugIn {
 		linea = "STACK_T1#" + startingDir2;
 		ACRlog.appendLog(completePath, linea);
 		linea = "STACK_T2#" + startingDir3;
+		ACRlog.appendLog(completePath, linea);
+		linea = "STACK_T2#" + startingDir3;
+		ACRlog.appendLog(completePath, linea);
+		linea = "OUT_DIR#" + outDir;
 		ACRlog.appendLog(completePath, linea);
 		ACRlog.waitHere("FINE SELEZIONE");
 	}
