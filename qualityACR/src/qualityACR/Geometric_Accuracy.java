@@ -419,7 +419,7 @@ public class Geometric_Accuracy implements PlugIn {
 		imp2.getRoi().setStrokeColor(Color.GREEN);
 		over2.addElement(imp2.getRoi());
 
-		double dim1 = dimPixel * profAnal(imp2, step, fast, verbose, timeout);
+		double dim1 = dimPixel * ACRlocalizer.profAnal(imp2, step, fast, verbose, timeout);
 		imp2.killRoi();
 		if (step)
 			ACRlog.waitHere("<mainLocalizer> Profilo analizzato");
@@ -440,7 +440,7 @@ public class Geometric_Accuracy implements PlugIn {
 		imp2.getRoi().setStrokeColor(Color.GREEN);
 		over2.addElement(imp2.getRoi());
 
-		double dim2 = dimPixel * profAnal(imp2, step, fast, verbose, timeout);
+		double dim2 = dimPixel * ACRlocalizer.profAnal(imp2, step, fast, verbose, timeout);
 		imp2.killRoi();
 
 		if (step)
@@ -611,9 +611,9 @@ public class Geometric_Accuracy implements PlugIn {
 		ImagePlus imp3 = imp1.duplicate();
 //		int[] dummy1 = new int[0];
 
-		boolean step1 = step;
-		boolean fast1 = fast;
-		boolean verbose1 = verbose;
+		boolean step1 = false;
+		boolean fast1 = false;
+		boolean verbose1 = false;
 
 		int[] out1 = ACRlocalizer.positionSearch2(imp2, maxFitError, step1, fast1, verbose1, timeout);
 
@@ -773,46 +773,4 @@ public class Geometric_Accuracy implements PlugIn {
 		return (double) Math.sqrt(xx * xx + yy * yy);
 	}
 
-	/**
-	 * Analizza il profilo di una linea, cercando di determinare le dimensioni
-	 * dell'oggetto. La linea deve essere attiva come ROI sull'immagine passata
-	 * 
-	 * @param imp2
-	 * @return
-	 */
-	public static double profAnal(ImagePlus imp2, boolean step, boolean fast, boolean verbose, int timeout) {
-		// e come caspita potrei abbreviare profile analyzer? Ci sono 2 soluzioni:
-		// analProf oppure profAnal ai posteri(ori) la scelta!!
-		if (verbose)
-			IJ.log("<GeometricAccuracy.profAnal START>");
-		int pseudomaxlen = 3; // dimensioni roi di ricerca pseudomassimo
-		double[][] decomposed3v = ACRutils.decomposer3v(imp2);
-		double[][] zeropadded3v = ACRutils.zeropadProfile3v(decomposed3v);
-		double[][] vetout = ACRlocalizer.FWHMpoints3vNEW(zeropadded3v, pseudomaxlen, "PROFILO LINEA", step, fast,
-				verbose);
-//		if (step) ACRlog.waitHere("profilo analizzato");
-		//
-		// posso misurare il diametro "con precisione?" utilizzando i due punti
-		// interpolati
-		//
-		if (verbose)
-			ACRlog.logMatrix(vetout, "<GeometricAccuracy.profAnal> vetout");
-
-		/// MA DEVO CALCOLARE LA DISTANZA !!!
-
-//		vetout[0][0] = leftxup; // leftx non interpolato
-//		vetout[0][1] = rightxup; // rightx non interpolato
-//		vetout[0][2] = xinterpsx; // leftx interpolato
-//		vetout[0][3] = xinterpdx; // rightx interpolato
-//
-//		vetout[1][0] = leftyup; // lefty non interpolato
-//		vetout[1][1] = rightyup; // rightx non interpolato
-//		vetout[1][2] = yinterpsx; // lefty interpolato
-//		vetout[1][3] = yinterpdx; // rightx interpolato
-
-		double dimension = Math
-				.sqrt(Math.pow((vetout[0][2] - vetout[0][3]), 2) + Math.pow((vetout[1][2] - vetout[1][3]), 2)); // IN
-																												// PIXEL
-		return dimension;
-	}
 }

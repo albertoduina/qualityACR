@@ -890,10 +890,17 @@ public class ACRlog {
 	}
 
 	public static String qui() {
+		String out = ("<" + Thread.currentThread().getStackTrace()[2].getClassName()+"."
+				+ Thread.currentThread().getStackTrace()[2].getMethodName())+" line= "
+				+ Thread.currentThread().getStackTrace()[2].getLineNumber() + ">  ";
+		return out;
+	}
+
+	public static String quiOld() {
 		String out = ("file=" + Thread.currentThread().getStackTrace()[2].getFileName() + " " + " line="
 				+ Thread.currentThread().getStackTrace()[2].getLineNumber() + " class="
 				+ Thread.currentThread().getStackTrace()[2].getClassName() + " method="
-				+ Thread.currentThread().getStackTrace()[2].getMethodName() + "\n \n");
+				+ Thread.currentThread().getStackTrace()[2].getMethodName());
 		return out;
 	}
 

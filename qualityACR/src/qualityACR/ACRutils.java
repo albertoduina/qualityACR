@@ -7,6 +7,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -399,6 +401,10 @@ public class ACRutils {
 	public static double[][] decomposer3v(ImagePlus imp1) {
 
 		Line line = (Line) imp1.getRoi();
+		if (line == null) {
+			IJ.log(ACRlog.qui() + "  line==null");
+			ACRlog.waitHere(ACRlog.qui() + "  line==null");
+		}
 		double[] profiZ = line.getPixels();
 		double[] profiW = new double[profiZ.length];
 		for (int i1 = 0; i1 < profiZ.length; i1++) {
@@ -1052,6 +1058,12 @@ public class ACRutils {
 		return out1;
 	}
 
+	/**
+	 * Trasforma un array da float a double
+	 * 
+	 * @param vetIn
+	 * @return
+	 */
 	public static double[] toDouble(float[] vetIn) {
 		double[] vetOut = new double[vetIn.length];
 		for (int i1 = 0; i1 < vetIn.length; i1++) {
@@ -1059,12 +1071,27 @@ public class ACRutils {
 		}
 		return vetOut;
 	}
+
+	/**
+	 * arrotonda un array da double ad int
+	 * 
+	 * @param vetIn
+	 * @return
+	 */
 	public static int[] toInt(double[] vetIn) {
 		int[] vetOut = new int[vetIn.length];
 		for (int i1 = 0; i1 < vetIn.length; i1++) {
 			vetOut[i1] = (int) Math.round(vetIn[i1]);
 		}
 		return vetOut;
+	}
+
+	public static double dblTruncate(double in1, int decimals) {
+
+		BigDecimal bd1 = new BigDecimal(Double.toString(in1));
+		bd1 = bd1.setScale(decimals, RoundingMode.HALF_UP);
+
+		return bd1.doubleValue();
 	}
 
 }

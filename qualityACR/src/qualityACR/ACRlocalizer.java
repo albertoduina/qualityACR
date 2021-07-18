@@ -16,8 +16,6 @@ import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
 public class ACRlocalizer {
-	private static final boolean debug = true;
-	private static final boolean big = true;
 
 	/**
 	 * Ricerca posizione e diametro Phantom per calcolo uniformita', utilizza un
@@ -81,10 +79,8 @@ public class ACRlocalizer {
 		if (verbose) {
 			imp11.show();
 			ACRutils.zoom(imp11);
-
 			ACRlog.waitHere("L'immagine in input viene processata con il Canny Edge Detector", ACRutils.debug, timeout,
 					fast);
-
 		}
 		ACRcannyEdgeDetector mce = new ACRcannyEdgeDetector();
 		mce.setGaussianKernelRadius(2.0f);
@@ -100,7 +96,6 @@ public class ACRlocalizer {
 					"L'immagine risultante e' una immagine ad 8 bit, con i soli valori \n"
 							+ "0 e 255. Lo spessore del perimetro del cerchio e' di 1 pixel",
 					ACRutils.debug, timeout, fast);
-//			iw12 = imp12.getWindow();
 		}
 		double[][] peaks9 = new double[4][1];
 		double[][] peaks10 = new double[4][1];
@@ -160,12 +155,11 @@ public class ACRlocalizer {
 		// ----
 		String[] vetTitle = { "orizzontale", "verticale", "diagonale sinistra", "diagonale destra", "inclinata 1",
 				"inclinata 2", "inclinata 3", "inclinata 4" };
-		// multipurpose line analyzer
+
 		int count = -1;
 		boolean vertical = false;
 		boolean valido = true;
 		String motivo = "";
-		// boolean solouno = true;
 		for (int i1 = 0; i1 < 8; i1++) {
 			xcoord[0] = vetx0[i1];
 			ycoord[0] = vety0[i1];
@@ -181,23 +175,15 @@ public class ACRlocalizer {
 				vertical = true;
 			else
 				vertical = false;
-			// showProfiles = false;
 			boolean profilo = false;
-			if (showProfiles) {
-				// solouno = false;
+			if (showProfiles)
 				profilo = true;
-			}
-
-//			cannyProfileAnalyzer(ImagePlus imp1, double dimPixel, String title, boolean showProfiles,
-//					boolean step, boolean vertical, boolean fast, boolean verbose, int timeout)
 
 			myPeaks = ACRutils.cannyProfileAnalyzer(imp12, dimPixel, vetTitle[i1], profilo, step, vertical, fast,
 					verbose, timeout);
-			// myPeaks = profileAnalyzer(imp12, dimPixel, vetTitle[i1],
 
-			// showProfiles, vertical, timeout);
 			String direction1 = ACRutils.readDicomParameter(imp11, ACRconst.DICOM_IMAGE_ORIENTATION);
-			// String direction2 = "1\0\0\01\0";
+
 			if (myPeaks != null) {
 				// per evitare le bolle d'aria escludero' il punto in alto per
 				// l'immagine assiale ed il punto a sinistra dell'immagine
@@ -565,50 +551,54 @@ public class ACRlocalizer {
 			ycoord[1] = vetYend[i1];
 			imp2.setRoi(new Line(xcoord[0], ycoord[0], xcoord[1], ycoord[1]));
 			over2.addElement(imp2.getRoi());
-			// if (now)
-			// ACRlog.waitHere("linea");
 			// estrazione matrice con segnale pixels e loro coordinate su immagine
 			double[][] decomposed3v = ACRutils.decomposer3v(imp2);
-			if (verbose)
-				ACRlog.logMatrix(decomposed3v, "<ACRlocalizer.positionSearch2> decomposed3v");
-			// ACRlog.waitHere();
-
-			// [][] decomposed3v ha il formato:
 			// decomposed3v[0] = profiX coordinata x del pixel su immagine
 			// decomposed3v[1] = profiY coordinata y del pixel su immagine
 			// decomposed3v[2] = profiZ valore segnale nei pixels per plottaggio
 			// decomposed3v[3] = profiW coordinata x per plottaggio
-
+			if (verbose)
+				ACRlog.logMatrix(decomposed3v, ACRlog.qui() + " decomposed3v");
 			// azzera segnale primo ed ultimo pixel del profilo
 			double[][] zeropadded3v = ACRutils.zeropadProfile3v(decomposed3v);
 			if (verbose)
-				ACRlog.logMatrix(zeropadded3v, "<ACRlocalizer.positionSearch2> zeropadded3v INPUT FWHMpoints3vNEW");
+				ACRlog.logMatrix(zeropadded3v, ACRlog.qui() + " zeropadded3v INPUT FWHMpoints3vNEW");
 			// ACRlog.waitHere();
 			// cerca i due punti sopra e i due punti sotto mezza altezza
 
 			if (verbose)
-				IJ.log("<ACRlocalizer.positionSearch2> ==== PROFILO " + vetTitle[i1] + " ====");
+				IJ.log(ACRlog.qui() + " ==== PROFILO " + vetTitle[i1] + " ====");
 			int pseudomaxlen = 3;
-			double[][] vetout = ACRlocalizer.FWHMpoints3vNEW(zeropadded3v, pseudomaxlen, "PROFILO " + vetTitle[i1],
-					step, fast, verbose);
-			// double[][] vetout ha il formato
-			// vetout[0][0] = coordinata X sinistra interpolata
-			// vetout[1][2] = segnale mezza altezza
-			// vetout[0][3] = coordinata X destra interpolata
-			// vetout[1][3] = segnale mezza altezza
+			double[][] vetout = ACRlocalizer.FWHManalyzer(zeropadded3v, pseudomaxlen, "PROFILO " + vetTitle[i1], step,
+					fast, verbose);
+
+			// vetout[0][0] = leftx nature;___ vetout[1][0] = lefty nature
+			// vetout[0][1] = rightx nature;__ vetout[1][1] = rightx nature
+			// vetout[0][2] = leftx interp;___ vetout[1][2] = lefty interp
+			// vetout[0][3] = rightx interp;__ vetout[1][3] = rightx interp
 			if (verbose) {
-				IJ.log("<ACRlocalizer.positionSearch2> ==========NOW=========");
-				IJ.log("<ACRlocalizer.positionSearch2> OUTPUT DI FWHMpoints3vNEW");
-				IJ.log("<ACRlocalizer.positionSearch2> vetout da FWMpoints3vNEW");
-				ACRlog.logMatrix(vetout, "<ACRlocalizer.positionSearch2> vetout");
-				IJ.log("<ACRlocalizer.positionSearch2> ======================");
+				IJ.log(ACRlog.qui() + " ==========NOW=========");
+				IJ.log(ACRlog.qui() + " OUTPUT DI FWHManalyzer");
+				ACRlog.logMatrix(vetout, ACRlog.qui() + " vetout");
+				IJ.log(ACRlog.qui() + " ======================");
 			}
 
-			int xpoint1 = (int) Math.round(vetout[0][2]);
-			int ypoint1 = (int) vetout[1][0];
+			int xpoint1 = (int) Math.round(vetout[0][2]); // vediamo gli interpolati
+			int ypoint1 = (int) Math.round(vetout[1][2]); // vediamo gli interpolati
+			int xpoint2 = (int) Math.round(vetout[0][3]); // vediamo gli interpolati
+			int ypoint2 = (int) Math.round(vetout[1][3]); // vediamo gli interpolati
+			IJ.log(ACRlog.qui() + "PUNTO INIZIALE " + xpoint1 + " , " + ypoint1);
+			IJ.log(ACRlog.qui() + "PUNTO FINALE " + xpoint2 + " , " + ypoint2);
+			ACRutils.plotPoints(imp2, over2, xpoint1, ypoint1, Color.GREEN);
+			ACRutils.plotPoints(imp2, over2, xpoint2, ypoint2, Color.GREEN);
 			if (verbose) {
-				IJ.log("<ACRlocalizer.positionSearch2> prima point= " + vetout[0][0] + "  " + vetout[1][0]);
-				IJ.log("<ACRlocalizer.positionSearch2> diventa point= " + vetout[0][2] + "  " + vetout[1][0]);
+				ACRlog.waitHere("PROFILO " + vetTitle[i1] + " con punti trovati, riportati anche su immagine",
+						ACRutils.debug, timeout, fast);
+			}
+
+			if (verbose) {
+				IJ.log(ACRlog.qui() + " prima point= " + vetout[0][0] + "  " + vetout[1][0]);
+				IJ.log(ACRlog.qui() + " diventa point= " + vetout[0][2] + "  " + vetout[1][0]);
 			}
 
 			xcircle[count1] = (float) vetout[0][2];
@@ -616,14 +606,10 @@ public class ACRlocalizer {
 			vetx[count1] = (int) xpoint1;
 			vety[count1] = (int) ypoint1;
 			count1++;
-			int xpoint2 = (int) Math.round(vetout[0][3]);
-			int ypoint2 = (int) vetout[1][1];
 
 			xcircle[count1] = (float) vetout[0][3];
 			ycircle[count1] = (float) vetout[1][1];
 			count1++;
-			ACRutils.plotPoints(imp2, over2, xpoint1, ypoint1, Color.GREEN);
-			ACRutils.plotPoints(imp2, over2, xpoint2, ypoint2, Color.GREEN);
 
 			if (step) {
 				ACRlog.waitHere("<ACRlocalizer.positionSearch2> Punti plottati VERDE su immagine con coordinate "
@@ -632,10 +618,6 @@ public class ACRlocalizer {
 			imp2.updateAndDraw();
 			iw2.toFront();
 			// iw2ayv
-			if (verbose) {
-				ACRlog.waitHere("PROFILO " + vetTitle[i1] + " con punti trovati, riportati anche su immagine",
-						ACRutils.debug, timeout, fast);
-			}
 
 		}
 		imp2.killRoi();
@@ -677,24 +659,24 @@ public class ACRlocalizer {
 	 * del centro del fantoccio (si conosce anche il diametro, ma vogliamo
 	 * calcolarlo come scritto nel manuale ACR
 	 * 
-	 * @param imp1
-	 * @param step
-	 * @param fast
-	 * @param timeout
-	 * @return vettore contenente i dati del cerchio localizzato ed i punti delle
+	 * @param imp1    immagine da analizzare
+	 * @param step    passo a passo
+	 * @param fast    animazione
+	 * @param timeout con fast preme automaticamente ok dopo timeout, si ha una
+	 *                pseudo animazione
+	 * @return array contenente i dati del cerchio localizzato ed i punti delle
 	 *         quattro misure eseguite
 	 */
 	public static double[] positionSearch3(ImagePlus imp1, int[] phantomCircle, boolean step, boolean fast,
 			boolean verbose, int timeout) {
 
-		boolean now = true;
 		// al contrario di positionSearch2, dove non conoscevamo posizione e diametro
 		// del fantoccio, in questo caso questi dati ci sono noti, ora vogliamo fare una
 		// misura precisa dei diametri, presi in modo che passino correttamente per il
-		// centro del fantoccio circolare
+		// centro reale del fantoccio circolare
 
 		if (verbose)
-			IJ.log("<ACRlocalizer.positionSearch3 START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + " START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
 
 		if (step)
 			ACRlog.waitHere(">>> 02 - MISURA PRECISA DIAMETRI FANTOCCIO <<<", ACRutils.debug, timeout, fast);
@@ -714,8 +696,8 @@ public class ACRlocalizer {
 		int ycenter = phantomCircle[1];
 		int diam = phantomCircle[2];
 		//
-		// per tracciare diagonali a 45 gradi, centrate sul cerchio e non sulla
-		// immagine, devo calcolare correttamente le nuove intersezioni della retta
+		// per tracciare le diagonali, centrate sul cerchio e non sulla immagine, devo
+		// calcolare correttamente le nuove intersezioni della diagonale
 		// con i bordi della immagine. Uso l'algoritmo Liang_Barsky. Introduco come
 		// estremi del segmento due punti al di fuori dei bordi dell'immagine e
 		// calcolo le intersezioni tra questa linea ed il bordo immagine
@@ -724,8 +706,8 @@ public class ACRlocalizer {
 		double edgeRight = width;
 		double edgeBottom = 0.;
 		double edgeTop = height;
-		double x0src = xcenter - width;
-		double y0src = ycenter - height;
+		double x0src = xcenter - width + 50;
+		double y0src = ycenter - height + 30;
 		double x1src = xcenter + width;
 		double y1src = ycenter + height;
 
@@ -737,12 +719,13 @@ public class ACRlocalizer {
 		edgeBottom = 0.;
 		edgeTop = height;
 		x0src = xcenter + width;
-		y0src = ycenter - width;
-		x1src = xcenter - width;
+		y0src = ycenter - width + 30;
+		x1src = xcenter - width + 20;
 		y1src = ycenter + width;
 		double[] clippings2 = ACRgraphic.liangBarsky(edgeLeft, edgeRight, edgeBottom, edgeTop, x0src, y0src, x1src,
 				y1src);
 		//
+		over2.clear();
 		// effettuo in tutto 4 profili
 		int[] vetXstart = new int[4];
 		int[] vetYstart = new int[4];
@@ -751,30 +734,40 @@ public class ACRlocalizer {
 		int[] xcoord = new int[2];
 		int[] ycoord = new int[2];
 		// ---- orizzontale
+		// per verifica grafica vado a plottare i punti di clipping delle diagonali,
+		// punti che mi servono per impostare in ImageJ la Line
 		vetXstart[0] = 0;
 		vetYstart[0] = ycenter;
+//		ACRutils.plotPoints(imp2, over2, vetXstart[0], vetYstart[0], Color.RED, 2, 6);
 		vetXend[0] = width;
 		vetYend[0] = ycenter;
+//		ACRutils.plotPoints(imp2, over2, vetXend[0], vetYend[0], Color.BLUE, 2, 6);
 		// ---- verticale
 		vetXstart[1] = xcenter;
 		vetYstart[1] = 0;
+//		ACRutils.plotPoints(imp2, over2, vetXstart[1], vetYstart[1], Color.RED, 2, 6);
 		vetXend[1] = xcenter;
 		vetYend[1] = height;
-		// ---- diagonale sx
+//		ACRutils.plotPoints(imp2, over2, vetXend[1], vetYend[1], Color.BLUE, 2, 6); // ---- diagonale sx
 		vetXstart[2] = (int) clippings1[0];
 		vetYstart[2] = (int) clippings1[1];
+//		ACRutils.plotPoints(imp2, over2, vetXstart[2], vetYstart[2], Color.RED, 2, 6);
 		vetXend[2] = (int) clippings1[2];
 		vetYend[2] = (int) clippings1[3];
-		// ----- diagonale dx
+//		ACRutils.plotPoints(imp2, over2, vetXend[2], vetYend[2], Color.BLUE, 2, 6); // ----- diagonale dx
 		vetXstart[3] = (int) clippings2[0];
 		vetYstart[3] = (int) clippings2[1];
+//		ACRutils.plotPoints(imp2, over2, vetXstart[3], vetYstart[3], Color.RED, 2, 6);
 		vetXend[3] = (int) clippings2[2];
 		vetYend[3] = (int) clippings2[3];
-		// -----
+//		ACRutils.plotPoints(imp2, over2, vetXend[3], vetYend[3], Color.BLUE, 2, 6); // -----
+
 		String[] vetTitle = { "ORIZZONTALE", "VERTICALE", "DIAGONALE_SX", "DIAGONALE_DX" };
 		// line analyzer
 		double[] out1 = new double[4];
 		for (int i1 = 0; i1 < 4; i1++) {
+			if (step || verbose)
+				IJ.log(ACRlog.qui() + "PROFILO " + vetTitle[i1]);
 			// viene ripetuto per ogni profilo
 			xcoord[0] = vetXstart[i1];
 			ycoord[0] = vetYstart[i1];
@@ -784,28 +777,35 @@ public class ACRlocalizer {
 			imp2.getRoi().setStrokeColor(Color.CYAN);
 			over2.addElement(imp2.getRoi());
 			int pseudomaxlen = 3;
+			//
 			double[][] decomposed3v = ACRutils.decomposer3v(imp2);
 			double[][] zeropadded3v = ACRutils.zeropadProfile3v(decomposed3v);
-			double[][] vetout = ACRlocalizer.FWHMpoints3vNEW(zeropadded3v, pseudomaxlen, "PROFILO " + vetTitle[i1],
-					step, fast, verbose);
-			// ora vado a plottare i punti trovati dall'analizzatore di profilo,
-			// sull'immagine reale 2D
-
-			int xpoint1 = (int) Math.round(vetout[0][2]);
-			int ypoint1 = (int) Math.round(vetout[1][2]);
+			double[][] vetout = ACRlocalizer.FWHManalyzer(zeropadded3v, pseudomaxlen, "PROFILO " + vetTitle[i1], step,
+					fast, verbose);
+			// vetout[0][0] = leftx nature;___ vetout[1][0] = lefty nature
+			// vetout[0][1] = rightx nature;__ vetout[1][1] = rightx nature
+			// vetout[0][2] = leftx interp;___ vetout[1][2] = lefty interp
+			// vetout[0][3] = rightx interp;__ vetout[1][3] = rightx interp
 			if (verbose) {
-				IJ.log("<ACRlocalizer.positionSearch3> immagine punto sinistro x= " + vetout[0][2] + " y= "
-						+ vetout[1][0]);
+				IJ.log(ACRlog.qui() + " ==========NOW=========");
+				IJ.log(ACRlog.qui() + " OUTPUT DI FWHManalyzer");
+				ACRlog.logMatrix(vetout, ACRlog.qui() + " vetout");
+				IJ.log(ACRlog.qui() + " ======================");
 			}
-			ACRutils.plotPoints(imp2, over2, xpoint1, ypoint1);
 
-			int xpoint2 = (int) Math.round(vetout[0][3]);
-			int ypoint2 = (int) Math.round(vetout[1][3]);
+			int xpoint1 = (int) Math.round(vetout[0][0]);
+			int ypoint1 = (int) Math.round(vetout[1][0]);
 			if (verbose) {
-				IJ.log("<ACRlocalizer.positionSearch3> immagine punto destro x= " + vetout[0][2] + " y= "
-						+ vetout[1][0]);
+				IJ.log(ACRlog.qui() + "PUNZONA punto sinistro su immagine x= " + xpoint1 + " y= " + ypoint1);
 			}
-			ACRutils.plotPoints(imp2, over2, xpoint2, ypoint2);
+			ACRutils.plotPoints(imp2, over2, xpoint1, ypoint1, Color.YELLOW);
+
+			int xpoint2 = (int) Math.round(vetout[0][1]);
+			int ypoint2 = (int) Math.round(vetout[1][1]);
+			if (verbose) {
+				IJ.log(ACRlog.qui() + "PUNZONA punto destro su immagine x= " + xpoint2 + " y= " + ypoint2);
+			}
+			ACRutils.plotPoints(imp2, over2, xpoint2, ypoint2, Color.CYAN);
 
 			imp2.updateAndDraw();
 			iw2.toFront();
@@ -814,34 +814,12 @@ public class ACRlocalizer {
 				ACRlog.waitHere("PROFILO " + vetTitle[i1] + " con punti trovati, riportati anche su immagine",
 						ACRutils.debug, timeout, fast);
 
-			// vetout[0][2] = coordinata X sinistra interpolata
-			// vetout[0][3] = coordinata X destra interpolata
-
-			//
-			// posso misurare il diametro "forse con precisione, forse" utilizzando i due
-			// punti
-			// interpolati
-			//
-
-//			vetout[0][0] = leftxup; // leftx non interpolato
-//			vetout[0][1] = rightxup; // rightx non interpolato
-//			vetout[0][2] = xinterpsx; // leftx interpolato
-//			vetout[0][3] = xinterpdx; // rightx interpolato
-//
-//			vetout[1][0] = leftyup; // lefty non interpolato
-//			vetout[1][1] = rightyup; // rightx non interpolato
-//			vetout[1][2] = yinterpsx; // lefty interpolato
-//			vetout[1][3] = yinterpdx; // righty interpolato
-
-			// qui bisogna calcolare la distanza con la formula corretta, MA COME
-			// E'POSSIBILE CHE SBAGLI, QUANDO STO STRONZO PLOTTA CORRETTAMENTE????
-
 			double dist = Math
 					.sqrt(Math.pow((vetout[0][2] - vetout[0][3]), 2) + Math.pow((vetout[1][2] - vetout[1][3]), 2));
 
 			double diameter = dist; // IN PIXEL
 			if (verbose)
-				IJ.log("<ACRlocalizer.positionSearch3 END> diametro " + i1 + " " + diameter);
+				IJ.log(ACRlog.qui() + "END> diametro " + i1 + " " + diameter);
 
 			out1[i1] = diameter;
 		}
@@ -890,17 +868,12 @@ public class ACRlocalizer {
 		// ora scansiono l'immagine, riga per riga, evito volutamente il bordo di 1
 		// pixel attorno ai bordi, area dove di solito succedono COSSE BRUUTTE ASSAI!
 		//
-		ImageProcessor ip1 = imp1.getProcessor();
-		int[] rowpixels = new int[width];
-		double[] out1 = new double[4];
 		int[] out2 = new int[4];
 		double[] out3 = new double[4];
 		double xpoint1 = 0;
 		double ypoint1 = 0;
 		double xpoint2 = 0;
 		double ypoint2 = 0;
-		int xp = 0;
-		int yp = 0;
 
 		ArrayList<Float> arrIntX = new ArrayList<>();
 		ArrayList<Float> arrIntY = new ArrayList<>();
@@ -917,7 +890,6 @@ public class ACRlocalizer {
 				ypoint1 = y1;
 				arrX.add(out2[0]);
 				arrY.add(y1);
-
 				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.YELLOW, false);
@@ -940,7 +912,6 @@ public class ACRlocalizer {
 				ypoint1 = out2[0];
 				arrX.add(x1);
 				arrY.add(out2[0]);
-
 				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
@@ -948,7 +919,6 @@ public class ACRlocalizer {
 				ypoint1 = out2[1];
 				xpoint1 = x1;
 				ypoint1 = out2[1];
-
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
 			}
 		}
@@ -1007,7 +977,6 @@ public class ACRlocalizer {
 		pr12.setPointType(2);
 		pr12.setSize(4);
 		imp1.updateAndDraw();
-
 		// ---------------------------------------------------
 		// eseguo ora fitCircle per trovare centro e dimensione grossolana del
 		// fantoccio. FitCircle è copiato da ImageJ ed era a sua volta derivato dal
@@ -1032,9 +1001,6 @@ public class ACRlocalizer {
 			ACRlog.waitHere("La circonferenza risultante dal fit non interpolato e' mostrata in GIALLO", true, timeout,
 					fast);
 		}
-
-//		imp1.killRoi();
-
 		// ora raduno tutti i punti che abbiamo determinato, ad esempio con la ricerca
 		// interpolata, e li passo al fitter
 		float[] vetX2 = ACRutils.arrayListToArrayFloat(arrIntX);
@@ -1044,9 +1010,6 @@ public class ACRlocalizer {
 		pr22.setPointType(2);
 		pr22.setSize(4);
 		imp1.updateAndDraw();
-
-//		ACRlog.waitHere("ora ripuliamo gli overlay e disegnamo il cerchio calcolato con le interpolazioni");
-
 		// ---------------------------------------------------
 		// eseguo ora fitCircle per trovare centro e dimensione grossolana del
 		// fantoccio. FitCircle è copiato da ImageJ ed era a sua volta derivato dal
@@ -1497,32 +1460,38 @@ public class ACRlocalizer {
 	}
 
 	/**
-	 * Calcolo dei punti estremi della FWHM del diametro fantoccio. Provo a
-	 * interpolare per sinistra e destra la coordinata X del punto preciso.
+	 * Riceve un array con i valori dei pixel e le loro coordinate, analizza il
+	 * profilo e restituisce i punti della FWHM sia come coordinate intere, che
+	 * interpolati
 	 * 
-	 * @param line1        vettore col contenuto e le coordinate dei pixel
+	 * @param line1        array col contenuto e le coordinate dei pixel
 	 * @param pseudomaxlen lunghezza per mediare lo pseudomassimo per poi fate max/2
 	 * @param titolo       titolo per i plot
 	 * @return matrice coi risultati
 	 */
 	public static double[][] FWHMpoints3vNEW(double[][] line3, int pseudomaxlen, String titolo, boolean step,
 			boolean fast, boolean verbose) {
-
+		//
 		// [][] line3 ha il formato:
-		// line3[0] = profiX coordinata x del pixel su immagine
-		// line3[1] = profiY coordinata y del pixel su immagine
-		// line3[2] = profiZ valore segnale nei pixels per plottaggio profilo
-		// line3[3] = profiW coordinata x per plottaggio profilo
+		// line3[0] = profiX coordinata x del pixel sulla immagine
+		// line3[1] = profiY coordinata y del pixel sulla immagine
+		// line3[2] = profiZ valore segnale nel pixels per plottaggio profilo
+		// line3[3] = profiW coordinata W "ipotenusa", la x del profilo
+		// dobbiamo fare in modo che la coordinata W sia sempre nella stessa direzione
+		//
+		int trunc = 4;
 
 		if (verbose) {
-			IJ.log("<ACRlocalizer.FWHMpoints3v START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
-			ACRlog.logMatrix(line3, "<ACRlocalizer.FWHMpoints3v> line3");
+			IJ.log(ACRlog.qui() + " START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + " START>  analisi del profilo ricevuto per ottenere la FWHM");
+			IJ.log(ACRlog.qui() + "  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			ACRlog.logMatrix(line3, ACRlog.qui() + "line3");
 		}
 
 		Plot plot1 = null;
 		double[] line1 = ACRutils.signal1vfrom3v(line3);
 		if (line1 == null)
-			ACRlog.waitHere("line1==null");
+			ACRlog.waitHere(ACRlog.qui() + " line1==null");
 		double pmax = ACRutils.pseudomax(line1, pseudomaxlen);
 		double fwhmlevel = pmax / 2;
 		// disegno linea verde a fwhmlevel (mezza altezza)
@@ -1537,17 +1506,16 @@ public class ACRlocalizer {
 			plot1.addPoints(xVetLineHalf, yVetLineHalf, Plot.LINE);
 			plot1.draw();
 		}
-		// ricerca due punti superiori al fwhmlevel
+		// ricerca due punti superiori al fwhmlevel, potrebbero bastare questi, ma se
+		// vogliamo fare di piu' possiamo anche trovare i due punti sotto (che avranno
+		// la coordinata x del grafico inferiore di 1) ed alla fine fare una
 		double[][] duepuntisopra = ACRlocalizer.findPointsopra3v(line3, (int) fwhmlevel);
+		// interpolazione lineare per trovare la frazione di pixel
 
-		// duepuntisopra[0][0] = leftx;
-		// duepuntisopra[1][0] = lefty;
-		// duepuntisopra[2][0] = leftz;
-		// duepuntisopra[3][0] = leftw;
-		// duepuntisopra[0][1] = rightx;
-		// duepuntisopra[1][1] = righty;
-		// duepuntisopra[2][1] = rightz;
-		// duepuntisopra[3][1] = rightw;
+		// duepuntisopra[0][0] = leftx; duepuntisopra[0][1] = rightx;
+		// duepuntisopra[1][0] = lefty; duepuntisopra[1][1] = righty;
+		// duepuntisopra[2][0] = leftz; duepuntisopra[2][1] = rightz;
+		// duepuntisopra[3][0] = leftw; duepuntisopra[3][1] = rightw;
 		if (verbose) {
 			IJ.log("<ACRlocalizer.FWHMpoints3v> duepuntisopra leftx= " + duepuntisopra[0][0] + " lefty= "
 					+ duepuntisopra[1][0] + " leftz= " + duepuntisopra[2][0] + " leftw= " + duepuntisopra[3][0]);
@@ -1623,19 +1591,28 @@ public class ACRlocalizer {
 			ACRlog.logVector(duepuntiwc, "<ACRlocalizer.FWHMpoints3v> duepuntiwc INTERPOLATI");
 			ACRlog.logVector(duepuntizc, "<ACRlocalizer.FWHMpoints3v> duepuntizc INTERPOLATI");
 		}
-
-//		ACRlog.waitHere("plottato anche il punto NERO interpolato");
 		//
 		// cerco ora di ricavare le coordinate immagine x ed y del punto interpolato
-		// (double poiche' solo in seguito le arrotondo ad intero, sperando di risolvere
+		// poiche' solo in seguito le arrotondo ad intero, sperando di risolvere
 		// il problema dell'apparente erore di un pixel fuori per alcuni fitting
 		//
 		int len = line3[0].length;
-		// ACRlog.waitHere("" + line3.length + " " + line3[0].length);
+		// ACRlog.waitHere("" + line3.length + " " +line3[0].length);
 		double y2 = line3[1][len - 2];
 		double y1 = line3[1][1];
 		double x2 = line3[0][len - 2];
 		double x1 = line3[0][1];
+
+		x1 = ACRutils.dblTruncate(x1, trunc);
+		x2 = ACRutils.dblTruncate(x2, trunc);
+		y1 = ACRutils.dblTruncate(y1, trunc);
+		y2 = ACRutils.dblTruncate(y2, trunc);
+
+		IJ.log(ACRlog.qui() + " x1= " + x1);
+		IJ.log(ACRlog.qui() + " y1= " + y1);
+		IJ.log(ACRlog.qui() + " x2= " + x2);
+		IJ.log(ACRlog.qui() + " y2= " + y2);
+
 		double slope = 0;
 		double xinterpsx = 0;
 		double yinterpsx = 0;
@@ -1671,47 +1648,68 @@ public class ACRlocalizer {
 			// wc1 e wc2 sono i due punti interpol
 
 			slope = (y2 - y1) / (x2 - x1);
+			slope = ACRutils.dblTruncate(slope, trunc);
 			double xoffset = line3[0][0];
 			double yoffset = line3[1][0];
+			double q = xoffset - slope * yoffset;
+			q = ACRutils.dblTruncate(q, trunc);
 
-			// lo slope sarebbe la tangente dell'angolo
-			// per cui possiamo scrivere
-
+			// lo slope sarebbe la tangente dell'angolo per cui possiamo ricavare seno e
+			// coseno, necessari per ricavare i cateti del triangolo rettangolo data
+			// l'ipotenusa, ricavando cosi'le coordinate x ed y interpolate (speriamo!!!)
+			// NOTA, il dblTruncate alla fine viene tolto di torno, serve solo per non
+			// vedere numeri luuuuunghi
 			double sin = slope / Math.sqrt(1 + slope * slope);
+			sin = ACRutils.dblTruncate(sin, trunc);
 			double cos = 1 / Math.sqrt(1 + slope * slope);
+			cos = ACRutils.dblTruncate(cos, trunc);
+			IJ.log("<ACRlocalizer.FWHMpoints3v> xoffset= " + xoffset);
+			IJ.log("<ACRlocalizer.FWHMpoints3v> yoffset= " + yoffset);
+			IJ.log("<ACRlocalizer.FWHMpoints3v> slope= " + slope);
+			IJ.log("<ACRlocalizer.FWHMpoints3v> q= " + q);
+			IJ.log("<ACRlocalizer.FWHMpoints3v> sin= " + sin);
+			IJ.log("<ACRlocalizer.FWHMpoints3v> cos= " + cos);
+			wc1 = ACRutils.dblTruncate(wc1, trunc);
+			wc2 = ACRutils.dblTruncate(wc2, trunc);
 
 			if (slope > 0) {
-				IJ.log("slope>0");
+				IJ.log("<ACRlocalizer.FWHMpoints3v>  slope > 0  slope= " + slope);
 				// punto sx
 				xinterpsx = Math.abs(wc1 * sin) + xoffset;
 				yinterpsx = Math.abs(wc1 * cos) + yoffset;
 				// punto dx
 				xinterpdx = Math.abs(wc2 * sin) + xoffset;
 				yinterpdx = Math.abs(wc2 * cos) + yoffset;
-
 			} else {
 				// punto sx
-				IJ.log("slope<0");
+				IJ.log("<ACRlocalizer.FWHMpoints3v>  slope < 0  slope= " + slope);
 				yinterpsx = Math.abs(wc1 * sin) + xoffset;
 				xinterpsx = Math.abs(wc1 * cos) + yoffset;
 				// punto dx
 				yinterpdx = Math.abs(wc2 * sin) + xoffset;
 				xinterpdx = Math.abs(wc2 * cos) + yoffset;
 			}
-			IJ.log("<ACRlocalizer.FWHMpoints3v> wc1= " + wc1 + " wc2= " + wc2 + " sin= " + sin + " cos= " + cos
-					+ " xoffset= " + xoffset + " yoffset= " + yoffset);
-			IJ.log("<ACRlocalizer.FWHMpoints3v> xinterpsx= " + xinterpsx + " yinterpsx= " + yinterpsx + " xinterpdx "
-					+ xinterpdx + " yinterpdx " + yinterpdx);
+
+			xinterpsx = ACRutils.dblTruncate(xinterpsx, trunc);
+			yinterpsx = ACRutils.dblTruncate(yinterpsx, trunc);
+			xinterpdx = ACRutils.dblTruncate(xinterpdx, trunc);
+			yinterpdx = ACRutils.dblTruncate(yinterpdx, trunc);
 
 			if (verbose) {
-				IJ.log("<ACRlocalizer.FWHMpoints3v> xoffset= " + xoffset + " yoffset= " + yoffset);
+				IJ.log("<ACRlocalizer.FWHMpoints3v> wc1= " + wc1);
+				IJ.log("<ACRlocalizer.FWHMpoints3v> wc2= " + wc2);
 				IJ.log("<ACRlocalizer.FWHMpoints3v> slope= " + slope);
 				IJ.log("<ACRlocalizer.FWHMpoints3v> sin= " + sin + " cos= " + cos);
+				IJ.log("<ACRlocalizer.FWHMpoints3v> xinterpsx= " + xinterpsx);
+				IJ.log("<ACRlocalizer.FWHMpoints3v> yinterpsx= " + yinterpsx);
+				IJ.log("<ACRlocalizer.FWHMpoints3v> xinterpdx= " + xinterpdx);
+				IJ.log("<ACRlocalizer.FWHMpoints3v> yinterpdx= " + yinterpdx);
 				IJ.log("<ACRlocalizer.FWHMpoints3v> punto uno= " + xinterpsx + " , " + yinterpsx);
 				IJ.log("<ACRlocalizer.FWHMpoints3v> punto due= " + xinterpdx + " , " + yinterpdx);
 			}
 
 		}
+
 		if (verbose)
 
 		{
@@ -1741,6 +1739,297 @@ public class ACRlocalizer {
 
 		if (verbose) {
 			ACRlog.logMatrix(vetout, "<ACRlocalizer.FWHMpoints3v> vetout");
+//			ACRlog.waitHere("attenzione: le coordinate precise sono in sx(vetout[0][2]) e dx(vetout[0][3])");
+		}
+		return vetout;
+	}
+
+	/**
+	 * Riceve un array con i valori dei pixel e le loro coordinate, analizza il
+	 * profilo e restituisce i punti della FWHM sia come coordinate intere, che
+	 * interpolati
+	 * 
+	 * @param line1        array col contenuto e le coordinate dei pixel
+	 * @param pseudomaxlen lunghezza per mediare lo pseudomassimo per poi fate max/2
+	 * @param titolo       titolo per i plot
+	 * @return matrice coi risultati
+	 */
+	public static double[][] FWHManalyzer(double[][] line3, int pseudomaxlen, String titolo, boolean step, boolean fast,
+			boolean verbose) {
+
+		// line3[0][] = profiX coordinata x del pixel sulla immagine
+		// line3[1][] = profiY coordinata y del pixel sulla immagine
+		// line3[2][] = profiZ valore segnale nel pixels, la ordinata del profilo
+		// line3[3][] = profiW coordinata W "ipotenusa", la ascissa del profilo
+		int trunc = 4; // usata solo durante i test, per troncare il numero dei decimali
+		if (verbose) {
+			IJ.log(ACRlog.qui() + " START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + " START>  analisi del profilo ricevuto per ottenere la FWHM");
+			IJ.log(ACRlog.qui() + "  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			ACRlog.logMatrix(line3, ACRlog.qui() + "line3");
+		}
+		Plot plot1 = null;
+		double[] line1 = ACRutils.signal1vfrom3v(line3);
+		if (line1 == null)
+			ACRlog.waitHere(ACRlog.qui() + " line1==null");
+		double pmax = ACRutils.pseudomax(line1, pseudomaxlen);
+		double fwhmlevel = pmax / 2;
+		// disegno linea verde a fwhmlevel (mezza altezza)
+		double[] xVetLineHalf = new double[2];
+		double[] yVetLineHalf = new double[2];
+		xVetLineHalf[0] = 0;
+		xVetLineHalf[1] = line1.length;
+		yVetLineHalf[0] = fwhmlevel;
+		yVetLineHalf[1] = fwhmlevel;
+		if (verbose) {
+			plot1 = ACRutils.ACRplot(line1, titolo, Color.GREEN, true);
+			plot1.addPoints(xVetLineHalf, yVetLineHalf, Plot.LINE);
+			plot1.draw();
+		}
+		// ricerca due punti superiori al fwhmlevel, rileva solo le coordinate
+		double[][] duepuntisopra = ACRlocalizer.findPointsopraAYV(line3, (int) fwhmlevel);
+		// out1[0][0] = leftx; out1[1][0] = rightx;
+		// out1[0][1] = lefty; out1[1][1] = righty;
+		// out1[0][2] = leftz; out1[1][2] = rightz;
+		// out1[0][3] = leftw; out1[1][3] = rightw;
+		IJ.log(ACRlog.qui() + "===============");
+		ACRlog.logMatrix(duepuntisopra, ACRlog.qui() + "duepuntisopra");
+
+		if (verbose) {
+			IJ.log(ACRlog.qui() + "duepuntisopra leftx= " + duepuntisopra[0][0] + " lefty= " + duepuntisopra[0][1]
+					+ " leftz= " + duepuntisopra[0][2] + " leftw= " + duepuntisopra[0][3]);
+			IJ.log(ACRlog.qui() + "duepuntisopra rightx= " + duepuntisopra[1][0] + " righty= " + duepuntisopra[1][1]
+					+ " rightz= " + duepuntisopra[1][2] + " rightw= " + duepuntisopra[1][3]);
+		}
+		double[] duepuntiwa = new double[2];
+		double[] duepuntiza = new double[2];
+
+		duepuntiwa[0] = duepuntisopra[1][2]; // NEW trasformato
+		duepuntiwa[1] = duepuntisopra[1][3]; // NEW trasformato
+		duepuntiza[0] = duepuntisopra[0][2]; // NEW trasformato
+		duepuntiza[1] = duepuntisopra[0][3]; // NEW trasformato
+
+		if (verbose) {
+			plot1.setLineWidth(4);
+			plot1.setColor(Color.RED);
+			plot1.addPoints(duepuntiwa, duepuntiza, Plot.DIAMOND);
+			IJ.log(ACRlog.qui() + "====verificare========");
+			ACRlog.logVector(duepuntiwa, ACRlog.qui() + "duepuntiwa SOPRA");
+			ACRlog.logVector(duepuntiza, ACRlog.qui() + "duepuntiza SOPRA");
+		}
+		// ricerca dei due punti inferiori al fwhmlevel
+		double[][] duepuntisotto = ACRlocalizer.findPointsottoAYV(line3, (int) fwhmlevel);
+		ACRlog.logMatrix(duepuntisotto, ACRlog.qui() + "duepuntisotto");
+
+		if (verbose) {
+			IJ.log("\"<ACRlocalizer.FWHMpoints3v> duepuntisotto leftx= " + duepuntisotto[0][0] + " lefty= "
+					+ duepuntisotto[0][1] + " leftz= " + duepuntisotto[0][2] + " leftw= " + duepuntisotto[0][3]);
+			IJ.log("\"<ACRlocalizer.FWHMpoints3v> duepuntisotto rightx= " + duepuntisotto[1][0] + " righty= "
+					+ duepuntisotto[1][1] + " rightz= " + duepuntisotto[1][2] + " rightw= " + duepuntisotto[1][3]);
+		}
+
+		double[] duepuntiwb = new double[2];
+		double[] duepuntizb = new double[2];
+
+		duepuntiwb[0] = duepuntisotto[1][2]; // NEW trasformato
+		duepuntiwb[1] = duepuntisotto[1][3]; // NEW trasformato
+		duepuntizb[0] = duepuntisotto[0][2]; // NEW trasformato
+		duepuntizb[1] = duepuntisotto[0][3]; // NEW trasformato
+		if (verbose) {
+			plot1.setColor(Color.BLUE);
+			plot1.addPoints(duepuntiwb, duepuntizb, Plot.DIAMOND);
+			ACRlog.logVector(duepuntiwb, ACRlog.qui() + "duepuntiwb SOTTO");
+			ACRlog.logVector(duepuntizb, ACRlog.qui() + "duepuntizb SOTTO");
+		}
+		// per complicarci la vita facciamo la interpolazione lineare tra il pixel sopra
+		// e quello sotto (distanza 1 pixel cioe' 0.625 mm) otterremo dei double
+		// interpolazione lineare coordinata X del punto sinistra
+		double wa1 = (double) duepuntiwa[0]; // OK
+		double za1 = (double) duepuntiza[0]; // OK
+		double wb1 = (double) duepuntiwb[0]; // OK
+		double zb1 = (double) duepuntizb[0]; // OK
+		double zc1 = pmax / 2.;
+		if (verbose)
+			IJ.log(ACRlog.qui() + "interpolazione lineare");
+		double wc1 = ACRutils.xLinearInterpolation(wa1, za1, wb1, zb1, zc1);
+		// interpolazione lineare coordinata X del punto destra
+		double wa2 = (double) duepuntiwa[1];
+		double za2 = (double) duepuntiza[1];
+		double wb2 = (double) duepuntiwb[1];
+		double zb2 = (double) duepuntizb[1];
+		double zc2 = pmax / 2.;
+		if (verbose)
+			IJ.log(ACRlog.qui() + "interpolazione lineare");
+		double wc2 = ACRutils.xLinearInterpolation(wa2, za2, wb2, zb2, zc2);
+		// tentativo di plot dei due punti interpolati
+		double[] duepuntiwc = new double[2];
+		double[] duepuntizc = new double[2];
+		// duepuntiwc[0] = wc1; IW2AYV test escluso lnterpolazione
+		// duepuntiwc[1] = wc2;
+		duepuntiwc[0] = wa1;
+		duepuntiwc[1] = wa2;
+		duepuntizc[0] = fwhmlevel;
+		duepuntizc[1] = fwhmlevel;
+		if (verbose) {
+			plot1.setColor(Color.GREEN);
+			plot1.addPoints(duepuntiwc, duepuntizc, Plot.DIAMOND);
+			ACRlog.logVector(duepuntiwc, ACRlog.qui() + "duepuntiwc INTERPOLATI");
+			ACRlog.logVector(duepuntizc, ACRlog.qui() + "duepuntizc INTERPOLATI");
+		}
+		//
+		// cerco ora di ricavare le coordinate immagine x ed y del punto interpolato
+		// poiche' solo in seguito le arrotondo ad intero, sperando di risolvere
+		// il problema dell'apparente erore di un pixel fuori per alcuni fitting
+		//
+		int len = line3[0].length;
+		// ACRlog.waitHere("" + line3.length + " " +line3[0].length);
+		double y2 = line3[1][len - 2];
+		double y1 = line3[1][1];
+		double x2 = line3[0][len - 2];
+		double x1 = line3[0][1];
+
+		x1 = ACRutils.dblTruncate(x1, trunc);
+		x2 = ACRutils.dblTruncate(x2, trunc);
+		y1 = ACRutils.dblTruncate(y1, trunc);
+		y2 = ACRutils.dblTruncate(y2, trunc);
+
+		IJ.log(ACRlog.qui() + " x1= " + x1);
+		IJ.log(ACRlog.qui() + " y1= " + y1);
+		IJ.log(ACRlog.qui() + " x2= " + x2);
+		IJ.log(ACRlog.qui() + " y2= " + y2);
+
+		double slope = 0;
+		double xinterpsx = 0;
+		double yinterpsx = 0;
+		double xinterpdx = 0;
+		double yinterpdx = 0;
+
+		// Calcolo dello slope della retta su cui abbiamo ricavato il profilo:
+		// escludiamo i casi particolari di retta orizzontale e verticale in cui lo
+		// slope vale 0 ed infinito
+		//
+		// wc1 e wc2 sono i due punti interpolati sul grafico, di cui vogliamo calcolare
+		// le coordinate x ed y per riportarli su immagine ed usarli nei calcoli
+		//
+
+		if (Double.compare(x1, x2) == 0) {
+			// linea orizzontale caso particolare
+			if (verbose)
+				IJ.log(ACRlog.qui() + "LINEA ORIZZONTALE");
+			xinterpsx = x1;
+			yinterpsx = wc1;
+			xinterpdx = x1;
+			yinterpdx = wc2;
+		} else if (Double.compare(y1, y2) == 0) {
+			if (verbose)
+				IJ.log(ACRlog.qui() + "LINEA VERTICALE");
+			xinterpsx = wc1;
+			yinterpsx = y1;
+			xinterpdx = wc2;
+			yinterpdx = y1;
+		} else {
+			if (verbose) {
+				IJ.log(ACRlog.qui() + "=================");
+				IJ.log(ACRlog.qui() + "LINEA INCLINATA");
+			}
+			// wc1 e wc2 sono i due punti interpol
+
+			slope = (y2 - y1) / (x2 - x1);
+			slope = ACRutils.dblTruncate(slope, trunc);
+			double xoffset = line3[0][0];
+			double yoffset = line3[1][0];
+			double q = xoffset - slope * yoffset;
+			q = ACRutils.dblTruncate(q, trunc);
+
+			// lo slope sarebbe la tangente dell'angolo per cui possiamo ricavare seno e
+			// coseno, necessari per ricavare i cateti del triangolo rettangolo data
+			// l'ipotenusa, ricavando cosi'le coordinate x ed y interpolate (speriamo!!!)
+			// NOTA, il dblTruncate alla fine viene tolto di torno, serve solo per non
+			// vedere numeri luuuuunghi
+			double sin = slope / Math.sqrt(1 + slope * slope);
+			sin = ACRutils.dblTruncate(sin, trunc);
+			double cos = 1 / Math.sqrt(1 + slope * slope);
+			cos = ACRutils.dblTruncate(cos, trunc);
+			IJ.log(ACRlog.qui() + "xoffset= " + xoffset);
+			IJ.log(ACRlog.qui() + "yoffset= " + yoffset);
+			IJ.log(ACRlog.qui() + "slope= " + slope);
+			IJ.log(ACRlog.qui() + "q= " + q);
+			IJ.log(ACRlog.qui() + "sin= " + sin);
+			IJ.log(ACRlog.qui() + "cos= " + cos);
+			wc1 = ACRutils.dblTruncate(wc1, trunc);
+			wc2 = ACRutils.dblTruncate(wc2, trunc);
+
+//			if (slope > 0) {
+			IJ.log(ACRlog.qui() + "slope > 0  slope= " + slope);
+			// punto sx
+			xinterpsx = wc1 * sin + xoffset;
+			yinterpsx = wc1 * cos + yoffset;
+			// punto dx
+			xinterpdx = wc2 * sin + xoffset;
+			yinterpdx = wc2 * cos + yoffset;
+//			} else {
+//				// punto sx
+//				IJ.log(ACRlog.qui() + "slope < 0  slope= " + slope);
+//				yinterpsx = Math.abs(wc1 * sin) + xoffset;
+//				xinterpsx = Math.abs(wc1 * cos) + yoffset;
+//				// punto dx
+//				yinterpdx = Math.abs(wc2 * sin) + xoffset;
+//				xinterpdx = Math.abs(wc2 * cos) + yoffset;
+//			}
+
+			xinterpsx = ACRutils.dblTruncate(xinterpsx, trunc);
+			yinterpsx = ACRutils.dblTruncate(yinterpsx, trunc);
+			xinterpdx = ACRutils.dblTruncate(xinterpdx, trunc);
+			yinterpdx = ACRutils.dblTruncate(yinterpdx, trunc);
+
+			if (verbose) {
+				IJ.log(ACRlog.qui() + "------------------------");
+				IJ.log(ACRlog.qui() + "wc1= " + wc1);
+				IJ.log(ACRlog.qui() + "wc2= " + wc2);
+				IJ.log(ACRlog.qui() + "slope= " + slope);
+				IJ.log(ACRlog.qui() + "sin= " + sin + " cos= " + cos);
+				IJ.log(ACRlog.qui() + "xinterpsx= " + xinterpsx);
+				IJ.log(ACRlog.qui() + "yinterpsx= " + yinterpsx);
+				IJ.log(ACRlog.qui() + "xinterpdx= " + xinterpdx);
+				IJ.log(ACRlog.qui() + "yinterpdx= " + yinterpdx);
+				IJ.log(ACRlog.qui() + "punto uno= " + xinterpsx + " , " + yinterpsx);
+				IJ.log(ACRlog.qui() + "punto due= " + xinterpdx + " , " + yinterpdx);
+				IJ.log(ACRlog.qui() + "------------------------");
+			}
+			IJ.log(ACRlog.qui() + "==FINE LINEA INCLINATA==");
+
+		}
+
+		if (verbose)
+
+		{
+			IJ.log(ACRlog.qui() + "SX punto interpolato su IMMAGINE= " + xinterpsx + " , " + yinterpsx);
+			IJ.log(ACRlog.qui() + "DX punto interpolato su IMMAGINE= " + xinterpdx + " , " + yinterpdx);
+		}
+
+		// ACRutils.waitHere("TRACCIATA UNA BISETTRICE IMMAGINE E TROVATI GLI ESTREMI
+		// OGGETTO");
+
+		ACRlog.logMatrix(duepuntisopra, ACRlog.qui() + "duepuntisopra");
+		double leftxup = duepuntisopra[0][0];
+		double leftyup = duepuntisopra[1][0];
+		double rightxup = duepuntisopra[0][1];
+		double rightyup = duepuntisopra[1][1];
+
+		double[][] vetout = new double[2][4];
+
+		vetout[0][0] = leftxup; // leftx non interpolato
+		vetout[0][1] = rightxup; // rightx non interpolato
+		vetout[0][2] = xinterpsx; // leftx interpolato
+		vetout[0][3] = xinterpdx; // rightx interpolato
+
+		vetout[1][0] = leftyup; // lefty non interpolato
+		vetout[1][1] = rightyup; // rightx non interpolato
+		vetout[1][2] = yinterpsx; // lefty interpolato
+		vetout[1][3] = yinterpdx; // rightx interpolato
+
+		if (verbose) {
+			ACRlog.logMatrix(vetout, ACRlog.qui() + "vetout");
 //			ACRlog.waitHere("attenzione: le coordinate precise sono in sx(vetout[0][2]) e dx(vetout[0][3])");
 		}
 		return vetout;
@@ -1787,16 +2076,12 @@ public class ACRlocalizer {
 		}
 		// ricavo i due punti sopra alla mezza altezza
 		double[][] duepuntisopra = ACRlocalizer.findPointsopra3v(line3, (int) halfmax);
-
-		// duepuntisopra[0][0] = leftx;
-		// duepuntisopra[1][0] = lefty;
-		// duepuntisopra[2][0] = leftz;
-		// duepuntisopra[3][0] = leftw;
-		// duepuntisopra[0][1] = rightx;
-		// duepuntisopra[1][1] = righty;
-		// duepuntisopra[2][1] = rightz;
-		// duepuntisopra[3][1] = rightw;
-
+		//
+		// duepuntisopra[0][0] = leftx; duepuntisopra[0][1] = rightx;
+		// duepuntisopra[1][0] = lefty; duepuntisopra[1][1] = righty;
+		// duepuntisopra[2][0] = leftz; duepuntisopra[2][1] = rightz;
+		// duepuntisopra[3][0] = leftw; duepuntisopra[3][1] = rightw;
+		//
 		double[] duepuntiza = new double[2];
 		double[] duepuntiwa = new double[2];
 		duepuntiwa[0] = duepuntisopra[3][0];
@@ -1848,11 +2133,8 @@ public class ACRlocalizer {
 		// ACRutils.waitHere("TRACCIATA UNA BISETTRICE IMMAGINE E TROVATI GLI ESTREMI
 		// OGGETTO");
 
-		// duepuntisopra[0][0] = leftx;
-		// duepuntisopra[1][0] = lefty;
-		// duepuntisopra[0][1] = rightx;
-		// duepuntisopra[1][1] = righty;
-
+		// duepuntisopra[0][0] = leftx; duepuntisopra[0][1] = rightx;
+		// duepuntisopra[1][0] = lefty; duepuntisopra[1][1] = righty;
 		double[][] vetout = new double[2][4];
 		vetout[0][0] = duepuntisopra[0][0]; // coordinata X pixel sopra sinistra
 		vetout[1][0] = duepuntisopra[1][0]; // coordinata Y pixel sopra sinistra
@@ -1943,14 +2225,75 @@ public class ACRlocalizer {
 		}
 		double[][] out1 = new double[4][2];
 		out1[0][0] = leftx;
-		out1[1][0] = lefty;
-		out1[2][0] = leftz;
-		out1[3][0] = leftw;
 		out1[0][1] = rightx;
+		out1[0][2] = leftz;
+		out1[0][3] = rightz;
+		out1[1][0] = lefty;
 		out1[1][1] = righty;
-		out1[2][1] = rightz;
-		out1[3][1] = rightw;
+		out1[1][2] = leftw;
+		out1[1][3] = rightw;
 
+		return out1;
+	}
+
+	public static double[][] findPointsopraAYV(double[][] line3, double halfmax) {
+
+		double leftx = 0;
+		double lefty = 0;
+		double leftz = 0;
+		double leftw = 0;
+		double rightx = 0;
+		double righty = 0;
+		double rightz = 0;
+		double rightw = 0;
+
+		double[] x1 = new double[line3[0].length];
+		for (int i1 = 0; i1 < line3[0].length; i1++) {
+			x1[i1] = line3[0][i1];
+		}
+		double[] y1 = new double[line3[0].length];
+		for (int i1 = 0; i1 < line3[0].length; i1++) {
+			y1[i1] = line3[1][i1];
+		}
+		double[] z1 = new double[line3[0].length];
+		for (int i1 = 0; i1 < line3[0].length; i1++) {
+			z1[i1] = line3[2][i1];
+		}
+		double[] w1 = new double[line3[0].length];
+		for (int i1 = 0; i1 < line3[0].length; i1++) {
+			w1[i1] = line3[3][i1];
+		}
+		// cerco, partendo da sinistra del segmento il valore di pixel che supera od
+		// uguaglia la meta'altezza del segnale
+		for (int i1 = 0; i1 < z1.length; i1++) {
+			if (Double.compare(z1[i1], halfmax) >= 0) {
+				leftx = x1[i1];
+				lefty = y1[i1];
+				leftz = z1[i1];
+				leftw = w1[i1];
+				break;
+			}
+		}
+		for (int i1 = z1.length - 1; i1 >= 0; i1--) {
+			if (Double.compare(z1[i1], halfmax) >= 0) {
+				rightx = x1[i1];
+				righty = y1[i1];
+				rightz = z1[i1];
+				rightw = w1[i1];
+				break;
+			}
+		}
+		double[][] out1 = new double[2][4];
+		out1[0][0] = leftx;
+		out1[0][1] = rightx;
+		out1[0][2] = leftz;
+		out1[0][3] = rightz;
+		out1[1][0] = lefty;
+		out1[1][1] = righty;
+		out1[1][2] = leftw;
+		out1[1][3] = rightw;
+		IJ.log(ACRlog.qui() + "=============");
+		ACRlog.logMatrix(out1, ACRlog.qui() + "out1");
 		return out1;
 	}
 
@@ -2031,6 +2374,66 @@ public class ACRlocalizer {
 		out1[1][1] = righty;
 		out1[2][1] = rightz;
 		out1[3][1] = rightw;
+
+		return out1;
+	}
+
+	public static double[][] findPointsottoAYV(double[][] line3, double pseudomax) {
+
+		double leftx = 0;
+		double lefty = 0;
+		double leftz = 0;
+		double leftw = 0;
+		double rightx = 0;
+		double righty = 0;
+		double rightz = 0;
+		double rightw = 0;
+
+		double[] x1 = new double[line3[0].length];
+		for (int i1 = 0; i1 < line3[0].length; i1++) {
+			x1[i1] = line3[0][i1];
+		}
+		double[] y1 = new double[line3[0].length];
+		for (int i1 = 0; i1 < line3[0].length; i1++) {
+			y1[i1] = line3[1][i1];
+		}
+		double[] z1 = new double[line3[0].length];
+		for (int i1 = 0; i1 < line3[0].length; i1++) {
+			z1[i1] = line3[2][i1];
+		}
+		double[] w1 = new double[line3[0].length];
+		for (int i1 = 0; i1 < line3[0].length; i1++) {
+			w1[i1] = line3[3][i1];
+		}
+		for (int i1 = 0; i1 < z1.length; i1++) {
+			if (Double.compare(z1[i1], pseudomax) >= 0) {
+				leftx = x1[i1 - 1];
+				lefty = y1[i1 - 1];
+				leftz = z1[i1 - 1];
+				leftw = w1[i1 - 1];
+				break;
+			}
+		}
+		for (int i1 = z1.length - 1; i1 >= 0; i1--) {
+			if (Double.compare(z1[i1], pseudomax) >= 0) {
+				rightx = x1[i1 + 1];
+				righty = y1[i1 + 1];
+				rightz = z1[i1 + 1];
+				rightw = w1[i1 + 1];
+				break;
+			}
+		}
+		double[][] out1 = new double[2][4];
+		out1[0][0] = leftx;
+		out1[0][1] = rightx;
+		out1[0][2] = leftz;
+		out1[0][3] = rightz;
+		out1[1][0] = lefty;
+		out1[1][1] = righty;
+		out1[1][2] = leftw;
+		out1[1][3] = rightw;
+		IJ.log(ACRlog.qui() + "=============");
+		ACRlog.logMatrix(out1, ACRlog.qui() + "out1");
 
 		return out1;
 	}
@@ -2135,6 +2538,49 @@ public class ACRlocalizer {
 		if (verbose)
 			ACRlog.logVector(out1, "verticalSearchInterpolated out1");
 		return out1;
+	}
+
+	/**
+	 * Analizza il profilo di una linea, cercando di determinare le dimensioni
+	 * dell'oggetto. La linea deve essere attiva come ROI sull'immagine passata
+	 * 
+	 * @param imp2
+	 * @return
+	 */
+	public static double profAnal(ImagePlus imp2, boolean step, boolean fast, boolean verbose, int timeout) {
+		// e come caspita potrei abbreviare profile analyzer? Ci sono 2 soluzioni:
+		// analProf oppure profAnal ai posteri(ori) la scelta!!
+		if (verbose)
+			IJ.log("<GeometricAccuracy.profAnal START>");
+		int pseudomaxlen = 3; // dimensioni roi di ricerca pseudomassimo
+		double[][] decomposed3v = ACRutils.decomposer3v(imp2);
+		double[][] zeropadded3v = ACRutils.zeropadProfile3v(decomposed3v);
+		double[][] vetout = ACRlocalizer.FWHMpoints3vNEW(zeropadded3v, pseudomaxlen, "PROFILO LINEA", step, fast,
+				verbose);
+//		if (step) ACRlog.waitHere("profilo analizzato");
+		//
+		// posso misurare il diametro "con precisione?" utilizzando i due punti
+		// interpolati
+		//
+		if (verbose)
+			ACRlog.logMatrix(vetout, "<GeometricAccuracy.profAnal> vetout");
+
+		/// MA DEVO CALCOLARE LA DISTANZA !!!
+
+//		vetout[0][0] = leftxup; // leftx non interpolato
+//		vetout[0][1] = rightxup; // rightx non interpolato
+//		vetout[0][2] = xinterpsx; // leftx interpolato
+//		vetout[0][3] = xinterpdx; // rightx interpolato
+//
+//		vetout[1][0] = leftyup; // lefty non interpolato
+//		vetout[1][1] = rightyup; // rightx non interpolato
+//		vetout[1][2] = yinterpsx; // lefty interpolato
+//		vetout[1][3] = yinterpdx; // rightx interpolato
+
+		double dimension = Math
+				.sqrt(Math.pow((vetout[0][2] - vetout[0][3]), 2) + Math.pow((vetout[1][2] - vetout[1][3]), 2)); // IN
+																												// PIXEL
+		return dimension;
 	}
 
 }
