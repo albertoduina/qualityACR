@@ -1014,6 +1014,52 @@ public class ACRutils {
 		}
 		return outIntArr;
 	}
+	
+	/**
+	 * Rimozione duplicati (ancora da testare)
+	 * 
+	 * @param matrix
+	 * @return
+	 */
+	public static String[][] removeDuplicate(String[][] matrix) {
+	    String[][] newMatrix = new String[matrix.length][matrix[0].length];
+	    int newMatrixRow = 1;
+
+	    for (int i = 0; i < matrix[0].length; i++)
+	        newMatrix[0][i] = matrix[0][i];
+
+	    for (int j = 1; j < matrix.length; j++) {
+	        List<Boolean> list = new ArrayList<>();
+	        for (int i = 0; newMatrix[i][0] != null; i++) {
+	            boolean same = true;
+	            for (int col = 2; col < matrix[j].length; col++) {
+	                if (!newMatrix[i][col].equals(matrix[j][col])) {
+	                    same = false;
+	                    break;
+	                }
+	            }
+	            list.add(same);
+	        }
+
+	        if (!list.contains(true)) {
+	            for (int i = 0; i < matrix[j].length; i++) {
+	                newMatrix[newMatrixRow][i] = matrix[j][i];
+	            }
+	            newMatrixRow++;
+	        }
+	    }
+	    
+	    int i;
+	    for(i = 0; newMatrix[i][0] != null; i++);
+	    
+	    String finalMatrix[][] = new String[i][newMatrix[0].length];
+	    for (i = 0; i < finalMatrix.length; i++) {
+	        for (int j = 0; j < finalMatrix[i].length; j++)
+	            finalMatrix[i][j] = newMatrix[i][j];
+	    }
+	    
+	    return finalMatrix;
+	}
 
 	/**
 	 * ricerca del minimo

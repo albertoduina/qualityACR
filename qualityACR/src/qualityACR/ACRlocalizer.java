@@ -8,11 +8,19 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.Line;
+import ij.gui.NewImage;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Plot;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
+import ij.measure.Calibration;
+import ij.measure.Measurements;
+import ij.measure.ResultsTable;
+import ij.plugin.Thresholder;
+import ij.plugin.filter.ParticleAnalyzer;
+import ij.process.AutoThresholder;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 public class ACRlocalizer {
@@ -676,7 +684,7 @@ public class ACRlocalizer {
 		// centro reale del fantoccio circolare
 
 		if (verbose)
-			IJ.log(ACRlog.qui() + " START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + "START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
 
 		if (step)
 			ACRlog.waitHere(">>> 02 - MISURA PRECISA DIAMETRI FANTOCCIO <<<", ACRutils.debug, timeout, fast);
@@ -706,8 +714,9 @@ public class ACRlocalizer {
 		double edgeRight = width;
 		double edgeBottom = 0.;
 		double edgeTop = height;
-		double x0src = xcenter - width + 50;
-		double y0src = ycenter - height + 30;
+		double x0src = xcenter - width;
+		double y0src = ycenter - height;
+		;
 		double x1src = xcenter + width;
 		double y1src = ycenter + height;
 
@@ -719,8 +728,8 @@ public class ACRlocalizer {
 		edgeBottom = 0.;
 		edgeTop = height;
 		x0src = xcenter + width;
-		y0src = ycenter - width + 30;
-		x1src = xcenter - width + 20;
+		y0src = ycenter - width;
+		x1src = xcenter - width;
 		y1src = ycenter + width;
 		double[] clippings2 = ACRgraphic.liangBarsky(edgeLeft, edgeRight, edgeBottom, edgeTop, x0src, y0src, x1src,
 				y1src);
@@ -849,7 +858,7 @@ public class ACRlocalizer {
 //		imp1.paste();
 //		imp1.killRoi();
 
-		IJ.log("gridLocalizer1_001 > ");
+		IJ.log(ACRlog.qui());
 		int latoROI = 11;
 		int width = imp1.getWidth();
 		int height = imp1.getHeight();
@@ -900,7 +909,8 @@ public class ACRlocalizer {
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.YELLOW, false);
 			}
 		}
-		ACRlog.waitHere("scansione orizzontale su interi colore giallo");
+		if (step || verbose)
+			ACRlog.waitHere(ACRlog.qui() + "scansione orizzontale su interi colore giallo");
 
 		// scansione per colonne
 		for (int x1 = 1; x1 < width - 1; x1++) {
@@ -922,7 +932,8 @@ public class ACRlocalizer {
 				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
 			}
 		}
-		ACRlog.waitHere("scansione verticale su interi colore blu");
+		if (step || verbose)
+			ACRlog.waitHere(ACRlog.qui() + "scansione verticale su interi colore blu");
 
 		// scansione per righe
 		for (int y1 = 1; y1 < height - 1; y1++) {
@@ -943,7 +954,8 @@ public class ACRlocalizer {
 				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.RED, true);
 			}
 		}
-		ACRlog.waitHere("scansione orizzontale interpolata colore rosso");
+		if (step || verbose)
+			ACRlog.waitHere(ACRlog.qui() + "scansione orizzontale interpolata colore rosso");
 
 		// scansione per colonne
 		for (int x1 = 1; x1 < width - 1; x1++) {
@@ -964,10 +976,12 @@ public class ACRlocalizer {
 				ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, type, size, Color.GREEN, true);
 			}
 		}
+		if (step || verbose) {
+			ACRlog.waitHere(ACRlog.qui() + "scansione verticale interpolata colore verde");
 
-		ACRlog.waitHere("scansione verticale interpolata colore verde");
-
-		ACRlog.waitHere("ora ripuliamo glio overlay e disegnamo il cerchio calcolato con le interpolazioni");
+			ACRlog.waitHere(
+					ACRlog.qui() + "ora ripuliamo glio overlay e disegnamo il cerchio calcolato con le interpolazioni");
+		}
 		over1.clear();
 
 		float[] vetX = ACRutils.arrayListToArrayFloat(arrIntX);
@@ -997,42 +1011,9 @@ public class ACRlocalizer {
 		over1.addElement(imp1.getRoi());
 		imp1.killRoi();
 
-		if (verbose) {
-			ACRlog.waitHere("La circonferenza risultante dal fit non interpolato e' mostrata in GIALLO", true, timeout,
-					fast);
-		}
-		// ora raduno tutti i punti che abbiamo determinato, ad esempio con la ricerca
-		// interpolata, e li passo al fitter
-		float[] vetX2 = ACRutils.arrayListToArrayFloat(arrIntX);
-		float[] vetY2 = ACRutils.arrayListToArrayFloat(arrIntY);
-
-		PointRoi pr22 = new PointRoi(vetX2, vetY2, vetX2.length);
-		pr22.setPointType(2);
-		pr22.setSize(4);
-		imp1.updateAndDraw();
-		// ---------------------------------------------------
-		// eseguo ora fitCircle per trovare centro e dimensione grossolana del
-		// fantoccio. FitCircle è copiato da ImageJ ed era a sua volta derivato dal
-		// programma BoneJ
-		// ---------------------------------------------------
-		imp1.setRoi(new PointRoi(vetX2, vetY2, vetX2.length));
-		double[] out6 = ACRgraphic.fitCircleNew(imp1);
-		ACRlog.logVector(out6, "out6");
-
-		double xCenterCircle2 = out6[0];
-		double yCenterCircle2 = out6[1];
-		double diamCircle2 = out6[2];
-
-		imp1.setRoi(new OvalRoi(xCenterCircle2 - diamCircle2 / 2, yCenterCircle2 - diamCircle2 / 2, diamCircle2,
-				diamCircle2));
-
-		imp1.getRoi().setStrokeColor(Color.GREEN);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
-
-		if (verbose) {
-			ACRlog.waitHere("La circonferenza risultante dal fit interpolato e' mostrata in VERDE", true, timeout,
-					fast);
+		if (true) {
+			ACRlog.waitHere(ACRlog.qui() + "La circonferenza risultante dal fit non interpolato e' mostrata in GIALLO",
+					true, timeout, fast);
 		}
 
 		float[] vetX3 = ACRutils.arrayListToArrayFloat(arrIntX);
@@ -1042,43 +1023,6 @@ public class ACRlocalizer {
 			points3[i1][0] = (double) vetX3[i1];
 			points3[i1][1] = (double) vetY3[i1];
 		}
-
-		double[] out7 = BoneJ_FitCircle.hyperStable(points3);
-		double xCenterCircle3 = out7[0];
-		double yCenterCircle3 = out7[1];
-		double diamCircle3 = out7[2] * 2;
-
-		imp1.setRoi(new OvalRoi(xCenterCircle3 - diamCircle3 / 2, yCenterCircle3 - diamCircle3 / 2, diamCircle3,
-				diamCircle3));
-
-		imp1.getRoi().setStrokeColor(Color.RED);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
-		if (verbose) {
-			ACRlog.waitHere("La circonferenza risultante dal fit interpolato e' mostrata in ROSSO", true, timeout,
-					fast);
-		}
-
-		double[] dvetX3 = ACRutils.toDouble(vetX3);
-		double[] dvetY3 = ACRutils.toDouble(vetY3);
-
-		double[] out8 = CircleFitter.myCircle(dvetX3, dvetY3);
-		double xCenterCircle4 = out8[0];
-		double yCenterCircle4 = out8[1];
-		double diamCircle4 = out8[2];
-
-		imp1.setRoi(new OvalRoi(xCenterCircle4 - diamCircle4 / 2, yCenterCircle4 - diamCircle4 / 2, diamCircle4,
-				diamCircle4));
-
-		imp1.getRoi().setStrokeColor(Color.BLUE);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
-		ACRlog.waitHere("La circonferenza risultante dal fit interpolato e' mostrata in BLU", true, timeout, fast);
-
-		ACRlog.waitHere("i risultati dei vari algoritmi sono i seguenti:\nGIALLO_= " + xCenterCircle + " , "
-				+ yCenterCircle + " , " + diamCircle + "\nVERDE_= " + xCenterCircle2 + " , " + yCenterCircle2 + " , "
-				+ diamCircle2 + "\nROSSO_= " + xCenterCircle3 + " , " + yCenterCircle3 + " , " + diamCircle3
-				+ "\nBLU____= " + xCenterCircle4 + " , " + yCenterCircle4 + " , " + diamCircle4);
 
 		double[] out4 = new double[3];
 		out4[0] = xCenterCircle;
@@ -2463,6 +2407,31 @@ public class ACRlocalizer {
 		return out1;
 	}
 
+//	public static int[] verticalSearch2(ImagePlus imp1, double water, int xposition, boolean verbose) {
+//		//
+//		// faccio la scansione verticale per localizzare il fantoccio
+//		//
+//		double halfwater = water / 2;
+//		int spessore = 1;
+//		imp1.deleteRoi();
+//		int height = imp1.getHeight();
+//		Line.setWidth(spessore);
+//		int x1 = xposition;
+//		int y1 = 0;
+//		int x2 = xposition;
+//		int y2 = height;
+//		imp1.setRoi(new Line(x1, y1, x2, y2));
+//		imp1.updateAndDraw();
+//		Roi roi1 = imp1.getRoi();
+//		double[] profi1 = ((Line) roi1).getPixels();
+//		if (verbose)
+//			ACRlog.logVector(profi1, "verticalSearch profi1");
+//		int[] out1 = profileSearch(profi1, halfwater, verbose);
+//		if (verbose)
+//			ACRlog.logVector(out1, "verticalSearch out1");
+//		return out1;
+//	}
+
 	public static int[] horizontalSearch(ImagePlus imp1, double water, int yposition, boolean verbose) {
 		//
 		// faccio la scansione verticale per localizzare il fantoccio
@@ -2581,6 +2550,213 @@ public class ACRlocalizer {
 				.sqrt(Math.pow((vetout[0][2] - vetout[0][3]), 2) + Math.pow((vetout[1][2] - vetout[1][3]), 2)); // IN
 																												// PIXEL
 		return dimension;
+	}
+
+	public static double phantomRotation(ImagePlus imp1, double[] phantomCircle, boolean step, boolean fast,
+			boolean verbose, int timeout) {
+
+		boolean verbose2 = false;
+
+		// ricerca del valore massimo di segnale sull'intera immagine mediato su di una
+		// ROI quadrata 11x11, utilizzo questo segnale come valore dell'acqua, per la
+		// ricerca e localizzazione del fantoccio
+		imp1.show();
+
+		ACRutils.zoom(imp1);
+
+//		imp1.setRoi(17, 18, 164, 160);
+//		imp1.cut();
+//		imp1.setRoi(3, 2, 164, 160);
+//		imp1.paste();
+//		imp1.killRoi();
+
+		IJ.log(ACRlog.qui());
+		int latoROI = 11;
+		int width = imp1.getWidth();
+		int height = imp1.getHeight();
+		Overlay over1 = new Overlay();
+		imp1.setOverlay(over1);
+
+		phantomElab1(imp1, phantomCircle, step, fast, verbose, timeout);
+		//
+		// Ricerca posizione del massimo con una roi quadrata di lato dispari 11x11,
+		// restituisce le coordinate del centro
+		//
+		double[] water = maxPositionGeneric(imp1, latoROI);
+		//
+		// uso il segnale max trovato per definire il threshold
+		//
+		int threshold = (int) water[2] * 3 / 4;
+		//
+		// ora scansiono l'immagine, riga per riga, evito volutamente il bordo di 1
+		// pixel attorno ai bordi, area dove di solito succedono COSSE BRUUTTE ASSAI!
+		//
+		int[] out2 = new int[4];
+		double[] out3 = new double[4];
+		double xpoint1 = 0;
+		double ypoint1 = 0;
+		double xpoint2 = 0;
+		double ypoint2 = 0;
+
+		ArrayList<Float> arrIntX = new ArrayList<>();
+		ArrayList<Float> arrIntY = new ArrayList<>();
+		ArrayList<Integer> arrX = new ArrayList<>();
+		ArrayList<Integer> arrY = new ArrayList<>();
+
+		// effettuo solo la scansione per colonne
+		for (int x1 = 1; x1 < width - 1; x1++) {
+			verbose2 = false;
+			out2 = verticalSearch(imp1, threshold, x1, verbose2);
+			if (out2 != null) {
+				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
+				xpoint1 = x1;
+				ypoint1 = out2[0];
+				arrX.add(x1);
+				arrY.add(out2[0]);
+				int size = 1;
+				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
+				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
+				xpoint1 = x1;
+				ypoint1 = out2[1];
+				xpoint1 = x1;
+				ypoint1 = out2[1];
+				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
+			}
+		}
+		return 0;
+	}
+
+	public static void phantomElab1(ImagePlus imp1, double[] phantomCircle, boolean step, boolean fast, boolean verbose,
+			int timeout) {
+
+		IJ.log(ACRlog.qui() + "START");
+
+		double xcircle = phantomCircle[0];
+		double ycircle = phantomCircle[1];
+		double dcircle = phantomCircle[2]-4;
+		ImagePlus imp3 = imp1.duplicate();
+		ImagePlus imp4 = applyThreshold(imp3);
+		ACRlog.waitHere();
+
+		ImageProcessor ip4 = imp4.getProcessor();
+		imp4.setRoi(new OvalRoi(xcircle - dcircle / 2, ycircle - dcircle / 2, dcircle, dcircle));
+		ip4.setColor(Color.WHITE);
+		ip4.fillOutside(imp4.getRoi());
+
+		imp4.updateAndDraw();
+		imp4.show();
+		ACRutils.zoom(imp4);
+		ACRlog.waitHere();
+
+//		Thresholder at1 = new Thresholder();
+//		at1.setBackground("White");
+//
+//		at1.setMethod("Default");
+//		ByteProcessor ipt1 = Thresholder.createMask(imp4);
+//		ImagePlus impt1 = new ImagePlus("thresholded", ipt1);
+//		impt1.show();
+//		ACRutils.zoom(impt1);
+		int options = ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES + ParticleAnalyzer.SHOW_MASKS+ ParticleAnalyzer.INCLUDE_HOLES;
+		int minCirc = 0;
+		int maxCirc = 1;
+		int minSizePixels = 3500;
+		int maxSizePixels = 300000;
+
+		ResultsTable rt1 = new ResultsTable();
+		int measurements = Measurements.CENTER_OF_MASS + Measurements.AREA;
+		ParticleAnalyzer pa1 = new ParticleAnalyzer(options, measurements, rt1, minSizePixels, maxSizePixels, minCirc,
+				maxCirc);
+		pa1.setHideOutputImage(false);
+		pa1.analyze(imp4);
+		ImagePlus imp5 = pa1.getOutputImage();
+		if (imp5 == null)
+			ACRlog.waitHere("imp5==null niente immagine da particle analyzer");
+		imp5.show();
+		ACRutils.zoom(imp5);
+		ACRlog.waitHere();
+
+		return;
+
+	}
+
+//	public static void elebora1() {
+//		// ho memorizzato la macro col recorder
+//		selectWindow("2_HC1-7vNC1,2_ACR_T_-60_-35.302663803101_-18.769975662231-1");
+//		selectWindow("2_HC1-7vNC1,2_ACR_T_-60_-35.302663803101_-18.769975662231");
+//		selectWindow("2_HC1-7vNC1,2_ACR_T_-60_-35.302663803101_-18.769975662231-1");
+//		setOption("ScaleConversions", true);
+//		run("8-bit");
+//		setAutoThreshold("Default");
+//		// run("Threshold...");
+//		setAutoThreshold("Default");
+//		// setThreshold(0, 87);
+//		setOption("BlackBackground", false);
+//		run("Convert to Mask");
+//		run("Analyze Particles...", "size=500-Infinity pixel show=Overlay clear overlay");
+//		run("Close");
+//
+//	}
+
+	/**
+	 * Applica correttamente l'operazione di Thresholding
+	 * 
+	 * @param imp1
+	 * @return
+	 */
+	public static ImagePlus applyThreshold(ImagePlus imp1) {
+		int slices = 1;
+		ImageProcessor ip1 = imp1.getProcessor();
+		Calibration cal1 = imp1.getCalibration();
+
+		short[] pixels1 = rawVector((short[]) ip1.getPixels(), cal1);
+
+		int threshold = (int) cal1.getCValue(ip1.getAutoThreshold());
+
+		ImagePlus imp2 = NewImage.createByteImage("Thresholded", imp1.getWidth(), imp1.getHeight(), slices,
+				NewImage.FILL_WHITE);
+		ByteProcessor ip2 = (ByteProcessor) imp2.getProcessor();
+		byte[] pixels2 = (byte[]) ip2.getPixels();
+		for (int i1 = 0; i1 < pixels2.length; i1++) {
+			if (pixels1[i1] >= threshold) {
+				pixels2[i1] = (byte) 255;
+			} else {
+				pixels2[i1] = (byte) 0;
+			}
+		}
+		ip2.resetMinAndMax();
+		return imp2;
+	}
+
+	public static ImagePlus applyThreshold2(ImagePlus imp1) {
+		int slices = 1;
+		ImageProcessor ip1 = imp1.getProcessor();
+		Calibration cal1 = imp1.getCalibration();
+
+		short[] pixels1 = rawVector((short[]) ip1.getPixels(), cal1);
+
+		int threshold = (int) cal1.getCValue(ip1.getAutoThreshold());
+
+		ImagePlus imp2 = NewImage.createByteImage("Thresholded", imp1.getWidth(), imp1.getHeight(), slices,
+				NewImage.FILL_BLACK);
+		ByteProcessor ip2 = (ByteProcessor) imp2.getProcessor();
+		byte[] pixels2 = (byte[]) ip2.getPixels();
+		for (int i1 = 0; i1 < pixels2.length; i1++) {
+			if (pixels1[i1] >= threshold) {
+				pixels2[i1] = (byte) 0;
+			} else {
+				pixels2[i1] = (byte) 255;
+			}
+		}
+		ip2.resetMinAndMax();
+		return imp2;
+	}
+
+	public static short[] rawVector(short[] pixels1, Calibration cal1) {
+		short[] out2 = new short[pixels1.length];
+		for (int i1 = 0; i1 < pixels1.length; i1++) {
+			out2[i1] = (short) cal1.getRawValue(pixels1[i1]);
+		}
+		return out2;
 	}
 
 }

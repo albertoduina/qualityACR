@@ -467,7 +467,7 @@ public class ACRgraphic {
 		int[] x = poly.xpoints;
 		int[] y = poly.ypoints;
 		if (n < 3) {
-			IJ.error("Fit Circle", "At least 3 points are required to fit a circle.");
+			IJ.error(ACRlog.qui() + "Fit Circle", "At least 3 points are required to fit a circle.");
 			return null;
 		}
 
@@ -523,7 +523,7 @@ public class ACRgraphic {
 			ynew = A0 + xnew * (A1 + xnew * (A2 + 4. * xnew * xnew));
 			if (Math.abs(ynew) > Math.abs(yold)) {
 				if (IJ.debugMode)
-					IJ.log("Fit Circle: wrong direction: |ynew| > |yold|");
+					IJ.log(ACRlog.qui() + "Fit Circle: wrong direction: |ynew| > |yold|");
 				xnew = 0;
 				break;
 			}
@@ -537,17 +537,17 @@ public class ACRgraphic {
 			}
 			if (iter >= IterMax) {
 				if (IJ.debugMode)
-					IJ.log("Fit Circle: will not converge");
+					IJ.log(ACRlog.qui() + "Fit Circle: will not converge");
 				xnew = 0;
 			}
 			if (xnew < 0) {
 				if (IJ.debugMode)
-					IJ.log("Fit Circle: negative root:  x = " + xnew);
+					IJ.log(ACRlog.qui() + "Fit Circle: negative root:  x = " + xnew);
 				xnew = 0;
 			}
 		}
 		if (IJ.debugMode)
-			IJ.log("Fit Circle: n=" + n + ", xnew=" + IJ.d2s(xnew, 2) + ", iterations=" + iterations);
+			IJ.log(ACRlog.qui() + "Fit Circle: n=" + n + ", xnew=" + IJ.d2s(xnew, 2) + ", iterations=" + iterations);
 
 		// calculate the circle parameters
 		double DET = xnew * xnew - xnew * Mz + Cov_xy;
@@ -555,7 +555,7 @@ public class ACRgraphic {
 		double CenterY = (Myz * (Mxx - xnew) - Mxz * Mxy) / (2 * DET);
 		double radius = Math.sqrt(CenterX * CenterX + CenterY * CenterY + Mz + 2 * xnew);
 		if (Double.isNaN(radius)) {
-			IJ.error("Fit Circle", "Points are collinear.");
+			IJ.error(ACRlog.qui() + "Fit Circle", "Points are collinear.");
 			return null;
 		}
 
@@ -572,7 +572,7 @@ public class ACRgraphic {
 		double[] out = new double[4];
 		out[0] = CenterX;
 		out[1] = CenterY;
-		out[2] = radius*2;
+		out[2] = radius * 2;
 		out[3] = DET;
 		return out;
 	}
@@ -592,7 +592,7 @@ public class ACRgraphic {
 		imp1.updateAndDraw();
 		Roi roi1 = imp1.getRoi();
 		double[] profi1 = ((Line) roi1).getPixels();
-		ACRlog.vetPrint(profi1, "profi1");
+		ACRlog.vetPrint(profi1, ACRlog.qui() + "profi1");
 		ACRlog.waitHere("getLinePixels");
 		return profi1;
 	}
@@ -618,7 +618,7 @@ public class ACRgraphic {
 		Roi roi1 = imp1.getRoi();
 		double[] profi1 = ((Line) roi1).getPixels();
 		Line.setWidth(oldWidth);
-		ACRlog.vetPrint(profi1, "profi1");
+		ACRlog.vetPrint(profi1, ACRlog.qui() + "profi1");
 		ACRlog.waitHere("getLinePixels");
 		return profi1;
 
@@ -636,7 +636,7 @@ public class ACRgraphic {
 
 		Line line = (Line) imp1.getRoi();
 		if (line == null || !(line.isLine())) {
-			IJ.error("Line selection required.");
+			IJ.error(ACRlog.qui() + "Line selection required.");
 			return null;
 		}
 		double[] profiZ = line.getPixels();
@@ -659,7 +659,7 @@ public class ACRgraphic {
 
 		Line line = (Line) imp1.getRoi();
 		if (line == null || !(line.isLine())) {
-			IJ.error("Line selection required.");
+			IJ.error(ACRlog.qui() + "Line selection required.");
 			return null;
 		}
 		double[] profiZ = line.getPixels();
@@ -673,7 +673,7 @@ public class ACRgraphic {
 			profiY[i1] = (double) fp1.ypoints[i1];
 		}
 		if (profiX.length != profiZ.length) {
-			IJ.log("different length, profi2x= " + profiX.length + " profi2z= " + profiZ.length);
+			IJ.log(ACRlog.qui() + "different length, profi2x= " + profiX.length + " profi2z= " + profiZ.length);
 		}
 		double[][] out1 = new double[3][profiX.length];
 		out1[0] = profiX;
@@ -726,7 +726,7 @@ public class ACRgraphic {
 	}
 
 	/**
-	 * Attenzione che in questa versione la struttura della matrice � completamente
+	 * Attenzione che in questa versione la struttura della matrice e' completamente
 	 * cambiata
 	 * 
 	 * @param profile
@@ -736,7 +736,7 @@ public class ACRgraphic {
 	 */
 	public static Plot basePlot2(double[][] profile, double[] vetXpoints, String title, Color color) {
 
-		ACRlog.logMatrix(profile, "profile");
+		ACRlog.logMatrix(profile, ACRlog.qui() + "profile");
 		double[] profileX = new double[profile[0].length];
 		double[] profileZ = new double[profile[0].length];
 
@@ -765,8 +765,8 @@ public class ACRgraphic {
 			}
 		}
 
-		ACRlog.logVector(vetXpoints, "vetXpoints");
-		ACRlog.logVector(vetYpoints, "vetYpoints");
+		ACRlog.logVector(vetXpoints, ACRlog.qui() + "vetXpoints");
+		ACRlog.logVector(vetYpoints, ACRlog.qui() + "vetYpoints");
 		ACRlog.waitHere();
 
 		plot.addPoints(vetXpoints, vetYpoints, PlotWindow.CIRCLE);
@@ -815,7 +815,7 @@ public class ACRgraphic {
 
 		ImagePlus imp = new Opener().openImage(path);
 		if (imp == null) {
-			ACRlog.waitThere("Immagine " + path + " inesistente o non visualizzabile");
+			ACRlog.waitThere(ACRlog.qui() + "Immagine " + path + " inesistente o non visualizzabile");
 			return null;
 		}
 		// IJ.log("OpenImageEnlarged");
@@ -837,7 +837,7 @@ public class ACRgraphic {
 		ImagePlus imp = opener.openImage(nome.getPath());
 		if (imp == null) {
 			if (verbose)
-				ACRlog.waitThere("Immagine " + nome.getPath() + " inesistente o non visualizzabile");
+				ACRlog.waitThere(ACRlog.qui() + "Immagine " + nome.getPath() + " inesistente o non visualizzabile");
 			return null;
 		}
 		return imp;
@@ -855,7 +855,7 @@ public class ACRgraphic {
 		ImagePlus imp = opener.openImage(path);
 		if (imp == null) {
 			if (verbose)
-				ACRlog.waitThere("Immagine " + path + " inesistente o non visualizzabile");
+				ACRlog.waitThere(ACRlog.qui() + "Immagine " + path + " inesistente o non visualizzabile");
 			return null;
 		}
 		return imp;
@@ -872,7 +872,7 @@ public class ACRgraphic {
 		Opener opener = new Opener();
 		ImagePlus imp = opener.openImage(path);
 		if (imp == null) {
-			ACRlog.waitThere("Immagine " + path + " inesistente o non visualizzabile");
+			ACRlog.waitThere(ACRlog.qui() + "Immagine " + path + " inesistente o non visualizzabile");
 			return null;
 		}
 		// IJ.log("OpenImageNormal");
