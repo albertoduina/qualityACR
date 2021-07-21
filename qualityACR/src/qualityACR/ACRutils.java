@@ -822,121 +822,6 @@ public class ACRutils {
 	// }
 	// }
 
-	/**
-	 * effettua l'ordinamento di un array a due dimensioni, secondo la chiave
-	 * fornita (0 o 1). LO SO CHE JAVA8 FA TUTTO CON UNA ISTRUZIONE, MA IO IGNORO E
-	 * ME NE F8!
-	 * 
-	 * @param tableIn matrice da ordinare
-	 * @param key     chiave di ordinamento
-	 * @return matrice ordinata
-	 */
-	public static double[][] minsort(double[][] tableIn, int key) {
-
-		double[][] tableOut = new double[tableIn.length][tableIn[0].length];
-		for (int i1 = 0; i1 < tableIn.length; i1++) {
-			for (int i2 = 0; i2 < tableIn[0].length; i2++) {
-				tableOut[i1][i2] = tableIn[i1][i2];
-			}
-		}
-		//
-		// per mia lazzaronaggine creo un array con i valori di key ed inoltre un array
-		// indice
-		//
-		double[] vetKey = new double[tableOut[0].length];
-		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
-			vetKey[i1] = tableOut[key][i1];
-		}
-		int[] vetIndex = new int[tableOut[0].length];
-		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
-			vetIndex[i1] = i1;
-		}
-		//
-		// lo battezzo algoritmo di Tone&Batista
-		//
-		double aux1 = 0;
-		int aux2 = 0;
-		for (int i1 = 0; i1 < vetKey.length; i1++) {
-			for (int i2 = i1 + 1; i2 < vetKey.length; i2++) {
-				if (vetKey[i2] < vetKey[i1]) {
-					aux1 = vetKey[i1];
-					vetKey[i1] = vetKey[i2];
-					vetKey[i2] = aux1;
-					// ----
-					aux2 = vetIndex[i1];
-					vetIndex[i1] = vetIndex[i2];
-					vetIndex[i2] = aux2;
-				}
-			}
-		}
-
-		// a questo punto usando il vetIndex di Tone&Batista, riordino tabella in un
-		// unica passata
-		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
-			for (int i2 = 0; i2 < vetIndex.length; i2++) {
-				tableOut[i2][i1] = tableIn[vetIndex[i2]][i1];
-			}
-		}
-
-		return tableOut;
-	}
-
-	/**
-	 * minsort per matrice di interi
-	 * 
-	 * @param tableIn matrice da ordinare
-	 * @param key     chiave ordinamento
-	 * @return matrice ordinata
-	 */
-	public static int[][] minsort(int[][] tableIn, int key) {
-
-		int[][] tableOut = new int[tableIn.length][tableIn[0].length];
-		for (int i1 = 0; i1 < tableIn.length; i1++) {
-			for (int i2 = 0; i2 < tableIn[0].length; i2++) {
-				tableOut[i1][i2] = tableIn[i1][i2];
-			}
-		}
-		//
-		// per mia lazzaronaggine creo un array con i valori di key ed inoltre un array
-		// indice
-		//
-		int[] vetKey = new int[tableOut[0].length];
-		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
-			vetKey[i1] = tableOut[key][i1];
-		}
-		int[] vetIndex = new int[tableOut[0].length];
-		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
-			vetIndex[i1] = i1;
-		}
-		//
-		// lo battezzo algoritmo di Tone&Batista
-		//
-		int aux1 = 0;
-		int aux2 = 0;
-		for (int i1 = 0; i1 < vetKey.length; i1++) {
-			for (int i2 = i1 + 1; i2 < vetKey.length; i2++) {
-				if (vetKey[i2] < vetKey[i1]) {
-					aux1 = vetKey[i1];
-					vetKey[i1] = vetKey[i2];
-					vetKey[i2] = aux1;
-					// ----
-					aux2 = vetIndex[i1];
-					vetIndex[i1] = vetIndex[i2];
-					vetIndex[i2] = aux2;
-				}
-			}
-		}
-
-		// a questo punto usando il vetIndex di Tone&Batista, riordino tabella in un
-		// unica passata
-		for (int i1 = 0; i1 < tableOut[0].length; i1++) {
-			for (int i2 = 0; i2 < vetIndex.length; i2++) {
-				tableOut[i2][i1] = tableIn[vetIndex[i2]][i1];
-			}
-		}
-
-		return tableOut;
-	}
 
 	/**
 	 * Cerca tutte me occorrenze del valore nell'elemento selezionato con key
@@ -955,8 +840,8 @@ public class ACRutils {
 				outY.add(vetIn[i1][1]);
 			}
 		}
-		int[] myX = arrayListToArrayInt(outX);
-		int[] myY = arrayListToArrayInt(outY);
+		int[] myX = ACRcalc.arrayListToArrayInt(outX);
+		int[] myY = ACRcalc.arrayListToArrayInt(outY);
 		int[][] out1 = new int[myX.length][2];
 		for (int i1 = 0; i1 < myX.length; i1++) {
 			out1[i1][0] = myX[i1];
@@ -980,86 +865,8 @@ public class ACRutils {
 		return out1;
 	}
 
-	/**
-	 * Conversion from arrayList<Integer> to int[]
-	 * 
-	 * @param inArrayList arrayList input
-	 * @return String[] output
-	 */
-	public static int[] arrayListToArrayInt(ArrayList<Integer> inArrayList) {
-		int[] outIntArr = new int[inArrayList.size()];
-		int i1 = 0;
-		for (Integer n : inArrayList) {
-			outIntArr[i1++] = n;
-		}
-		return outIntArr;
-	}
 
-	public static float[] arrayListToArrayFloat(List<Float> inArrayList) {
 
-		float[] outIntArr = new float[inArrayList.size()];
-		int i1 = 0;
-		for (Float n : inArrayList) {
-			outIntArr[i1++] = n;
-		}
-		return outIntArr;
-	}
-
-	public static double[] arrayListToArrayDouble(List<Double> inArrayList) {
-
-		double[] outIntArr = new double[inArrayList.size()];
-		int i1 = 0;
-		for (Double n : inArrayList) {
-			outIntArr[i1++] = n;
-		}
-		return outIntArr;
-	}
-	
-	/**
-	 * Rimozione duplicati (ancora da testare)
-	 * 
-	 * @param matrix
-	 * @return
-	 */
-	public static String[][] removeDuplicate(String[][] matrix) {
-	    String[][] newMatrix = new String[matrix.length][matrix[0].length];
-	    int newMatrixRow = 1;
-
-	    for (int i = 0; i < matrix[0].length; i++)
-	        newMatrix[0][i] = matrix[0][i];
-
-	    for (int j = 1; j < matrix.length; j++) {
-	        List<Boolean> list = new ArrayList<>();
-	        for (int i = 0; newMatrix[i][0] != null; i++) {
-	            boolean same = true;
-	            for (int col = 2; col < matrix[j].length; col++) {
-	                if (!newMatrix[i][col].equals(matrix[j][col])) {
-	                    same = false;
-	                    break;
-	                }
-	            }
-	            list.add(same);
-	        }
-
-	        if (!list.contains(true)) {
-	            for (int i = 0; i < matrix[j].length; i++) {
-	                newMatrix[newMatrixRow][i] = matrix[j][i];
-	            }
-	            newMatrixRow++;
-	        }
-	    }
-	    
-	    int i;
-	    for(i = 0; newMatrix[i][0] != null; i++);
-	    
-	    String finalMatrix[][] = new String[i][newMatrix[0].length];
-	    for (i = 0; i < finalMatrix.length; i++) {
-	        for (int j = 0; j < finalMatrix[i].length; j++)
-	            finalMatrix[i][j] = newMatrix[i][j];
-	    }
-	    
-	    return finalMatrix;
-	}
 
 	/**
 	 * ricerca del minimo

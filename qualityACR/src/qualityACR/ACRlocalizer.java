@@ -837,17 +837,13 @@ public class ACRlocalizer {
 	}
 
 	/**
-	 * Ricerca di oggetti nell'immagine con la scansione di una griglia. Se fosse
-	 * sufficientemente veloce sarebbe interessante eseguirla per ogni riga ed ogni
-	 * colonna.
+	 * Ricerca di oggetti nell'immagine con la scansione orizzontale, riga per riga,
+	 * e poi verticale, colonna per colonna. Non gestisce i numerosi doppioni.
 	 */
 	public static double[] gridLocalizer1(ImagePlus imp1, boolean step, boolean fast, boolean verbose, int timeout) {
 
 		boolean verbose2 = false;
 
-		// ricerca del valore massimo di segnale sull'intera immagine mediato su di una
-		// ROI quadrata 11x11, utilizzo questo segnale come valore dell'acqua, per la
-		// ricerca e localizzazione del fantoccio
 		imp1.show();
 
 		ACRutils.zoom(imp1);
@@ -980,12 +976,12 @@ public class ACRlocalizer {
 			ACRlog.waitHere(ACRlog.qui() + "scansione verticale interpolata colore verde");
 
 			ACRlog.waitHere(
-					ACRlog.qui() + "ora ripuliamo glio overlay e disegnamo il cerchio calcolato con le interpolazioni");
+					ACRlog.qui() + "ora ripuliamo gli overlay e disegnamo il cerchio calcolato con le interpolazioni");
 		}
 		over1.clear();
 
-		float[] vetX = ACRutils.arrayListToArrayFloat(arrIntX);
-		float[] vetY = ACRutils.arrayListToArrayFloat(arrIntY);
+		float[] vetX = ACRcalc.arrayListToArrayFloat(arrIntX);
+		float[] vetY = ACRcalc.arrayListToArrayFloat(arrIntY);
 
 		PointRoi pr12 = new PointRoi(vetX, vetY);
 		pr12.setPointType(2);
@@ -1016,8 +1012,8 @@ public class ACRlocalizer {
 					true, timeout, fast);
 		}
 
-		float[] vetX3 = ACRutils.arrayListToArrayFloat(arrIntX);
-		float[] vetY3 = ACRutils.arrayListToArrayFloat(arrIntY);
+		float[] vetX3 = ACRcalc.arrayListToArrayFloat(arrIntX);
+		float[] vetY3 = ACRcalc.arrayListToArrayFloat(arrIntY);
 		double[][] points3 = new double[vetX3.length][2];
 		for (int i1 = 0; i1 < vetX3.length; i1++) {
 			points3[i1][0] = (double) vetX3[i1];
@@ -1034,8 +1030,11 @@ public class ACRlocalizer {
 	}
 
 	/**
-	 * Ricerca posizione del massimo con una roi programmabile di lato dispari,
-	 * restituisce le coordinate del centro
+	 * Ricerca posizione del massimo di segnale, sull'intera immagine, con una roi
+	 * programmabile di lato dispari, che scorre su tutta l'immagine. Calcola il
+	 * segnale medio della ROI e ne memorizziamo valore max e posizione in cui lo si
+	 * incontra. Restituisce valore max e le coordinate del centro ROI in cui si
+	 * trova (una sola posizione prevista)
 	 * 
 	 * @param imp1
 	 * @return
@@ -1090,7 +1089,7 @@ public class ACRlocalizer {
 		}
 		if (max1 < 50.0) // filtro per evitare di restitruire il fondo, non so se serve a qualcosa
 			return null;
-		// restituiamo il vaolre massimo tra le medie delle ROI e le sue coordinate
+		// restituiamo il valore massimo tra le medie delle ROI e le sue coordinate
 		// sull'immagine
 		double[] out = new double[3];
 		out[0] = xmax1;
@@ -1103,7 +1102,7 @@ public class ACRlocalizer {
 	 * Ricerca lungo i pixel di un profilo, in pratica una specie di FWHM non
 	 * utilizzo il primo e l'ultimo pixel del profilo, per evitare pixel strani
 	 * dovuti a difetti digitali delle immagini. Restituisce il valore del pixel che
-	 * supera od eguaglia il threshold. Integer
+	 * supera od eguaglia il threshold.
 	 * 
 	 * @param profi1 profilo da elaborare
 	 * @param water  presunto segnale dell'acqua
@@ -1142,7 +1141,7 @@ public class ACRlocalizer {
 	 * Ricerca lungo i pixel di un profilo, in pratica una specie di FWHM non
 	 * utilizzo il primo e l'ultimo pixel del profilo, per evitare pixel strani
 	 * dovuti a difetti digitali delle immagini. Restituisce il valore del pixel che
-	 * supera od eguaglia il threshold. DoublePrecision
+	 * supera od eguaglia il threshold.
 	 * 
 	 * @param profi1 profilo da elaborare
 	 * @param water  presunto segnale dell'acqua
@@ -2633,7 +2632,7 @@ public class ACRlocalizer {
 
 		double xcircle = phantomCircle[0];
 		double ycircle = phantomCircle[1];
-		double dcircle = phantomCircle[2]-4;
+		double dcircle = phantomCircle[2] - 4;
 		ImagePlus imp3 = imp1.duplicate();
 		ImagePlus imp4 = applyThreshold(imp3);
 		ACRlog.waitHere();
@@ -2656,7 +2655,8 @@ public class ACRlocalizer {
 //		ImagePlus impt1 = new ImagePlus("thresholded", ipt1);
 //		impt1.show();
 //		ACRutils.zoom(impt1);
-		int options = ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES + ParticleAnalyzer.SHOW_MASKS+ ParticleAnalyzer.INCLUDE_HOLES;
+		int options = ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES + ParticleAnalyzer.SHOW_MASKS
+				+ ParticleAnalyzer.INCLUDE_HOLES;
 		int minCirc = 0;
 		int maxCirc = 1;
 		int minSizePixels = 3500;

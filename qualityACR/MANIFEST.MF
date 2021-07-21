@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Ant-Version: Apache Ant 1.10.10
 Created-By: 16.0.1+9-24 (Oracle Corporation)
 Built-By: AlbertoDuina
-Built-Date: July 20 2021
+Built-Date: July 21 2021
 Main-Class: qualityACR.Test1
-Implementation-Version: 2021lug20_2253
+Implementation-Version: 2021lug21_2254
 
