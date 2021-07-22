@@ -436,6 +436,44 @@ public class ACRlog {
 		return;
 	}
 
+	public static void logArrayListTable3(ArrayList<ArrayList<Integer>> matrixTable, String title) {
+		// ArrayList<Double> row1 = new ArrayList<Double>();
+		if (matrixTable == null) {
+			IJ.log("fromArrayListToStringTable.matrixTable == null");
+			return;
+		}
+		IJ.log("####### " + title + "[" + matrixTable.get(0).size() + " x " + matrixTable.size() + "] ########");
+		// ArrayList<String> riga = matrixTable.get(0);
+		for (int i1 = 0; i1 < matrixTable.size(); i1++) {
+			ArrayList<Integer> arrayList = matrixTable.get(i1);
+			String logRiga = "";
+			for (int j1 = 0; j1 < matrixTable.get(i1).size(); j1++) {
+				logRiga += arrayList.get(j1) + ",  ";
+			}
+			IJ.log(logRiga);
+		}
+		return;
+	}
+
+	public static void logArrayListTable4(ArrayList<ArrayList<Integer>> matrixTable, String title) {
+		// ArrayList<Double> row1 = new ArrayList<Double>();
+		if (matrixTable == null) {
+			IJ.log("fromArrayListToStringTable.matrixTable == null");
+			return;
+		}
+
+		for (ArrayList obj : matrixTable) {
+			ArrayList<Integer> temp = obj;
+			String aa = "";
+			for (Integer num : temp) {
+				aa = aa + (num + " , ");
+			}
+			IJ.log("" + aa);
+		}
+
+			return;
+	}
+
 	public static void logArrayListTable2(ArrayList<ArrayList<String>> matrixTable, String title) {
 		// ArrayList<Double> row1 = new ArrayList<Double>();
 		if (matrixTable == null) {
@@ -890,8 +928,8 @@ public class ACRlog {
 	}
 
 	public static String qui() {
-		String out = ("<" + Thread.currentThread().getStackTrace()[2].getClassName()+"."
-				+ Thread.currentThread().getStackTrace()[2].getMethodName())+" line= "
+		String out = ("<" + Thread.currentThread().getStackTrace()[2].getClassName() + "."
+				+ Thread.currentThread().getStackTrace()[2].getMethodName()) + " line= "
 				+ Thread.currentThread().getStackTrace()[2].getLineNumber() + ">  ";
 		return out;
 	}

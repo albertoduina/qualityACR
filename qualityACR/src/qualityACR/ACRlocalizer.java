@@ -2399,10 +2399,10 @@ public class ACRlocalizer {
 		Roi roi1 = imp1.getRoi();
 		double[] profi1 = ((Line) roi1).getPixels();
 		if (verbose)
-			ACRlog.logVector(profi1, "verticalSearch profi1");
+			ACRlog.logVector(profi1, ACRlog.qui()+"verticalSearch profi1");
 		int[] out1 = profileSearch(profi1, halfwater, verbose);
 		if (verbose)
-			ACRlog.logVector(out1, "verticalSearch out1");
+			ACRlog.logVector(out1, ACRlog.qui()+"verticalSearch out1");
 		return out1;
 	}
 
@@ -2575,20 +2575,17 @@ public class ACRlocalizer {
 		int height = imp1.getHeight();
 		Overlay over1 = new Overlay();
 		imp1.setOverlay(over1);
-
-		phantomElab1(imp1, phantomCircle, step, fast, verbose, timeout);
 		//
-		// Ricerca posizione del massimo con una roi quadrata di lato dispari 11x11,
-		// restituisce le coordinate del centro
+		// eleboro e filtro l'immagine, in modo da renderla binaria ed isolare i
+		// particolari che in seguito andro'a rilevare
 		//
-		double[] water = maxPositionGeneric(imp1, latoROI);
+		ImagePlus imp4 = phantomElab1(imp1, phantomCircle, step, fast, verbose, timeout);
+		Overlay over4= new Overlay();
+		imp4.setOverlay(over4);
 		//
-		// uso il segnale max trovato per definire il threshold
+		// l'immagine e'binaria, per cui threshold=255;
 		//
-		int threshold = (int) water[2] * 3 / 4;
-		//
-		// ora scansiono l'immagine, riga per riga, evito volutamente il bordo di 1
-		// pixel attorno ai bordi, area dove di solito succedono COSSE BRUUTTE ASSAI!
+		int threshold = 255;
 		//
 		int[] out2 = new int[4];
 		double[] out3 = new double[4];
@@ -2604,8 +2601,8 @@ public class ACRlocalizer {
 
 		// effettuo solo la scansione per colonne
 		for (int x1 = 1; x1 < width - 1; x1++) {
-			verbose2 = false;
-			out2 = verticalSearch(imp1, threshold, x1, verbose2);
+			verbose2 = true;
+			out2 = verticalSearch(imp4, threshold, x1, verbose2);
 			if (out2 != null) {
 				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
 				xpoint1 = x1;
@@ -2614,19 +2611,21 @@ public class ACRlocalizer {
 				arrY.add(out2[0]);
 				int size = 1;
 				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
-				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
+				ACRutils.plotPoints(imp4, over4, xpoint1, ypoint1, type, size, Color.GREEN, false);
 				xpoint1 = x1;
 				ypoint1 = out2[1];
 				xpoint1 = x1;
 				ypoint1 = out2[1];
-				ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, type, size, Color.BLUE, false);
+				ACRutils.plotPoints(imp4, over4, xpoint1, ypoint1, type, size, Color.GREEN, false);
 			}
+//			ACRlog.waitHere();
 		}
+		ACRlog.waitHere();
 		return 0;
 	}
 
-	public static void phantomElab1(ImagePlus imp1, double[] phantomCircle, boolean step, boolean fast, boolean verbose,
-			int timeout) {
+	public static ImagePlus phantomElab1(ImagePlus imp1, double[] phantomCircle, boolean step, boolean fast,
+			boolean verbose, int timeout) {
 
 		IJ.log(ACRlog.qui() + "START");
 
@@ -2635,6 +2634,10 @@ public class ACRlocalizer {
 		double dcircle = phantomCircle[2] - 4;
 		ImagePlus imp3 = imp1.duplicate();
 		ImagePlus imp4 = applyThreshold(imp3);
+		
+		imp4.updateAndDraw();
+		imp4.show();
+
 		ACRlog.waitHere();
 
 		ImageProcessor ip4 = imp4.getProcessor();
@@ -2645,7 +2648,7 @@ public class ACRlocalizer {
 		imp4.updateAndDraw();
 		imp4.show();
 		ACRutils.zoom(imp4);
-		ACRlog.waitHere();
+//		ACRlog.waitHere();
 
 //		Thresholder at1 = new Thresholder();
 //		at1.setBackground("White");
@@ -2673,9 +2676,9 @@ public class ACRlocalizer {
 			ACRlog.waitHere("imp5==null niente immagine da particle analyzer");
 		imp5.show();
 		ACRutils.zoom(imp5);
-		ACRlog.waitHere();
+//		ACRlog.waitHere();
 
-		return;
+		return imp5;
 
 	}
 
@@ -2706,14 +2709,20 @@ public class ACRlocalizer {
 	public static ImagePlus applyThreshold(ImagePlus imp1) {
 		int slices = 1;
 		ImageProcessor ip1 = imp1.getProcessor();
+		
+		
+		
 		Calibration cal1 = imp1.getCalibration();
 
 		short[] pixels1 = rawVector((short[]) ip1.getPixels(), cal1);
 
 		int threshold = (int) cal1.getCValue(ip1.getAutoThreshold());
+		
+//		short[] pixels1 = (short[]) ip1.getPixels();
+//		int threshold=500;
 
 		ImagePlus imp2 = NewImage.createByteImage("Thresholded", imp1.getWidth(), imp1.getHeight(), slices,
-				NewImage.FILL_WHITE);
+				NewImage.FILL_BLACK);
 		ByteProcessor ip2 = (ByteProcessor) imp2.getProcessor();
 		byte[] pixels2 = (byte[]) ip2.getPixels();
 		for (int i1 = 0; i1 < pixels2.length; i1++) {
@@ -2723,7 +2732,7 @@ public class ACRlocalizer {
 				pixels2[i1] = (byte) 0;
 			}
 		}
-		ip2.resetMinAndMax();
+//		ip2.resetMinAndMax();
 		return imp2;
 	}
 

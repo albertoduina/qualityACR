@@ -667,85 +667,72 @@ public class ACRcalc {
 		return tableOut;
 	}
 
+	/**
+	 * Rimozione dei duplicati all'interno di una matrice 2D, ricorre all'uso di
+	 * arrayList 2D
+	 * 
+	 * @param matin matrice di interi
+	 * @return matrice di interi coi duplicati rimossi
+	 */
 	public static int[][] removeDuplicate(int[][] matin) {
 
-		ArrayList<ArrayList<Integer>> pippo = new ArrayList<ArrayList<Integer>>();
+		ArrayList<ArrayList<Integer>> pippo = new ArrayList<>();
 
 		boolean dup = false;
-		int precedente = 0;
-		int k2 = 0;
-		int v1 = 0;
-		int v2 = 0;
-		int key = 0; // va lasciato a zero!
+		int key = 0; // chiave per il sort della matrice
 		int[][] matsort = minsort(matin, key);
 		int dim1 = matsort.length;
 		int dim2 = matsort[0].length;
-		IJ.log(ACRlog.qui() + " dim1= " + dim1 + " dim2= " + dim2);
+//		IJ.log(ACRlog.qui() + " dim1= " + dim1 + " dim2= " + dim2);
 
+		int count = 0;
 		int aux1 = 0;
-		int[] vetaux1 = new int[matsort.length];
+		int[] vetprec = new int[matsort.length];
 
-//		ACRlog.logMatrix(matin, ACRlog.qui() + "matin");
-		ACRlog.logMatrix(matsort, ACRlog.qui() + "matsort");
+//		ACRlog.logMatrix(matsort, ACRlog.qui() + "matsort");
 		for (int i2 = 0; i2 < matsort[0].length; i2++) {
-			if (matsort[key][i2] != precedente) {
-				dup = false;
-			} else {
-				dup = true;
-				for (int i1 = 0; i1 < matsort.length; i1++) {
-					if (matsort[i1][i2] != vetaux1[i1]) {
-						dup = false;
-					}
+			dup = true;
+			for (int i1 = 0; i1 < matsort.length; i1++) {
+				if (matsort[i1][i2] != vetprec[i1]) {
+					dup = false;
 				}
-				if (!dup) {
-					for (int i1 = 0; i1 < matsort.length; i1++) {
-						ArrayList<Integer> tempList = new ArrayList<>();
-						aux1 = matsort[i1][i2];
-						tempList.add(aux1);
-						vetaux1[i1] = aux1;
-						dup = false;
+			}
+			if (!dup) {
+				count++;
+				for (int i1 = 0; i1 < matsort.length; i1++) {
+					ArrayList<Integer> tempList = new ArrayList<>();
+					aux1 = matsort[i1][i2];
+					tempList.add(aux1);
+					vetprec[i1] = aux1;
+					if (i2 == 0) {
 						pippo.add(tempList);
+					} else {
+						pippo.get(i1).add(aux1);
 					}
 				}
 			}
 		}
 
+//		ACRlog.waitHere("count= " + count);
+//
+//		ACRlog.logArrayListTable4(pippo, ACRlog.qui() + "pippo");
+//		ACRlog.waitHere();
+
 		int[][] pluto = ACRcalc.convert2Darraylist(pippo);
 		return pluto;
 	}
 
-//	public static void mainello(String[] args) {
-//		ArrayList<ArrayList<Integer>> mainList = new ArrayList<ArrayList<Integer>>();
-//
-//		Integer[] sub1 = { 1, 2, 4 };
-//		Integer[] sub2 = { 3, 2, 1 };
-//		ArrayList<Integer> subList1 = new ArrayList<>(Arrays.asList(sub1));
-//		ArrayList<Integer> subList2 = new ArrayList<>(Arrays.asList(sub2));
-//
-//		mainList.add(subList1);
-//		mainList.add(subList2); // [[1, 2, 4], [3, 2, 1]]
-//
-//		ArrayList<Integer> intValues = new ArrayList<>();
-//		for (ArrayList<Integer> inner : mainList) {
-//			intValues.addAll(inner); // add inner list elements to Integer list
-//		}
-//
-////        List<String> strings =  intValues.stream().map(Object::toString)
-////                .collect(Collectors.toList());  // converts to string list
-////
-////        System.out.println(StringUtils.join(strings, ","));  // prints comma separated string
-//	}
 
 	public static int[][] convert2Darraylist(ArrayList<ArrayList<Integer>> pippo) {
 		int dim1 = pippo.size();
 		int dim2 = pippo.get(0).size();
-		IJ.log(ACRlog.qui() + "dim1= " + dim1 + " dim2= " + dim2);
+//		IJ.log(ACRlog.qui() + "dim1= " + dim1 + " dim2= " + dim2);
 
 		int[][] matOut = new int[dim1][dim2];
 		for (int i1 = 0; i1 < dim1; i1++) {
-			for (int i2 = 0; i2 < dim2; i2++) {
-				matOut[i1][i2] = pippo.get(i1).get(i2);
-			}
+			ArrayList<Integer> temparray = pippo.get(i1);
+			int[] vettemp = ACRcalc.arrayListToArrayInt(temparray);
+			matOut[i1] = vettemp;
 		}
 		return matOut;
 	}
