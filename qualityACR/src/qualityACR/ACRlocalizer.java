@@ -56,7 +56,7 @@ public class ACRlocalizer {
 		boolean manual = false;
 		int xCenterCircle = 0;
 		int yCenterCircle = 0;
-		int diamCircleMan = 0;
+//		int diamCircleMan = 0;
 		int diamCircle = 0;
 		int xCenterMROI = 0;
 		int yCenterMROI = 0;
@@ -2399,10 +2399,10 @@ public class ACRlocalizer {
 		Roi roi1 = imp1.getRoi();
 		double[] profi1 = ((Line) roi1).getPixels();
 		if (verbose)
-			ACRlog.logVector(profi1, ACRlog.qui()+"verticalSearch profi1");
+			ACRlog.logVector(profi1, ACRlog.qui() + "verticalSearch profi1");
 		int[] out1 = profileSearch(profi1, halfwater, verbose);
 		if (verbose)
-			ACRlog.logVector(out1, ACRlog.qui()+"verticalSearch out1");
+			ACRlog.logVector(out1, ACRlog.qui() + "verticalSearch out1");
 		return out1;
 	}
 
@@ -2569,18 +2569,18 @@ public class ACRlocalizer {
 //		imp1.paste();
 //		imp1.killRoi();
 
-		IJ.log(ACRlog.qui());
+		IJ.log(ACRlog.qui() + "START");
 		int latoROI = 11;
 		int width = imp1.getWidth();
 		int height = imp1.getHeight();
 		Overlay over1 = new Overlay();
 		imp1.setOverlay(over1);
 		//
-		// eleboro e filtro l'immagine, in modo da renderla binaria ed isolare i
+		// elaboro e filtro l'immagine, in modo da renderla binaria ed isolare i
 		// particolari che in seguito andro'a rilevare
 		//
 		ImagePlus imp4 = phantomElab1(imp1, phantomCircle, step, fast, verbose, timeout);
-		Overlay over4= new Overlay();
+		Overlay over4 = new Overlay();
 		imp4.setOverlay(over4);
 		//
 		// l'immagine e'binaria, per cui threshold=255;
@@ -2588,20 +2588,21 @@ public class ACRlocalizer {
 		int threshold = 255;
 		//
 		int[] out2 = new int[4];
-		double[] out3 = new double[4];
+//		double[] out3 = new double[4];
 		double xpoint1 = 0;
 		double ypoint1 = 0;
 		double xpoint2 = 0;
 		double ypoint2 = 0;
+		int[] out4 = new int[4];
 
-		ArrayList<Float> arrIntX = new ArrayList<>();
-		ArrayList<Float> arrIntY = new ArrayList<>();
+//		ArrayList<Float> arrIntX = new ArrayList<>();
+//		ArrayList<Float> arrIntY = new ArrayList<>();
 		ArrayList<Integer> arrX = new ArrayList<>();
 		ArrayList<Integer> arrY = new ArrayList<>();
 
-		// effettuo solo la scansione per colonne
+		// scansione per colonne
 		for (int x1 = 1; x1 < width - 1; x1++) {
-			verbose2 = true;
+			verbose2 = false;
 			out2 = verticalSearch(imp4, threshold, x1, verbose2);
 			if (out2 != null) {
 				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
@@ -2614,13 +2615,85 @@ public class ACRlocalizer {
 				ACRutils.plotPoints(imp4, over4, xpoint1, ypoint1, type, size, Color.GREEN, false);
 				xpoint1 = x1;
 				ypoint1 = out2[1];
-				xpoint1 = x1;
-				ypoint1 = out2[1];
+				arrX.add(x1);
+				arrY.add(out2[1]);
 				ACRutils.plotPoints(imp4, over4, xpoint1, ypoint1, type, size, Color.GREEN, false);
 			}
 //			ACRlog.waitHere();
 		}
+		for (int y1 = 1; y1 < width - 1; y1++) {
+			verbose2 = false;
+			out4 = horizontalSearch(imp4, threshold, y1, verbose2);
+			if (out4 != null) {
+				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
+				xpoint2 = out4[0];
+				ypoint2 = y1;
+				arrX.add(out4[0]);
+				arrY.add(y1);
+				int size = 1;
+				int type = 2; // 0=hybrid, 1=cross, 2= point, 3=circle
+				ACRutils.plotPoints(imp4, over4, xpoint2, ypoint2, type, size, Color.GREEN, false);
+				xpoint2 = out4[1];
+				ypoint2 = y1;
+				arrX.add(out4[1]);
+				arrY.add(y1);
+				ACRutils.plotPoints(imp4, over4, xpoint2, ypoint2, type, size, Color.GREEN, false);
+			}
+//			ACRlog.waitHere();
+		}
+
+		// devo togliere i numerosi doppioni
+
+		int[] vetX = ACRcalc.arrayListToArrayInt(arrX);
+		int[] vetY = ACRcalc.arrayListToArrayInt(arrY);
+		int[][] matXY = new int[2][vetX.length];
+		for (int i1 = 0; i1 < vetX.length; i1++) {
+			matXY[0][i1] = vetX[i1];
+			matXY[1][i1] = vetY[i1];
+		}
+
+		ACRlog.logMatrix(matXY, ACRlog.qui() + "matXY");
+		int[][] matout1 = ACRcalc.removeDuplicate(matXY);
+		ACRlog.logMatrix(matout1, ACRlog.qui() + "matout1");
+
+//		int[] vetX2 = new int[matout1[0].length];
+//		int[] vetY2 = new int[matout1[0].length];
+//		int count = 0;
+//		for (int number : matout1[0])
+//			vetX2[count++] = number;
+//		count = 0;
+//		for (int number : matout1[1])
+//			vetY2[count++] = number;
+
 		ACRlog.waitHere();
+
+		int[][] rotated = ACRutils.matRotate(matout1);
+		// ora bisogna analizzare tutti i punti delle scansioni, per ricavare i piu'
+		// prossimi agli angoli dell'immagine
+
+		int[][] matout2 = Geometric_Accuracy.vertexFinder(rotated, width, height, verbose);
+		ACRlog.logMatrix(matout2, ACRlog.qui() + "matout2");
+		// andiamo a plottare i èunti trovati
+		// VERDE
+		int AX = matout2[0][0];
+		int AY = matout2[1][0];
+		// GIALLO
+		int BX = matout2[0][1];
+		int BY = matout2[1][1];
+		// ROSSO
+		int CX = matout2[0][2];
+		int CY = matout2[1][2];
+		// AZZURRO
+		int DX = matout2[0][3];
+		int DY = matout2[1][3];
+		ACRlog.waitHere("A= " + AX + " , " + AY + " B= " + BX + " , " + BY + " C= " + CX + " , " + CY + " D= " + DX
+				+ " , " + DY);
+
+		ACRutils.plotPoints(imp4, over4, AX, AY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp4, over4, BX, BY, Color.YELLOW, 4, 4);
+		ACRutils.plotPoints(imp4, over4, CX, CY, Color.ORANGE, 4, 4);
+		ACRutils.plotPoints(imp4, over4, DX, DY, Color.CYAN, 4, 4);
+
 		return 0;
 	}
 
@@ -2634,7 +2707,7 @@ public class ACRlocalizer {
 		double dcircle = phantomCircle[2] - 4;
 		ImagePlus imp3 = imp1.duplicate();
 		ImagePlus imp4 = applyThreshold(imp3);
-		
+
 		imp4.updateAndDraw();
 		imp4.show();
 
@@ -2709,15 +2782,13 @@ public class ACRlocalizer {
 	public static ImagePlus applyThreshold(ImagePlus imp1) {
 		int slices = 1;
 		ImageProcessor ip1 = imp1.getProcessor();
-		
-		
-		
+
 		Calibration cal1 = imp1.getCalibration();
 
 		short[] pixels1 = rawVector((short[]) ip1.getPixels(), cal1);
 
 		int threshold = (int) cal1.getCValue(ip1.getAutoThreshold());
-		
+
 //		short[] pixels1 = (short[]) ip1.getPixels();
 //		int threshold=500;
 

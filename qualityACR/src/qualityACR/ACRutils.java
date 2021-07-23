@@ -822,7 +822,6 @@ public class ACRutils {
 	// }
 	// }
 
-
 	/**
 	 * Cerca tutte me occorrenze del valore nell'elemento selezionato con key
 	 * 
@@ -857,7 +856,7 @@ public class ACRutils {
 	 * @param key            selezione
 	 * @return array output
 	 */
-	public static int[] matrixExtractor(int[][] selectedPoints, int key) {
+	public static int[] matExtractor(int[][] selectedPoints, int key) {
 		int[] out1 = new int[selectedPoints.length];
 		for (int i1 = 0; i1 < selectedPoints.length; i1++) {
 			out1[i1] = selectedPoints[i1][key];
@@ -865,8 +864,15 @@ public class ACRutils {
 		return out1;
 	}
 
-
-
+	public static int[][] matRotate(int[][] matin) {
+		int[][] matrot = new int[matin[0].length][matin.length];
+		for (int i1 = 0; i1 < matin.length; i1++) {
+			for (int i2 = 0; i2 < matin[0].length; i2++) {
+				matrot[i2][i1] = matin[i1][i2];
+			}
+		}
+		return matrot;
+	}
 
 	/**
 	 * ricerca del minimo

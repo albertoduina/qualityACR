@@ -30,7 +30,7 @@ public class SpatialResolution implements PlugIn {
 	public void mainResolution() {
 
 		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
-
+		IJ.log(ACRlog.qui()+"START");
 //		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
 //		boolean[] defaults = { true, false, true, false, false, false, false, true, true, true, false, false, false,
 //				true };

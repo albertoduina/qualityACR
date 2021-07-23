@@ -302,10 +302,10 @@ public class Geometric_Accuracy implements PlugIn {
 //			ACRlog.printMatrix(rotatedPoints, "rotatedPoints");
 
 		// estraggo dalla matrice gli array con il calcolo per i vertici
-		int[] vertexa = ACRutils.matrixExtractor(rotatedPoints, 2);
-		int[] vertexb = ACRutils.matrixExtractor(rotatedPoints, 3);
-		int[] vertexc = ACRutils.matrixExtractor(rotatedPoints, 4);
-		int[] vertexd = ACRutils.matrixExtractor(rotatedPoints, 5);
+		int[] vertexa = ACRutils.matExtractor(rotatedPoints, 2);
+		int[] vertexb = ACRutils.matExtractor(rotatedPoints, 3);
+		int[] vertexc = ACRutils.matExtractor(rotatedPoints, 4);
+		int[] vertexd = ACRutils.matExtractor(rotatedPoints, 5);
 		if (false) {
 			ACRlog.logVector(vertexa, "vertexa");
 			ACRlog.logVector(vertexb, "vertexb");
@@ -427,7 +427,7 @@ public class Geometric_Accuracy implements PlugIn {
 		double SY = MY;
 
 		// ACRutils.plotPoints(imp2, over2, (int) SX, (int) SY, Color.GREEN, 3, 5);
-		// qui determino il parametro q 
+		// qui determino il parametro q
 		q = SX - slope * SY;
 		y0src = 0;
 		y1src = height;
@@ -583,12 +583,23 @@ public class Geometric_Accuracy implements PlugIn {
 		return (histo);
 	}
 
+	/**
+	 * MAIN per la ricerca del diametro
+	 * 
+	 * @param path1
+	 * @param pathReport
+	 * @param slice
+	 * @param step
+	 * @param fast
+	 * @param verbose
+	 * @param timeout
+	 */
 	public void mainSliceDiameter(String path1, String pathReport, int slice, boolean step, boolean fast,
 			boolean verbose, int timeout) {
 		double maxFitError = +20;
 //		double maxBubbleGapLimit = 2;
 
-		IJ.log("<Geometric_Accuracy.mainSliceDiameter START>");
+		IJ.log(ACRlog.qui() + "START>");
 
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		if (imp1 == null)
@@ -637,32 +648,39 @@ public class Geometric_Accuracy implements PlugIn {
 		for (int i1 = 0; i1 < out3.length; i1++) {
 			out4[i1] = out3[i1] * dimPixel;
 			ACRlog.appendLog(pathReport, "diametro " + i1 + " slice " + slice + "= " + IJ.d2s(out4[i1], 3) + " mm");
-			IJ.log("<Geometric_Accuracy.mainSliceDiameter END> diametro " + i1 + " slice " + slice + "= "
-					+ IJ.d2s(out4[i1], 3) + " mm");
+			IJ.log(ACRlog.qui() + "END> diametro " + i1 + " slice " + slice + "= " + IJ.d2s(out4[i1], 3) + " mm");
 		}
 	}
 
+	/**
+	 * Ricerca del max o min in una matrice
+	 * 
+	 * @param vetIn matrice di input
+	 * @param key   chiave di ricerca
+	 * @param max   mettere true= ricerca max
+	 * @return
+	 */
 	public double[][] extractMax(double[][] vetIn, int key, boolean max) {
 
 		double[] vetKey = new double[vetIn[0].length];
 		for (int i1 = 0; i1 < vetKey.length; i1++) {
 			vetKey[i1] = vetIn[key][i1];
-			IJ.log("<Geometric_Accuracy.extractMax> vetIn" + i1 + "," + vetIn[0][i1] + "," + vetIn[1][i1]);
+			IJ.log(ACRlog.qui() + "vetIn" + i1 + "," + vetIn[0][i1] + "," + vetIn[1][i1]);
 		}
 		ArrayList<double[]> borderPoints = new ArrayList<>();
 		double[] pointxy = new double[2];
 		double[] minmax = Tools.getMinMax(vetKey);
 		if (max)
-			IJ.log("<Geometric_Accuracy.extractMax> cerchiamo il max= " + minmax[1]);
+			IJ.log(ACRlog.qui() + "ricerca max= " + minmax[1]);
 		else
-			IJ.log("<Geometric_Accuracy.extractMax> cerchiamo il min= " + minmax[0]);
+			IJ.log(ACRlog.qui() + "ricerca min= " + minmax[0]);
 		int count = 0;
 		for (int i1 = 0; i1 < vetIn[0].length; i1++) {
 			if (max) {
 				if (Double.compare(vetIn[key][i1], minmax[1]) == 0) {
 					pointxy[0] = vetIn[0][i1];
 					pointxy[1] = vetIn[1][i1];
-					IJ.log("<Geometric_Accuracy.extractMax> aggiunto MAX " + vetIn[0][i1] + "," + vetIn[1][i1]);
+					IJ.log(ACRlog.qui() + "aggiunto MAX " + vetIn[0][i1] + "," + vetIn[1][i1]);
 					borderPoints.add(pointxy);
 					count++;
 				}
@@ -670,14 +688,14 @@ public class Geometric_Accuracy implements PlugIn {
 				if (Double.compare(vetIn[key][i1], minmax[0]) == 0) {
 					pointxy[0] = vetIn[0][i1];
 					pointxy[1] = vetIn[1][i1];
-					IJ.log("<Geometric_Accuracy.extractMax> aggiunto MIN " + vetIn[0][i1] + "," + vetIn[1][i1]);
+					IJ.log(ACRlog.qui() + "aggiunto MIN " + vetIn[0][i1] + "," + vetIn[1][i1]);
 					borderPoints.add(pointxy);
 					count++;
 				}
 			}
 		}
 
-		IJ.log("<Geometric_Accuracy.extractMax> [borderPoints.size()= " + borderPoints.size() + "count= " + count);
+		IJ.log(ACRlog.qui() + "[borderPoints.size()= " + borderPoints.size() + "count= " + count);
 
 		double[][] outIntArr = new double[2][borderPoints.size()];
 		int i2 = 0;
@@ -686,13 +704,13 @@ public class Geometric_Accuracy implements PlugIn {
 			outIntArr[1][i2] = n1[1];
 			i2++;
 		}
-		ACRlog.logMatrix(outIntArr, "<Geometric_Accuracy.extractMax> outIntArr");
+		ACRlog.logMatrix(outIntArr, ACRlog.qui() + "outIntArr");
 		return outIntArr;
 
 	}
 
 	/**
-	 * distanza di un punto da una retta
+	 * distanza di un punto da una retta [pixel]
 	 * 
 	 * @param x
 	 * @param y
@@ -734,7 +752,7 @@ public class Geometric_Accuracy implements PlugIn {
 	}
 
 	/**
-	 * Altra soluzione di distanza da un segmento
+	 * Altra soluzione di distanza da un segmento [pixel]
 	 * 
 	 * @param x
 	 * @param y
@@ -750,9 +768,9 @@ public class Geometric_Accuracy implements PlugIn {
 		// C - end point of the line segment (x2, y2)
 		// D - the crossing point between line from A to BC
 
-		double AB = distBetween(x, y, x1, y1);
-		double BC = distBetween(x1, y1, x2, y2);
-		double AC = distBetween(x, y, x2, y2);
+		double AB = distBetweenPoints(x, y, x1, y1);
+		double BC = distBetweenPoints(x1, y1, x2, y2);
+		double AC = distBetweenPoints(x, y, x2, y2);
 
 		// Heron's formula
 		double s = (AB + BC + AC) / 2;
@@ -766,11 +784,128 @@ public class Geometric_Accuracy implements PlugIn {
 		return AD;
 	}
 
-	private static double distBetween(double x, double y, double x1, double y1) {
+	/**
+	 * Calcolo della distanza tra due punti [pixel]
+	 * 
+	 * @param x
+	 * @param y
+	 * @param x1
+	 * @param y1
+	 * @return
+	 */
+	private static double distBetweenPoints(double x, double y, double x1, double y1) {
 		double xx = x1 - x;
 		double yy = y1 - y;
 
 		return (double) Math.sqrt(xx * xx + yy * yy);
+	}
+
+	/**
+	 * Dalla lista dei punti del profilo di un possibile rettangolo, ricava i 4
+	 * possibili vertici, calcolandone le distanze dai vertici dell'immagine
+	 * 
+	 * @param inpoints ATTENZIONE il formato e'routato inpoints[n][2]!!!!
+	 * @param width
+	 * @param height
+	 * @return
+	 */
+
+	public static int[][] vertexFinder(int[][] inpoints, int width, int height, boolean verbose) {
+
+		if (inpoints.length < inpoints[0].length) {
+			IJ.log(ACRlog.qui() + "attenzione la matrice di input DEVE essere ruotata!!");
+			ACRlog.waitHere("EHI, GUARDA NEL LOG, per sapere cosa hai combinato");
+		}
+
+		int[] vetX = new int[inpoints.length];
+		int[] vetY = new int[inpoints.length];
+		for (int i1 = 0; i1 < inpoints.length; i1++) {
+			vetX[i1] = inpoints[i1][0];
+			vetY[i1] = inpoints[i1][1];
+		}
+		int px = 0;
+		int py = 0;
+		int ax = 0;
+		int ay = 0;
+		int bx = width;
+		int by = 0;
+		int cx = width;
+		int cy = height;
+		int dx = 0;
+		int dy = height;
+		//
+		// FORSE HO TROVATO IL MODO: PER OGNI PUNTO SI CALCOLA:
+		// ABS(distanza da un vertice su X)+ABS(distanza da un vertice su Y)
+		// si hanno cosi' 4 colonne, coincidenti con le coordinate X ed Y del punto.
+		// Il minimo per ogni colonna rappresenta quel particolare vertice
+		//
+		// SE FUNZIONA E'UNA FIGATA, PURE ELEGANTE E LOGICA COME SOLUZIONE!
+		//
+		//
+		int[][] metamatrix = new int[inpoints.length][6];
+
+		for (int i1 = 0; i1 < inpoints.length; i1++) {
+			px = inpoints[i1][0];
+			py = inpoints[i1][1];
+			metamatrix[i1][0] = inpoints[i1][0];
+			metamatrix[i1][1] = inpoints[i1][1];
+			metamatrix[i1][2] = Math.abs(px - ax) + Math.abs(py - ay); // vertice a
+			metamatrix[i1][3] = Math.abs(px - bx) + Math.abs(py - by); // vertice b
+			metamatrix[i1][4] = Math.abs(px - cx) + Math.abs(py - cy); // vertice c
+			metamatrix[i1][5] = Math.abs(px - dx) + Math.abs(py - dy); // vertice d
+//		STRANAMENTE il calcolo qui sopra da'risultati migliori del calcolo dell'ipotenusa, piu'complicato			
+		}
+
+		if (verbose)
+			ACRlog.printMatrix(metamatrix, ACRlog.qui() + "metamatrix");
+
+		// estraggo dalla matrice gli array con il calcolo per i vertici
+		int[] vertexa = ACRutils.matExtractor(metamatrix, 2);
+		int[] vertexb = ACRutils.matExtractor(metamatrix, 3);
+		int[] vertexc = ACRutils.matExtractor(metamatrix, 4);
+		int[] vertexd = ACRutils.matExtractor(metamatrix, 5);
+		if (verbose) {
+			ACRlog.logVector(vertexa, "vertexa");
+			ACRlog.logVector(vertexb, "vertexb");
+			ACRlog.logVector(vertexc, "vertexc");
+			ACRlog.logVector(vertexd, "vertexd");
+		}
+
+		int[] posmina = ACRutils.minsearch(vertexa);
+		int[] posminb = ACRutils.minsearch(vertexb);
+		int[] posminc = ACRutils.minsearch(vertexc);
+		int[] posmind = ACRutils.minsearch(vertexd);
+		if (verbose) {
+			ACRlog.logVector(posmina, "posmina [min][index]");
+			ACRlog.logVector(posminb, "posminb [min][index]");
+			ACRlog.logVector(posminc, "posminc [min][index]");
+			ACRlog.logVector(posmind, "posmind [min][index]");
+		}
+
+		// VERDE
+		int AX = metamatrix[posmina[1]][0];
+		int AY = metamatrix[posmina[1]][1];
+		// GIALLO
+		int BX = metamatrix[posminb[1]][0];
+		int BY = metamatrix[posminb[1]][1];
+		// ROSSO
+		int CX = metamatrix[posminc[1]][0];
+		int CY = metamatrix[posminc[1]][1];
+		// AZZURRO
+		int DX = metamatrix[posmind[1]][0];
+		int DY = metamatrix[posmind[1]][1];
+
+		int[][] vetvertex = new int[2][4];
+		vetvertex[0][0] = AX;
+		vetvertex[1][0] = AY;
+		vetvertex[0][1] = BX;
+		vetvertex[1][1] = BY;
+		vetvertex[0][2] = CX;
+		vetvertex[1][2] = CY;
+		vetvertex[0][3] = DX;
+		vetvertex[1][3] = DY;
+		return vetvertex;
+
 	}
 
 }
