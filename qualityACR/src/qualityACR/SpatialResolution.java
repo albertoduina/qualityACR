@@ -125,7 +125,7 @@ public class SpatialResolution implements PlugIn {
 		//
 		// IJ.run(imp2, "Flip Horizontally", "");
 		//
-		IJ.run(imp2, "Rotate... ", "angle=8 grid=1 interpolation=Bilinear");
+		 IJ.run(imp2, "Rotate... ", "angle=10 grid=1 interpolation=Bilinear");
 		//
 		// IJ.run(imp2, "Rotate... ", "angle=-8 grid=1 interpolation=Bilinear");
 		//
@@ -142,6 +142,7 @@ public class SpatialResolution implements PlugIn {
 		fast = true;
 		verbose = true;
 		double phantomRot1 = ACRlocalizer.phantomRotation(imp2, phantomCircle, step, fast, verbose, timeout);
+		IJ.log(ACRlog.qui()+" angoloRotazione fantoccio= "+phantomRot1);
 
 		return;
 	}

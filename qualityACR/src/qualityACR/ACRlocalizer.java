@@ -2555,22 +2555,10 @@ public class ACRlocalizer {
 			boolean verbose, int timeout) {
 
 		boolean verbose2 = false;
-
-		// ricerca del valore massimo di segnale sull'intera immagine mediato su di una
-		// ROI quadrata 11x11, utilizzo questo segnale come valore dell'acqua, per la
-		// ricerca e localizzazione del fantoccio
-		imp1.show();
-
-		ACRutils.zoom(imp1);
-
-//		imp1.setRoi(17, 18, 164, 160);
-//		imp1.cut();
-//		imp1.setRoi(3, 2, 164, 160);
-//		imp1.paste();
-//		imp1.killRoi();
-
 		IJ.log(ACRlog.qui() + "START");
-		int latoROI = 11;
+		imp1.show();
+		ACRutils.zoom(imp1);
+//		int latoROI = 11;
 		int width = imp1.getWidth();
 		int height = imp1.getHeight();
 		Overlay over1 = new Overlay();
@@ -2583,29 +2571,22 @@ public class ACRlocalizer {
 		Overlay over4 = new Overlay();
 		imp4.setOverlay(over4);
 		//
-		// l'immagine e'binaria, per cui threshold=255;
+		// l'immagine di phantomElab1 e'binaria, per cui threshold=255;
 		//
 		int threshold = 255;
-		//
 		int[] out2 = new int[4];
-//		double[] out3 = new double[4];
 		double xpoint1 = 0;
 		double ypoint1 = 0;
 		double xpoint2 = 0;
 		double ypoint2 = 0;
 		int[] out4 = new int[4];
-
-//		ArrayList<Float> arrIntX = new ArrayList<>();
-//		ArrayList<Float> arrIntY = new ArrayList<>();
 		ArrayList<Integer> arrX = new ArrayList<>();
 		ArrayList<Integer> arrY = new ArrayList<>();
-
 		// scansione per colonne
 		for (int x1 = 1; x1 < width - 1; x1++) {
 			verbose2 = false;
 			out2 = verticalSearch(imp4, threshold, x1, verbose2);
 			if (out2 != null) {
-				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
 				xpoint1 = x1;
 				ypoint1 = out2[0];
 				arrX.add(x1);
@@ -2619,13 +2600,11 @@ public class ACRlocalizer {
 				arrY.add(out2[1]);
 				ACRutils.plotPoints(imp4, over4, xpoint1, ypoint1, type, size, Color.GREEN, false);
 			}
-//			ACRlog.waitHere();
 		}
 		for (int y1 = 1; y1 < width - 1; y1++) {
 			verbose2 = false;
 			out4 = horizontalSearch(imp4, threshold, y1, verbose2);
 			if (out4 != null) {
-				// qui intendo plottare sull'overlay, per vedere i risultati ottenibili
 				xpoint2 = out4[0];
 				ypoint2 = y1;
 				arrX.add(out4[0]);
@@ -2639,10 +2618,9 @@ public class ACRlocalizer {
 				arrY.add(y1);
 				ACRutils.plotPoints(imp4, over4, xpoint2, ypoint2, type, size, Color.GREEN, false);
 			}
-//			ACRlog.waitHere();
 		}
 
-		// devo togliere i numerosi doppioni
+		// tolgo i doppioni dove scansione orizzontale e verticale si sovrappongono
 
 		int[] vetX = ACRcalc.arrayListToArrayInt(arrX);
 		int[] vetY = ACRcalc.arrayListToArrayInt(arrY);
@@ -2651,29 +2629,19 @@ public class ACRlocalizer {
 			matXY[0][i1] = vetX[i1];
 			matXY[1][i1] = vetY[i1];
 		}
-
-		ACRlog.logMatrix(matXY, ACRlog.qui() + "matXY");
+		if (verbose)
+			ACRlog.logMatrix(matXY, ACRlog.qui() + "matXY");
 		int[][] matout1 = ACRcalc.removeDuplicate(matXY);
-		ACRlog.logMatrix(matout1, ACRlog.qui() + "matout1");
-
-//		int[] vetX2 = new int[matout1[0].length];
-//		int[] vetY2 = new int[matout1[0].length];
-//		int count = 0;
-//		for (int number : matout1[0])
-//			vetX2[count++] = number;
-//		count = 0;
-//		for (int number : matout1[1])
-//			vetY2[count++] = number;
-
-		ACRlog.waitHere();
-
+		if (verbose)
+			ACRlog.logMatrix(matout1, ACRlog.qui() + "matout1");
+		if (step)
+			ACRlog.waitHere();
 		int[][] rotated = ACRutils.matRotate(matout1);
-		// ora bisogna analizzare tutti i punti delle scansioni, per ricavare i piu'
-		// prossimi agli angoli dell'immagine
-
+		// analizzo tutti i punti trovati, per ricavare i piu'prossimi agli angoli
+		// dell'immagine
 		int[][] matout2 = Geometric_Accuracy.vertexFinder(rotated, width, height, verbose);
 		ACRlog.logMatrix(matout2, ACRlog.qui() + "matout2");
-		// andiamo a plottare i èunti trovati
+		// andiamo a plottare i punti trovati
 		// VERDE
 		int AX = matout2[0][0];
 		int AY = matout2[1][0];
@@ -2686,15 +2654,77 @@ public class ACRlocalizer {
 		// AZZURRO
 		int DX = matout2[0][3];
 		int DY = matout2[1][3];
-		ACRlog.waitHere("A= " + AX + " , " + AY + " B= " + BX + " , " + BY + " C= " + CX + " , " + CY + " D= " + DX
-				+ " , " + DY);
+		if (step)
+			ACRlog.waitHere("A= " + AX + " , " + AY + " B= " + BX + " , " + BY + " C= " + CX + " , " + CY + " D= " + DX
+					+ " , " + DY);
 
 		ACRutils.plotPoints(imp4, over4, AX, AY, Color.RED, 4, 4);
 		ACRutils.plotPoints(imp4, over4, BX, BY, Color.YELLOW, 4, 4);
-		ACRutils.plotPoints(imp4, over4, CX, CY, Color.ORANGE, 4, 4);
-		ACRutils.plotPoints(imp4, over4, DX, DY, Color.CYAN, 4, 4);
+		ACRutils.plotPoints(imp4, over4, CX, CY, Color.BLUE, 4, 4);
+		ACRutils.plotPoints(imp4, over4, DX, DY, Color.BLUE, 4, 4);
 
-		return 0;
+		Line l1 = new Line(DX, DY, CX, CY);
+		
+		int[][] matin= new int[2][2];
+		matin[0][0]=DX;
+		matin[1][0]=DY;
+		matin[0][1]=CX;
+		matin[1][1]=CY;
+		
+		
+		double[] vetout= ACRlocalizer.parallela(matin, -15);
+		int EX=DX+(int) vetout[0];
+		int EY=DY+(int) vetout[1];
+		int FX=CX+(int) vetout[0];
+		int FY=CY+(int) vetout[1];
+
+		ACRutils.plotPoints(imp4, over4, EX, EY, Color.CYAN, 4, 4);
+		ACRutils.plotPoints(imp4, over4, FX, FY, Color.CYAN, 4, 4);
+		
+		
+		double angle = l1.getAngle();
+
+		return angle;
+	}
+
+	/**
+	 * dati due punti di un segmento inclinato ed una distanza, traccia un segmento
+	 * parallelo, traslando i due punti della distanza voluta
+	 * 
+	 * @param punti
+	 * @param distanza
+	 * @return
+	 */
+	public static double[] parallela(int[][] punti, int distanza) {
+		int ax = punti[0][0];
+		int ay = punti[0][1];
+		int bx = punti[1][0];
+		int by = punti[1][1];
+		double slope = (ax - bx) / (ay - by);
+		double perp = -1/slope;
+
+		double sin = slope / Math.sqrt(1 + slope * slope);
+		double cos = 1 / Math.sqrt(1 + slope * slope);
+
+		double sinperp = perp / Math.sqrt(1 + perp * perp);
+		double cosperp = 1 / Math.sqrt(1 + perp * perp);
+		// data l'ipotenusa, la distanza perpendicolare tra i due segmenti, devo trovare
+		// i due cateti, che sono gli spostamenti X ed Y per i punti del segmento
+		// parallelo
+		double xoffset = distanza * sinperp;
+		double yoffset = distanza * cosperp;
+
+		IJ.log(ACRlog.qui() + "slope= " + slope);
+		IJ.log(ACRlog.qui() + "perp= " + perp);
+		IJ.log(ACRlog.qui() + "sinperp= " + sinperp);
+		IJ.log(ACRlog.qui() + "cosperp= " + cosperp);
+		IJ.log(ACRlog.qui() + "xoffset= " + xoffset);
+		IJ.log(ACRlog.qui() + "yoffset= " + yoffset);
+
+		double[] vetout = new double[2];
+		vetout[0] = xoffset;
+		vetout[1] = yoffset;
+		return vetout;
 	}
 
 	public static ImagePlus phantomElab1(ImagePlus imp1, double[] phantomCircle, boolean step, boolean fast,
