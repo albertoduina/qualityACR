@@ -2,8 +2,10 @@ package qualityACR;
 
 import java.awt.Color;
 import java.awt.Frame;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -33,24 +35,41 @@ public class Geometric_Accuracy implements PlugIn {
 	}
 
 	public void mainGeometry() {
-
+		Properties prop = ACRutils.readConfigACR();
 		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
-
-//		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
-//		boolean[] defaults = { true, false, true, false, false, false, false, true, true, true, false, false, false,
-//				true };
 		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
 		boolean[] defaults = { false, false, false, false, false, false, false, false, false, false, false, false,
 				false, false };
 		String[] headings = { "slices T1", "slices T2" };
+		boolean fastdefault = false;
+		boolean stepdefault = false;
+		boolean verbosedefault = false;
+		boolean localizerdefault = false;
+		boolean[] T1 = new boolean[7];
+		boolean[] T2 = new boolean[7];
+
+		if (prop != null) {
+			fastdefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.fast"));
+			stepdefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.step"));
+			verbosedefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.verbose"));
+			localizerdefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.geomLocalizer"));
+			for (int i1 = 0; i1 < 7; i1++) {
+				T1[i1] = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.SliceT1[" + i1 + "]"));
+				T2[i1] = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.SliceT2[" + i1 + "]"));
+			}
+			int count=0;
+			for (int i1 = 0; i1<7; i1++) {
+				defaults[count++]=T1[i1];
+				defaults[count++]=T2[i1];
+			}
+		}
 
 		GenericDialog gd1 = new GenericDialog("GEOMETRIC ACCURACY");
-		gd1.addCheckbox("ANIMAZIONE 2 sec", false);
-		gd1.addCheckbox("STEP", true);
-		gd1.addCheckbox("VERBOSE", true);
-		gd1.addCheckbox("LOCALIZER", true);
+		gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
+		gd1.addCheckbox("STEP", stepdefault);
+		gd1.addCheckbox("VERBOSE", verbosedefault);
+		gd1.addCheckbox("LOCALIZER", localizerdefault);
 		gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
-
 		gd1.showDialog();
 		if (gd1.wasCanceled()) {
 			ACRlog.waitHere("premuto cancel");
@@ -74,6 +93,34 @@ public class Geometric_Accuracy implements PlugIn {
 			vetBoolSliceT1[i1] = gd1.getNextBoolean();
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
+
+		// vado a scrivere i setup nel config file
+
+		if (prop == null)
+			prop = new Properties();
+		prop.setProperty("Geometric_Accuracy.fast", "" + fast);
+		prop.setProperty("Geometric_Accuracy.step", "" + step);
+		prop.setProperty("Geometric_Accuracy.verbose", "" + verbose);
+		prop.setProperty("Geometric_Accuracy.geomLocalizer", "" + geomLocalizer);
+		for (int i1 = 0; i1 < 7; i1++) {
+			String aux1 = "Geometric_Accuracy.SliceT1[" + i1 + "]";
+			String aux2 = "" + vetBoolSliceT1[i1];
+			prop.setProperty(aux1, aux2);
+		}
+		for (int i1 = 0; i1 < 7; i1++) {
+			String aux1 = "Geometric_Accuracy.SliceT2[" + i1 + "]";
+			String aux2 = "" + vetBoolSliceT2[i1];
+			prop.setProperty(aux1, aux2);
+		}
+
+		try {
+			ACRutils.writeConfigACR(prop);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		ACRlog.waitHere();
 
 		// leggo i nomi di tutti i 15 file presenti
 		String pathLocalizer = "";
@@ -798,114 +845,6 @@ public class Geometric_Accuracy implements PlugIn {
 		double yy = y1 - y;
 
 		return (double) Math.sqrt(xx * xx + yy * yy);
-	}
-
-	/**
-	 * Dalla lista dei punti del profilo di un possibile rettangolo, ricava i 4
-	 * possibili vertici, calcolandone le distanze dai vertici dell'immagine
-	 * 
-	 * @param inpoints ATTENZIONE il formato e'routato inpoints[n][2]!!!!
-	 * @param width
-	 * @param height
-	 * @return
-	 */
-
-	public static int[][] vertexFinder(int[][] inpoints, int width, int height, boolean verbose) {
-
-		if (inpoints.length < inpoints[0].length) {
-			IJ.log(ACRlog.qui() + "attenzione la matrice di input DEVE essere ruotata!!");
-			ACRlog.waitHere("EHI, GUARDA NEL LOG, per sapere cosa hai combinato");
-		}
-
-		int[] vetX = new int[inpoints.length];
-		int[] vetY = new int[inpoints.length];
-		for (int i1 = 0; i1 < inpoints.length; i1++) {
-			vetX[i1] = inpoints[i1][0];
-			vetY[i1] = inpoints[i1][1];
-		}
-		int px = 0;
-		int py = 0;
-		int ax = 0;
-		int ay = 0;
-		int bx = width;
-		int by = 0;
-		int cx = width;
-		int cy = height;
-		int dx = 0;
-		int dy = height;
-		//
-		// FORSE HO TROVATO IL MODO: PER OGNI PUNTO SI CALCOLA:
-		// ABS(distanza da un vertice su X)+ABS(distanza da un vertice su Y)
-		// si hanno cosi' 4 colonne, coincidenti con le coordinate X ed Y del punto.
-		// Il minimo per ogni colonna rappresenta quel particolare vertice
-		//
-		// SE FUNZIONA E'UNA FIGATA, PURE ELEGANTE E LOGICA COME SOLUZIONE!
-		//
-		//
-		int[][] metamatrix = new int[inpoints.length][6];
-
-		for (int i1 = 0; i1 < inpoints.length; i1++) {
-			px = inpoints[i1][0];
-			py = inpoints[i1][1];
-			metamatrix[i1][0] = inpoints[i1][0];
-			metamatrix[i1][1] = inpoints[i1][1];
-			metamatrix[i1][2] = Math.abs(px - ax) + Math.abs(py - ay); // vertice a
-			metamatrix[i1][3] = Math.abs(px - bx) + Math.abs(py - by); // vertice b
-			metamatrix[i1][4] = Math.abs(px - cx) + Math.abs(py - cy); // vertice c
-			metamatrix[i1][5] = Math.abs(px - dx) + Math.abs(py - dy); // vertice d
-//		STRANAMENTE il calcolo qui sopra da'risultati migliori del calcolo dell'ipotenusa, piu'complicato			
-		}
-
-		if (verbose)
-			ACRlog.printMatrix(metamatrix, ACRlog.qui() + "metamatrix");
-
-		// estraggo dalla matrice gli array con il calcolo per i vertici
-		int[] vertexa = ACRutils.matExtractor(metamatrix, 2);
-		int[] vertexb = ACRutils.matExtractor(metamatrix, 3);
-		int[] vertexc = ACRutils.matExtractor(metamatrix, 4);
-		int[] vertexd = ACRutils.matExtractor(metamatrix, 5);
-		if (verbose) {
-			ACRlog.logVector(vertexa, "vertexa");
-			ACRlog.logVector(vertexb, "vertexb");
-			ACRlog.logVector(vertexc, "vertexc");
-			ACRlog.logVector(vertexd, "vertexd");
-		}
-
-		int[] posmina = ACRutils.minsearch(vertexa);
-		int[] posminb = ACRutils.minsearch(vertexb);
-		int[] posminc = ACRutils.minsearch(vertexc);
-		int[] posmind = ACRutils.minsearch(vertexd);
-		if (verbose) {
-			ACRlog.logVector(posmina, "posmina [min][index]");
-			ACRlog.logVector(posminb, "posminb [min][index]");
-			ACRlog.logVector(posminc, "posminc [min][index]");
-			ACRlog.logVector(posmind, "posmind [min][index]");
-		}
-
-		// VERDE
-		int AX = metamatrix[posmina[1]][0];
-		int AY = metamatrix[posmina[1]][1];
-		// GIALLO
-		int BX = metamatrix[posminb[1]][0];
-		int BY = metamatrix[posminb[1]][1];
-		// ROSSO
-		int CX = metamatrix[posminc[1]][0];
-		int CY = metamatrix[posminc[1]][1];
-		// AZZURRO
-		int DX = metamatrix[posmind[1]][0];
-		int DY = metamatrix[posmind[1]][1];
-
-		int[][] vetvertex = new int[2][4];
-		vetvertex[0][0] = AX;
-		vetvertex[1][0] = AY;
-		vetvertex[0][1] = BX;
-		vetvertex[1][1] = BY;
-		vetvertex[0][2] = CX;
-		vetvertex[1][2] = CY;
-		vetvertex[0][3] = DX;
-		vetvertex[1][3] = DY;
-		return vetvertex;
-
 	}
 
 }

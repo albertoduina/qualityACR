@@ -4,11 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.Opener;
-import ij.plugin.DICOM;
 import ij.process.ImageProcessor;
 
 public class ACRinputOutput {
@@ -40,10 +40,14 @@ public class ACRinputOutput {
 	public static String[] readStackPathToSortedList(String startingDir1, String title) {
 		// IJ.log("startingDir= " + startingDir1);
 		// ora devo leggere i nomi di tutti i file contenuti nella cartella
+		IJ.log(ACRlog.qui());
+
 		List<File> result1 = ACRinputOutput.getFileListing(new File(startingDir1));
 		if (result1 == null) {
 			IJ.log("result1==null");
 		}
+		IJ.log(ACRlog.qui());
+
 		// IJ.log("result1.size= " + result1.size());
 //		String[] list1 = new String[result1.size()];
 //		String[] name1 = new String[result1.size()];
@@ -92,12 +96,14 @@ public class ACRinputOutput {
 			IJ.log("filesAndDirs==null");
 			return null;
 		}
+		IJ.log(ACRlog.qui());
 
 		List<File> filesDirs = Arrays.asList(filesAndDirs);
 		if (filesDirs == null) {
 			IJ.log("filesDirs==null");
 			return null;
 		}
+		IJ.log(ACRlog.qui());
 
 		for (File file : filesDirs) {
 			if (!file.isFile()) {
@@ -108,8 +114,9 @@ public class ACRinputOutput {
 			} else {
 				if (isImage(file)) {
 					result.add(file);
-				} 
+				}
 			}
+			IJ.log(ACRlog.qui());
 		}
 		return result;
 	}
@@ -304,7 +311,7 @@ public class ACRinputOutput {
 	 * @param fileName1 nome immagine
 	 * @return true se tiff
 	 */
-	public static boolean isImage(String fileName1) {
+	public static boolean isImage2(String fileName1) {
 		IJ.redirectErrorMessages(true);
 		ImagePlus imp1 = new Opener().openImage(fileName1);
 		IJ.redirectErrorMessages(false);
@@ -313,8 +320,7 @@ public class ACRinputOutput {
 		}
 		return true;
 	}
-
-	public static boolean isImage(File file1) {
+	public static boolean isImage2(File file1) {
 		IJ.redirectErrorMessages(true);
 		ImagePlus imp1 = new Opener().openImage(file1.getPath());
 		IJ.redirectErrorMessages(false);
@@ -323,6 +329,23 @@ public class ACRinputOutput {
 		}
 		return true;
 	}
+ 
+	public static boolean isImage(String fileName1) {
+		Opener o1 = new Opener();
+		int type = o1.getFileType(fileName1);
+		if (type == Opener.UNKNOWN || type == Opener.JAVA_OR_TEXT || type == Opener.ROI || type == Opener.TEXT)
+			return false;
+		else
+			return true;
+		}
 
+	public static boolean isImage(File file1) {
+		Opener o1 = new Opener();
+		int type = o1.getFileType(file1.getPath());
+		if (type == Opener.UNKNOWN || type == Opener.JAVA_OR_TEXT || type == Opener.ROI || type == Opener.TEXT)
+			return false;
+		else
+			return true;
+		}
 
 }

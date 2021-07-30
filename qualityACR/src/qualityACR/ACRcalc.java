@@ -680,6 +680,8 @@ public class ACRcalc {
 
 		boolean dup = false;
 		int key = 0; // chiave per il sort della matrice
+//		IJ.log(ACRlog.qui());
+//		ACRlog.logMatrix(matin, ACRlog.qui()+"matin");
 		int[][] matsort = minsort(matin, key);
 		int dim1 = matsort.length;
 		int dim2 = matsort[0].length;

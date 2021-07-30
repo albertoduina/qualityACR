@@ -3,17 +3,26 @@ package qualityACR;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Rectangle;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Properties;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
@@ -31,6 +40,90 @@ public class ACRutils {
 	static final boolean debug = true;
 	static final boolean big = true;
 
+	public static void writeConfig(String[][] property) {
+		String tmpFolderPath = IJ.getDirectory("temp");
+		String configPath = tmpFolderPath + "ACRsetup.tmp";
+
+		try (OutputStream output = new FileOutputStream(configPath)) {
+
+			Properties prop = new Properties();
+
+			for (int i1 = 0; i1 < property[0].length; i1++) {
+				prop.setProperty(property[0][i1], property[1][i1]);
+				prop.store(output, null);
+			}
+
+			// save properties to project root folder
+
+		} catch (IOException io) {
+			io.printStackTrace();
+		}
+
+	}
+
+	public static Properties readConfig() {
+
+		String tmpFolderPath = IJ.getDirectory("temp");
+		String configPath = tmpFolderPath + "ACRsetup.tmp";
+		Properties prop = new Properties();
+
+		try (InputStream input = new FileInputStream(configPath)) {
+
+			// load a properties file
+			prop.load(input);
+
+//			// get the property value and print it out
+//			System.out.println(prop.getProperty("db.url"));
+//			System.out.println(prop.getProperty("db.user"));
+//			System.out.println(prop.getProperty("db.password"));
+
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+		return prop;
+
+	}
+
+	/**
+	 * legge dalla cartella tmp dell'utente (visibile in IJ sotto
+	 * File/showFolder/temp) il file ACRsetup.tmp contenente i defaults per i vari
+	 * menu di avviamento dei vari plugin
+	 * 
+	 * @return
+	 */
+	public static Properties readConfigACR() {
+
+		String tmpFolderPath = IJ.getDirectory("temp");
+		String configPath = tmpFolderPath + "ACRsetup.tmp";
+		Properties prop = new Properties();
+		try {
+			InputStream is = new BufferedInputStream(new FileInputStream(configPath));
+			prop.load(is);
+			is.close();
+			return prop;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/**
+	 * scrive nella cartella tmp dell'utente (visibile in IJ sotto
+	 * File/showFolder/temp) il file ACRsetup.tmp contenente i defaults per i vari
+	 * menu di avviamento dei vari plugin
+	 * 
+	 * @return
+	 */
+	public static void writeConfigACR(Properties prefs) throws IOException {
+
+		String tmpFolderPath = IJ.getDirectory("temp");
+		String configPath = tmpFolderPath + "ACRsetup.tmp";
+
+		FileOutputStream fos = new FileOutputStream(configPath);
+		BufferedOutputStream bos = new BufferedOutputStream(fos);
+		prefs.store(bos, "ACR Preferences");
+		bos.close();
+	}
+
 	/***
 	 * Legge i dati da un file e li restituisce in un array string
 	 * 
@@ -45,17 +138,34 @@ public class ACRutils {
 		}
 
 		ArrayList<String> vetList = new ArrayList<String>();
+		IJ.log(ACRlog.qui());
+		Scanner myReader;
 		try {
-			BufferedReader in = new BufferedReader(new FileReader(fileName));
-			String str1 = "";
-			while ((str1 = in.readLine()) != null) {
+			myReader = new Scanner(file);
+			while (myReader.hasNextLine()) {
+				String str1 = myReader.nextLine();
 				String[] str2 = str1.split("#");
 				vetList.add(str2[1]);
 			}
-			in.close();
-		} catch (IOException e) {
+			myReader.close();	
+			IJ.log(ACRlog.qui());
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+//		try {
+//			FileReader fileReader = new FileReader(fileName);
+//			BufferedReader in = new BufferedReader(fileReader);
+//			String str1 = "";
+//			while ((str1 = in.readLine()) != null) {
+//				String[] str2 = str1.split("#");
+//				vetList.add(str2[1]);
+//			}
+//			in.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 		// ora trasferiamo tutto nel vettore
 		String[] vetResult = new String[vetList.size()];
 		for (int i1 = 0; i1 < vetList.size(); i1++) {
@@ -85,6 +195,12 @@ public class ACRutils {
 		return prof2;
 	}
 
+	/**
+	 * azzera primo ed ultimo pixel del profilo
+	 * 
+	 * @param prof1
+	 * @return
+	 */
 	public static double[][] zeropadProfile3v(double[][] prof1) {
 
 		double[][] prof2 = new double[prof1.length][prof1[0].length];
@@ -98,7 +214,19 @@ public class ACRutils {
 		return prof2;
 	}
 
+	/**
+	 * Estrae dalla matrice line3 il valore di segnale nei pixel ovvero il segnale Z
+	 * 
+	 * @param line3
+	 * @return
+	 */
 	public static double[] signal1vfrom3v(double[][] line3) {
+
+		// line3 [4][n]
+		// line3[0] = coordinata X punto
+		// line3[1] = coordinata Y punto
+		// line3[2] = segnale Z punto;
+		// line3[3] = coordinata W su profilo;
 
 		double[] line1 = new double[line3[0].length];
 		for (int i1 = 0; i1 < line3[0].length; i1++) {
@@ -117,8 +245,20 @@ public class ACRutils {
 				max1 = mean1;
 			}
 		}
-
 		return max1;
+	}
+
+	public static double pseudomin(double[] vet1, int len1) {
+
+		double min1 = Double.MAX_VALUE;
+		for (int i1 = 0; i1 < (vet1.length - len1); i1++) {
+			double[] subvet1 = ACRutils.subvet(vet1, len1, i1);
+			double mean1 = ACRcalc.vetMean(subvet1);
+			if (Double.compare(mean1, min1) < 0) {
+				min1 = mean1;
+			}
+		}
+		return min1;
 	}
 
 	/**
@@ -292,6 +432,122 @@ public class ACRutils {
 					"Attenzione trovata una sola intersezione col cerchio, cioe' " + peaks1[2].length + "  VERIFICARE");
 		// logMatrix(peaks1, "peaks1 " + title);
 		return peaks1;
+	}
+
+	public static boolean compareVectors(double[] vect1, double[] vect2, double precision, String msg) {
+		if ((vect1 == null) || (vect2 == null)) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Warning vector = null");
+			}
+			return false;
+		}
+		if (vect1.length != vect2.length) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Vectors with different length");
+			}
+			return false;
+		}
+		for (int i1 = 0; i1 < vect1.length; i1++) {
+			double diff = vect1[i1] - vect2[i1];
+			if (Math.abs(diff) > precision) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static boolean compareVectors(float[] vect1, float[] vect2, float precision, String msg) {
+		if ((vect1 == null) || (vect2 == null)) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Warning vector = null");
+			}
+			return false;
+		}
+		if (vect1.length != vect2.length) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Vectors with different length");
+			}
+			return false;
+		}
+		for (int i1 = 0; i1 < vect1.length; i1++) {
+			double diff = vect1[i1] - vect2[i1];
+			if (Math.abs(diff) > precision) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static boolean compareVectors(int[] vect1, int[] vect2, String msg) {
+		if ((vect1 == null) || (vect2 == null)) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Warning vector = null");
+			}
+			return false;
+		}
+		if (vect1.length != vect2.length) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Vectors with different length");
+			}
+			return false;
+		}
+		for (int i1 = 0; i1 < vect1.length; i1++) {
+			if (vect1[i1] != vect2[i1]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static boolean compareVectors(long[] vect1, long[] vect2, String msg) {
+		if ((vect1 == null) || (vect2 == null)) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Warning vector = null");
+			}
+			return false;
+		}
+		if (vect1.length != vect2.length) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Vectors with different length");
+			}
+			return false;
+		}
+		for (int i1 = 0; i1 < vect1.length; i1++) {
+			if (vect1[i1] != vect2[i1]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static boolean compareVectors(String[] vect1, String[] vect2, String msg) {
+		if ((vect1 == null) || (vect2 == null)) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Warning vector = null");
+			}
+			return false;
+		}
+		if (vect1.length != vect2.length) {
+			if (msg.length() > 0) {
+				IJ.log(msg + " Vectors with different length");
+			}
+			return false;
+		}
+		for (int i1 = 0; i1 < vect1.length; i1++) {
+			if (!vect1[i1].equals(vect2[i1])) {
+				if (msg.length() > 0) {
+					IJ.log(msg + " At pos " + i1 + " " + vect1[i1] + " differ " + vect2[i1]);
+				}
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static boolean compareDoublesWithTolerance(double aa, double bb, double tolerance) {
+		if (Double.compare(aa, bb) == 0)
+			return true;
+		return Math.abs(aa - bb) < tolerance;
 	}
 
 	/**
@@ -946,7 +1202,7 @@ public class ACRutils {
 	}
 
 	public static double dblTruncate(double in1, int decimals) {
-
+		ACRlog.waitThere("");
 		BigDecimal bd1 = new BigDecimal(Double.toString(in1));
 		bd1 = bd1.setScale(decimals, RoundingMode.HALF_UP);
 
