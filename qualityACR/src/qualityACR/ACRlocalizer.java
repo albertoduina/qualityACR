@@ -3301,55 +3301,89 @@ public class ACRlocalizer {
 
 		// innanzitutto vado a tracciare una struttura di punti, che potrebbe essere
 		// fatta coincidere con la matrice di fori della risoluzione
-		double lato = 2.0;
-		double ax = 57;
-		double ay = 70;
-		double cx = 65;
-		double cy = 62;
+		double lato = 2.2;
+		double k1 = 0.0;
+		double k2 = 0.2;
 
-		double bx = 0;
-		double by = 0;
-		double k1=0.175;
+		double[] primo = new double[2];
+		primo[0] = 64.2;
+		primo[1] = 62.1;
+		double[] secondo = new double[2];
+		secondo[0] = 57;
+		secondo[1] = 70;
+
+		subMatrix(imp2, over2, primo, secondo, lato, k1, k2);
+
+		lato = 2.4;
+		double[] terzo = new double[2];
+		terzo[0] = 96.5;
+		terzo[1] = 62;
+		double[] quarto = new double[2];
+		quarto[0] = 88;
+		quarto[1] = 70.5;
+		k1 = 0;
+		k2 = 0.2;
+
+		subMatrix(imp2, over2, terzo, quarto, lato, k1, k2);
+
+		lato = 2.6;
+		double[] quinto = new double[2];
+		quinto[0] = 129.5;
+		quinto[1] = 61.5;
+		double[] sesto = new double[2];
+		sesto[0] = 119.5;
+		sesto[1] = 71.5;
+		k1 = 0;
+		k2 = 0.2;
+
+		subMatrix(imp2, over2, quinto, sesto, lato, k1, k2);
+
+	}
+
+	public static void subMatrix(ImagePlus imp2, Overlay over2, double[] second, double[] first, double lato, double k1,
+			double k2) {
+		double ax = first[0];
+		double ay = first[1];
+		double bx = second[0];
+		double by = second[1];
+
+		double fx = 0;
+		double fy = 0;
 
 		for (int i1 = 0; i1 < 4; i1++) {
-			bx = cx + i1 * lato;
+			fx = bx + i1 * lato;
 			for (int i2 = 0; i2 < 4; i2++) {
-				bx = bx - k1;
-				by = cy + i2 * lato + i2 * k1 * lato;
-				Roi r1 = new Roi(bx, by, lato, lato);
-				IJ.log("bx= " + bx + " by= " + by + " VERDE");
+				fx = fx - k2;
+				fy = by + i2 * lato + i2 * k1 * lato;
+				Roi r1 = new Roi(fx, fy, lato, lato);
+				IJ.log("bx= " + fx + " by= " + fy + " VERDE");
 				imp2.setRoi(r1);
 				imp2.getRoi().setStrokeColor(Color.GREEN);
 				over2.addElement(imp2.getRoi());
 				imp2.killRoi();
-				ACRlog.waitHere();
+	//			ACRlog.waitHere();
 			}
-			cx = cx + k1 * lato;
+			bx = bx + k1 * lato;
 		}
 
-		ax = 57;
-		ay = 70;
-		cx = 65;
-		cy = 62;
-
-		bx = 0;
-		by = 0;
+		fx = 0;
+		fy = 0;
 
 		for (int i1 = 0; i1 < 4; i1++) {
 
 			for (int i2 = 0; i2 < 4; i2++) {
-				bx = ax + i1 * lato;
-				by = ay + i2 * lato + i2 * k1 * lato;
-				IJ.log("bx= " + bx + " by= " + by + " ROSSO");
-				Roi r1 = new Roi(bx, by, lato, lato);
+				fx = ax + i1 * lato;
+				fy = ay + i2 * lato + i2 * k1 * lato;
+				IJ.log("bx= " + fx + " by= " + fy + " ROSSO");
+				Roi r1 = new Roi(fx, fy, lato, lato);
 				imp2.setRoi(r1);
 				imp2.getRoi().setStrokeColor(Color.RED);
 				over2.addElement(imp2.getRoi());
 				imp2.killRoi();
-				ACRlog.waitHere();
+	//			ACRlog.waitHere();
 			}
 			ax = ax + k1 * lato;
-			ay = ay - k1 * lato;
+			ay = ay - k2 * lato;
 		}
 
 	}
