@@ -3287,6 +3287,64 @@ public class ACRlocalizer {
 		return matout;
 	}
 
+	public static double[][] rototrasla(ImagePlus imp1, double[][] matin, double[] phantomCircle, double angle,
+			boolean step, boolean fast, boolean verbose, int timeout) {
+		// per PRIMA COSA bisogna SEMPRE RUOTARE
+		// le formule analitiche di rotazione di un angolo alfa attorno ad un punto a,b
+		// sono:
+
+		// xruotato= (x-a)*cosalfa- (y-b)*sinalfa;
+		// yruotato= (x-a)sinalfa+(y-b)*cosalfa;
+
+		// per SECONDA COSA andiamo a TRASLARE
+
+		// xtraslato= xruotato
+		ImagePlus imp2 = imp1.duplicate();
+		imp2.show();
+		ACRutils.zoom(imp2);
+//		int latoROI = 11;
+		int width = imp2.getWidth();
+		int height = imp2.getHeight();
+		Overlay over2 = new Overlay();
+		imp2.setOverlay(over2);
+
+		double AX = matin[0][0];
+		double AY = matin[1][0];
+		double BX = matin[0][1];
+		double BY = matin[1][1];
+
+		double xcenter = phantomCircle[0];
+		double ycenter = phantomCircle[1];
+		double diameter = phantomCircle[2];
+
+		// il riferimento per la traslazione del centro fantoccio e' dato dal centro
+		// dell'immagine, quindi vado a fare la differenza rispetto a height/2 e
+		// width/2. Quanto ala rotazione facciamo riferimento a 0 gradi
+		double xoffset = width / 2 - xcenter;
+		double yoffset = height / 2 - ycenter;
+		IJ.log("xoffset= " + xoffset + " yoffset= " + yoffset + " angle= " + angle);
+
+		imp2.setRoi(new PointRoi(AX, AY));
+		imp2.getRoi().setStrokeColor(Color.green);
+		over2.addElement(imp2.getRoi());
+		imp2.killRoi();
+
+		double cos1 = Math.cos(angle);
+		double sin1 = Math.sin(angle);
+
+		double AX1 = Math.abs(AX * cos1 - AY * sin1);
+		double AY1 = Math.abs(AX * sin1 + AY * cos1);
+		// xruotato= (x-a)*cosalfa- (y-b)*sinalfa;
+		// yruotato= (x-a)sinalfa+(y-b)*cosalfa;
+		imp2.setRoi(new PointRoi(AX1, AY1));
+		imp2.getRoi().setStrokeColor(Color.red);
+		over2.addElement(imp2.getRoi());
+		imp2.killRoi();
+		IJ.log("AX= " + AX + " AY= " + AY + " AX1= " + AX1 + " AY1= " + AY1);
+
+		return null;
+	}
+
 	public static void gridMatrix(ImagePlus imp1, double[] phantomCircle, double angle, boolean step, boolean fast,
 			boolean verbose, int timeout) {
 
@@ -3353,17 +3411,18 @@ public class ACRlocalizer {
 		for (int i1 = 0; i1 < 4; i1++) {
 			fx = bx + i1 * lato;
 			for (int i2 = 0; i2 < 4; i2++) {
-				fx = fx - k2;
-				fy = by + i2 * lato + i2 * k1 * lato;
+				fx = fx - k2 * lato;
+				fy = by + i2 * lato; // + i2 * k1 * lato;
 				Roi r1 = new Roi(fx, fy, lato, lato);
 				IJ.log("bx= " + fx + " by= " + fy + " VERDE");
 				imp2.setRoi(r1);
 				imp2.getRoi().setStrokeColor(Color.GREEN);
 				over2.addElement(imp2.getRoi());
 				imp2.killRoi();
-	//			ACRlog.waitHere();
+				// ACRlog.waitHere();
 			}
-			bx = bx + k1 * lato;
+//			bx = bx + k1 * lato;
+//			by= by+ k2*lato;
 		}
 
 		fx = 0;
@@ -3373,16 +3432,16 @@ public class ACRlocalizer {
 
 			for (int i2 = 0; i2 < 4; i2++) {
 				fx = ax + i1 * lato;
-				fy = ay + i2 * lato + i2 * k1 * lato;
+				fy = ay + i2 * lato; // + i2 * k1 * lato;
 				IJ.log("bx= " + fx + " by= " + fy + " ROSSO");
 				Roi r1 = new Roi(fx, fy, lato, lato);
 				imp2.setRoi(r1);
 				imp2.getRoi().setStrokeColor(Color.RED);
 				over2.addElement(imp2.getRoi());
 				imp2.killRoi();
-	//			ACRlog.waitHere();
+				// ACRlog.waitHere();
 			}
-			ax = ax + k1 * lato;
+//			ax = ax + k1 * lato;
 			ay = ay - k2 * lato;
 		}
 

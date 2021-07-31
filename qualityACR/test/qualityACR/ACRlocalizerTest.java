@@ -96,4 +96,42 @@ public class ACRlocalizerTest {
 //		assertTrue(ACRutils.compareDoublesWithTolerance(angle, expected, 1e-11));
 	}
 
+	
+	
+	
+	@Test
+	public final void testRototrasla() {
+		boolean step = true;
+		boolean fast = false;
+		boolean verbose = true;
+		int timeout = 200;
+
+		String path1 = ".\\testdata\\001.dcm";
+		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
+		imp1.show();
+		ACRutils.zoom(imp1);
+		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp1, false, false, false, timeout);
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, false, timeout);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, false, timeout);
+		
+		ACRlog.logVector(phantomCircle, ACRlog.qui()+"phantomCircle");
+		ACRlog.logMatrix(phantomVertices, ACRlog.qui()+"phantomVertices");
+		IJ.log(ACRlog.qui()+"angle= "+angle);
+		double[][] matin = new double[2][4];
+		matin[0][0]=74;
+		matin[1][0]=84;
+		matin[0][1]=92;
+		matin[1][1]=88;
+		
+		
+
+		double[][] matout= ACRlocalizer.rototrasla(imp1, matin, phantomCircle, angle, step, fast, verbose, timeout);
+
+		ACRlog.waitHere();
+
+//		IJ.log("Angle= " + angle);
+//		double expected = 163.6104596659652;
+//		assertTrue(ACRutils.compareDoublesWithTolerance(angle, expected, 1e-11));
+	}
+
 }
