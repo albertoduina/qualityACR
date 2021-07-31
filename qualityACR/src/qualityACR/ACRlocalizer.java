@@ -3309,32 +3309,48 @@ public class ACRlocalizer {
 
 		double bx = 0;
 		double by = 0;
+		double k1=0.175;
 
-		for (int i1 = 0; i1 < 4; i1++) {
-			bx = ax + i1 * lato;
-			for (int i2 = 0; i2 < 4; i2++) {
-				by = ay + i2 * lato;
-				Roi r1 = new Roi(bx, by, lato, lato);
-				imp2.setRoi(r1);
-				imp2.getRoi().setStrokeColor(Color.RED);
-				over2.addElement(imp2.getRoi());
-				imp2.killRoi();
-			}
-		}
 		for (int i1 = 0; i1 < 4; i1++) {
 			bx = cx + i1 * lato;
 			for (int i2 = 0; i2 < 4; i2++) {
-				by = cy + i2 * lato;
+				bx = bx - k1;
+				by = cy + i2 * lato + i2 * k1 * lato;
 				Roi r1 = new Roi(bx, by, lato, lato);
-				bx = bx - 0.5;
+				IJ.log("bx= " + bx + " by= " + by + " VERDE");
+				imp2.setRoi(r1);
+				imp2.getRoi().setStrokeColor(Color.GREEN);
+				over2.addElement(imp2.getRoi());
+				imp2.killRoi();
+				ACRlog.waitHere();
+			}
+			cx = cx + k1 * lato;
+		}
+
+		ax = 57;
+		ay = 70;
+		cx = 65;
+		cy = 62;
+
+		bx = 0;
+		by = 0;
+
+		for (int i1 = 0; i1 < 4; i1++) {
+
+			for (int i2 = 0; i2 < 4; i2++) {
+				bx = ax + i1 * lato;
+				by = ay + i2 * lato + i2 * k1 * lato;
+				IJ.log("bx= " + bx + " by= " + by + " ROSSO");
+				Roi r1 = new Roi(bx, by, lato, lato);
 				imp2.setRoi(r1);
 				imp2.getRoi().setStrokeColor(Color.RED);
 				over2.addElement(imp2.getRoi());
 				imp2.killRoi();
+				ACRlog.waitHere();
 			}
+			ax = ax + k1 * lato;
+			ay = ay - k1 * lato;
 		}
-
-		ACRlog.waitHere();
 
 	}
 
