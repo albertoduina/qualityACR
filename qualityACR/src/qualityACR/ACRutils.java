@@ -5,12 +5,10 @@ import java.awt.Frame;
 import java.awt.Rectangle;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,7 +20,6 @@ import java.util.Scanner;
 import java.util.StringTokenizer;
 
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
@@ -84,13 +81,13 @@ public class ACRutils {
 
 	}
 
-	/**
-	 * legge dalla cartella tmp dell'utente (visibile in IJ sotto
-	 * File/showFolder/temp) il file ACRsetup.tmp contenente i defaults per i vari
-	 * menu di avviamento dei vari plugin
-	 * 
-	 * @return
-	 */
+//	/**
+//	 * legge dalla cartella tmp dell'utente (visibile in IJ sotto
+//	 * File/showFolder/temp) il file ACRsetup.tmp contenente i defaults per i vari
+//	 * menu di avviamento dei vari plugin
+//	 * 
+//	 * @return
+//	 */
 	public static Properties readConfigACR() {
 
 		String tmpFolderPath = IJ.getDirectory("temp");
@@ -138,7 +135,7 @@ public class ACRutils {
 		}
 
 		ArrayList<String> vetList = new ArrayList<String>();
-		IJ.log(ACRlog.qui());
+//		IJ.log(ACRlog.qui());
 		Scanner myReader;
 		try {
 			myReader = new Scanner(file);
@@ -148,7 +145,7 @@ public class ACRutils {
 				vetList.add(str2[1]);
 			}
 			myReader.close();	
-			IJ.log(ACRlog.qui());
+//			IJ.log(ACRlog.qui());
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

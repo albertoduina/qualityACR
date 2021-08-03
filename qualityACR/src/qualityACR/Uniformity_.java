@@ -3,7 +3,9 @@ package qualityACR;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -38,21 +40,40 @@ public class Uniformity_ implements PlugIn {
 
 	public void mainUnifor() {
 
-//		int alternativa2 = 0;
-		// eseguite
+		Properties prop = ACRutils.readConfigACR();
 		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
-
-		GenericDialog gd1 = new GenericDialog("UNIFORMITY");
-		gd1.addCheckbox("ANIMAZIONE 2 sec", true);
-		gd1.addCheckbox("VERBOSE", true);
-		gd1.addCheckbox("STEP", true);
-		gd1.addCheckbox("MINMAX ALBERTO", false);
-		gd1.addCheckbox("MINMAX ARTICOLO", true);
-		gd1.addCheckbox("UNIFORMITY", true);
+		boolean fastdefault = false;
+		boolean stepdefault = false;
+		boolean verbosedefault = false;
+		boolean[] T1 = new boolean[7];
+		boolean[] T2 = new boolean[7];
 		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
 		boolean[] defaults = { false, false, false, false, false, false, true, true, false, false, false, false, false,
 				false };
 		String[] headings = { "slices T1", "slices T2" };
+
+		if (prop != null) {
+			fastdefault = Boolean.parseBoolean(prop.getProperty("Uniformity.fast"));
+			stepdefault = Boolean.parseBoolean(prop.getProperty("Uniformity.step"));
+			verbosedefault = Boolean.parseBoolean(prop.getProperty("Uniformity.verbose"));
+			for (int i1 = 0; i1 < 7; i1++) {
+				T1[i1] = Boolean.parseBoolean(prop.getProperty("Uniformity.SliceT1[" + i1 + "]"));
+				T2[i1] = Boolean.parseBoolean(prop.getProperty("Uniformity.SliceT2[" + i1 + "]"));
+			}
+			int count = 0;
+			for (int i1 = 0; i1 < 7; i1++) {
+				defaults[count++] = T1[i1];
+				defaults[count++] = T2[i1];
+			}
+		}
+
+		GenericDialog gd1 = new GenericDialog("UNIFORMITY");
+		gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
+		gd1.addCheckbox("STEP", stepdefault);
+		gd1.addCheckbox("VERBOSE", verbosedefault);
+//		gd1.addCheckbox("MINMAX ALBERTO", false);
+//		gd1.addCheckbox("MINMAX ARTICOLO", true);
+//		gd1.addCheckbox("UNIFORMITY", true);
 		gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
 
 		gd1.showDialog();
@@ -65,9 +86,9 @@ public class Uniformity_ implements PlugIn {
 		boolean fast = gd1.getNextBoolean();
 		boolean step = gd1.getNextBoolean();
 		boolean verbose = gd1.getNextBoolean();
-		boolean maxminAlberto = gd1.getNextBoolean();
-		boolean maxminArticolo = gd1.getNextBoolean();
-		boolean uniformity = gd1.getNextBoolean();
+//		boolean maxminAlberto = gd1.getNextBoolean();
+//		boolean maxminArticolo = gd1.getNextBoolean();
+//		boolean uniformity = gd1.getNextBoolean();
 		boolean[] vetBoolSliceT1 = new boolean[7];
 		boolean[] vetBoolSliceT2 = new boolean[7];
 		for (int i1 = 0; i1 < 7; i1++) {
@@ -75,10 +96,39 @@ public class Uniformity_ implements PlugIn {
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
 
-		boolean[] comandi = new boolean[3];
-		comandi[0] = maxminAlberto;
-		comandi[1] = maxminArticolo;
-		comandi[2] = uniformity;
+//		boolean maxminAlberto = false;
+//		boolean maxminArticolo = true;
+//		boolean uniformity = true;
+
+		// vado a scrivere i setup nel config file
+		if (prop == null) {
+			prop = new Properties();
+		}
+		prop.setProperty("Uniformity.fast", "" + fast);
+		prop.setProperty("Uniformity.step", "" + step);
+		prop.setProperty("Uniformity.verbose", "" + verbose);
+		for (int i1 = 0; i1 < 7; i1++) {
+			String aux1 = "Uniformity.SliceT1[" + i1 + "]";
+			String aux2 = "" + vetBoolSliceT1[i1];
+			prop.setProperty(aux1, aux2);
+		}
+		for (int i1 = 0; i1 < 7; i1++) {
+			String aux1 = "Uniformity.SliceT2[" + i1 + "]";
+			String aux2 = "" + vetBoolSliceT2[i1];
+			prop.setProperty(aux1, aux2);
+		}
+
+		try {
+			ACRutils.writeConfigACR(prop);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+//		boolean[] comandi = new boolean[3];
+//		comandi[0] = false; // maxminAlberto;
+//		comandi[1] = maxminArticolo;
+//		comandi[2] = uniformity;
 
 		String uno = "";
 		String due = "";
@@ -87,8 +137,8 @@ public class Uniformity_ implements PlugIn {
 			uno = uno + "," + i1 + " " + vetBoolSliceT1[i1];
 			due = due + "," + i1 + " " + vetBoolSliceT2[i1];
 		}
-		IJ.log("slices T1 = " + uno);
-		IJ.log("slices T2 = " + due);
+//		IJ.log(ACRlog.qui()+"slices T1 = " + uno);
+//		IJ.log(ACRlog.qui()+"slices T2 = " + due);
 
 		// leggo i nomi di tutti i 15 file presenti
 //		String pathLocalizer = "";
@@ -105,6 +155,7 @@ public class Uniformity_ implements PlugIn {
 		if (sortedListT2 == null)
 			IJ.log("sortedListT2 ==null");
 
+		ACRlog.waitHere();
 		//
 		// Effettuo le varie elaborazioni richieste su ogni slice selezionata
 		//
@@ -113,21 +164,47 @@ public class Uniformity_ implements PlugIn {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log("==================");
 				IJ.log("elaborazione slice T1 numero " + i1);
-				double[] phantomposition = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout);
-				phantomCalculations(sortedListT1[i1], phantomposition, comandi, i1, step, fast, verbose, timeout);
+				IJ.log(ACRlog.qui() + "<START>");
+				ImagePlus imp1 = ACRgraphic.openImageNoDisplay(sortedListT1[i1], false);
+				ImagePlus imp2 = imp1.duplicate();
+				imp2.show();
+				ACRutils.zoom(imp2);
+				ACRlog.waitHere();
+
+				double[] phantomCircle = ACRlocalizer.gridLocalizerAdvanced(imp2, step, fast, verbose, timeout);
+				ACRlog.waitHere();
+
+//				double[] phantomposition = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout);
+				phantomCalculations(imp2, phantomCircle, i1, step, fast, verbose, timeout);
 			}
 		}
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log("==================");
 				IJ.log("elaborazione slice T2 numero " + i1);
-				double[] phantomposition = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout);
-				phantomCalculations(sortedListT1[i1], phantomposition, comandi, i1, step, fast, verbose, timeout);
+				ImagePlus imp1 = ACRgraphic.openImageNoDisplay(sortedListT2[i1], false);
+				ImagePlus imp2 = imp1.duplicate();
+				imp2.show();
+				ACRutils.zoom(imp2);
+				double[] phantomCircle = ACRlocalizer.gridLocalizerAdvanced(imp2, step, fast, verbose, timeout);
+//				double[] phantomposition = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout);
+				phantomCalculations(imp2, phantomCircle, i1, step, fast, verbose, timeout);
 			}
 		}
 
 	}
 
+	/**
+	 * SOSTITUITO DA PHANTOM GRID LOCALIZER ADVANCED
+	 * 
+	 * @param path1
+	 * @param slice
+	 * @param step
+	 * @param fast
+	 * @param verbose
+	 * @param timeout
+	 * @return
+	 */
 	public double[] phantomPositionSearch(String path1, int slice, boolean step, boolean fast, boolean verbose,
 			int timeout) {
 
@@ -139,7 +216,8 @@ public class Uniformity_ implements PlugIn {
 
 //			}
 		// Ricerca delle coordinate e diametro del fantoccio su slice 5
-		double[] out2 = ACRlocalizer.positionSearch1(imp1, maxFitError, maxBubbleGapLimit, step, fast, verbose, timeout);
+		double[] out2 = ACRlocalizer.positionSearch1(imp1, maxFitError, maxBubbleGapLimit, step, fast, verbose,
+				timeout);
 		//
 		// per rendere le cose piu' interessanti durante il debug disegno un buco nel
 		// fantoccio riempiendolo con segnale a 1.0.n ed un altro buco con segnale 3000.
@@ -176,18 +254,13 @@ public class Uniformity_ implements PlugIn {
 			ACRlog.waitHere("MainUnifor> cerchio esterno rosso, fantoccio rilevato da positionSearch1", debug, timeout,
 					fast);
 		}
-		
-		
-		
-		
-		
 
 		return out2;
 
 	}
 
-	public void phantomCalculations(String path1, double[] phantomposition, boolean[] comandi, int slice, boolean step,
-			boolean fast, boolean verbose, int timeout1) {
+	public void phantomCalculations(ImagePlus imp1, double[] phantomposition, int slice, boolean step, boolean fast,
+			boolean verbose, int timeout1) {
 
 // -----------------------------------------------------------------
 // PIU - Percentage Image Uniformity	
@@ -212,12 +285,14 @@ public class Uniformity_ implements PlugIn {
 // da 0. Il risultato sostituira'il valore del pixel corrispondente al centro 
 // della media mobile. 
 
-		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
-		imp1.show();
-		if (big)
-			ACRutils.zoom(imp1);
+		ImagePlus imp2 = imp1.duplicate();
+		imp2.show();
+		ACRutils.zoom(imp2);
+		ACRlog.waitHere(
+				"ATTENZIONE: IL DIAMETRO DEL FANTOCCIO DOPO LE ELABORAZIONI DELL'ARTICOLO E'NOTEVOLMENTE DIVERSO DAL DIAMETRO REALE !!!!!!!");
+
 		double dimPixel = ACRutils
-				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp1, ACRconst.DICOM_PIXEL_SPACING), 1));
+				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp2, ACRconst.DICOM_PIXEL_SPACING), 1));
 		// calcolo che diametro deve avere una Roi di 100 mmq
 		double pixeldia100 = 2 * Math.sqrt(100. / Math.PI) / dimPixel;
 		// arrotondo all'int superiore (come dice l'articolo)
@@ -226,9 +301,8 @@ public class Uniformity_ implements PlugIn {
 		// double mmarea100 = Math.PI * ((double) pixint100 / 2.) * ((double) pixint100
 		// / 2.) * dimPixel * dimPixel;
 		// INOLTRE, per chiarezza nella programmazione mi assicuro che pixint100 sia
-		// dispari, in
-		// questo modo ho un pixel centrale, in cui viene scritta la media che
-		// calcoleremo
+		// dispari, in questo modo ho un pixel centrale, in cui viene scritta la media
+		// che calcoleremo
 		if (pixint100 % 2 == 0)
 			pixint100 += 1;
 
@@ -236,29 +310,42 @@ public class Uniformity_ implements PlugIn {
 		int xphantom = (int) phantomposition[0];
 		int yphantom = (int) phantomposition[1];
 		int dphantom = (int) phantomposition[2];
-		// -----------------------------------------------------------------
+		// ---------------------------------------------------------------------------
+		// L'area del cerchio della MROI e'esplicitamente suggerita in "ACR small
+		// phantom guidance" a pag 24 " Place a large, circular ROI on the image as
+		// shown in Figure 17. This ROI must have an area of between 54 cm2 and 56 cm2
+		// (5,400 to 5,600 mm2)
+		// -----------------------------------------------------------------------------
+
+		double area = 5600; // 5600 mm2 sono stabiliti dal protocollo
+		double diam = 2 * Math.sqrt(area / Math.PI); // stabilito dalla geometria
+		double dmroi = diam / dimPixel; // trasformo in pixel
+
+		// Dovremo utilizzare una MROI che, secondo la Small Phantom Guidance, deve
+		// essere di 54-56 cmq ovvero da 5400 a 5600 mmq.
 		// Visualizzo sull'immagine il posizionamento che verra' utilizzato
 		// MROI in verde
 		// -----------------------------------------------------------------
 		// estraggo i dati della MROI
-		int xmroi = (int) phantomposition[3];
-		int ymroi = (int) phantomposition[4];
-		int dmroi = (int) phantomposition[5];
+//		int xmroi = (int) phantomposition[3];
+//		int ymroi = (int) phantomposition[4];
+//		int dmroi = (int) phantomposition[5];
 
-		imp1.setRoi(new OvalRoi(xmroi - dmroi / 2, ymroi - dmroi / 2, dmroi, dmroi));
+		imp2.setRoi(new OvalRoi(xphantom - dmroi / 2, yphantom - dmroi / 2, dmroi, dmroi));
 		// siccome ho impostato la MROI posso calcolare il valore medio di essa, si
 		// utilizza nel calcolo dei ghosts
-		ImageStatistics stat1 = imp1.getStatistics();
+		ImageStatistics stat1 = imp2.getStatistics();
 		double MROImean = stat1.mean;
 
 		Overlay over1 = new Overlay(); // con questo definisco un overlay trasparente per i disegni
-		imp1.setOverlay(over1);
+		imp2.setOverlay(over1);
 
-		imp1.getRoi().setStrokeColor(Color.GREEN);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
-		if (true)
+		imp2.getRoi().setStrokeColor(Color.GREEN);
+		over1.addElement(imp2.getRoi());
+		imp2.killRoi();
+		if (verbose || step)
 			ACRlog.waitHere("MainUnifor> cerchio interno verde MROI", debug, timeout1, fast);
+		ACRlog.waitHere();
 
 		int[] phantomcircle = new int[4];
 		phantomcircle[0] = xphantom;
@@ -266,30 +353,24 @@ public class Uniformity_ implements PlugIn {
 		phantomcircle[2] = dphantom;
 
 		int[] MROIcircle = new int[4];
-		MROIcircle[0] = xmroi;
-		MROIcircle[1] = ymroi;
-		MROIcircle[2] = dmroi;
+		MROIcircle[0] = xphantom;
+		MROIcircle[1] = yphantom;
+		MROIcircle[2] = (int) dmroi;
 
-		// ============================================================================
-		// QUESTA SOLUZIONE NON E'SODDISFACENTE, LASCIA UN BORDO SBIADITO DOVE VIENE
-		// RILEVATO UN MINIMO FASULLO
-		// ============================================================================
-
-		double[] outAlberto = null;
+//		double[] outAlberto = null;
 		double[] outArticolo = null;
 		double outUnifor = -1;
 
 		// step, fast, verbose, timeout
 
-		if (comandi[0])
-			outAlberto = minmaxAlberto(imp1, phantomcircle, MROIcircle, pixint100, step, fast, verbose, timeout1);
+//		if (comandi[0])
+//			outAlberto = minmaxAlberto(imp2, phantomcircle, MROIcircle, pixint100, step, fast, verbose, timeout1);
 
-		if (comandi[1])
-			outArticolo = minmaxArticolo(imp1, phantomcircle, MROIcircle, pixint100, step, fast, verbose, timeout1);
+//			if (comandi[1])
+		outArticolo = minmaxArticolo(imp2, phantomcircle, MROIcircle, pixint100, step, fast, verbose, timeout1);
 
-		if (comandi[2])
-			outUnifor = uniforACR(imp1, phantomcircle, MROIcircle, outArticolo, pixint100, step, fast, verbose,
-					timeout1);
+//		if (comandi[2])
+		outUnifor = uniforACR(imp2, phantomcircle, MROIcircle, outArticolo, pixint100, step, fast, verbose, timeout1);
 		//
 		// Il metodo seguito pare funzionare, pero' tutto il giro di fare delle mask e
 		// metterle in AND appare complicato e farragginoso, adesso provo la routine
@@ -1255,7 +1336,7 @@ public class Uniformity_ implements PlugIn {
 		int width = imp2.getWidth();
 		int height = imp2.getHeight();
 
-		if (fast == false) {
+		if (verbose || step) {
 			ACRlog.vetPrint(imageVetDoublePixels, "##### imageVetDoublePixels IMMAGINE SORGENTE");
 			ACRlog.vetPrint(imageVetMask, "##### imageVetDoublePixels IMMAGINE SORGENTE");
 			ACRlog.waitHere();

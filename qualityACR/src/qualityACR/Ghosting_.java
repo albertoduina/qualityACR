@@ -154,8 +154,8 @@ public class Ghosting_ implements PlugIn {
 			imp1.getRoi().setStrokeColor(Color.RED);
 			over1.addElement(imp1.getRoi());
 			imp1.killRoi();
-			ACRlog.waitHere(ACRlog.qui()+"cerchio esterno rosso, fantoccio rilevato da positionSearch1", debug, timeout,
-					fast);
+			ACRlog.waitHere(ACRlog.qui() + "cerchio esterno rosso, fantoccio rilevato da positionSearch1", debug,
+					timeout, fast);
 		}
 
 		return out2;
@@ -207,19 +207,18 @@ public class Ghosting_ implements PlugIn {
 			over1.addElement(imp1.getRoi());
 			imp1.killRoi();
 
-			ACRlog.waitHere(ACRlog.qui()+"cerchio esterno blu, involucro esterno fantoccio", step, timeout, fast);
+			ACRlog.waitHere(ACRlog.qui() + "cerchio esterno blu, involucro esterno fantoccio", step, timeout, fast);
 		}
 
-// -----------------------------------------------------------------
-// Visualizzo sull'immagine il posizionamento che verra' utilizzato
-// MROI in verde
-// -----------------------------------------------------------------
-//
-		// devo posizionare una area di 54-56 cmq quindi ne calcolo il diametro in
-		// pixels.
-		// L'area del cerchio e'esplicitamente suggerita in "ACR small phantom guidance"
-		// a pag 24 " Place a large, circular ROI on the image as shown in Figure 17.
-		// This ROI must have an area of between 54 cm2 and 56 cm2 (5,400 to 5,600 mm2)
+		// -----------------------------------------------------------------
+		// Visualizzo sull'immagine il posizionamento che verra' utilizzato
+		// MROI in verde
+		// ---------------------------------------------------------------------------
+		// L'area del cerchio della MROI e'esplicitamente suggerita in "ACR small
+		// phantom guidance" a pag 24 " Place a large, circular ROI on the image as
+		// shown in Figure 17. This ROI must have an area of between 54 cm2 and 56 cm2
+		// (5,400 to 5,600 mm2)
+		// -----------------------------------------------------------------------------
 		//
 
 		double area = 5600; // 5600 mm2 sono stabiliti dal protocollo
@@ -239,7 +238,7 @@ public class Ghosting_ implements PlugIn {
 		over1.addElement(imp1.getRoi());
 		imp1.killRoi();
 		if (true)
-			ACRlog.waitHere(ACRlog.qui()+"cerchio interno verde MROI", step, timeout, fast);
+			ACRlog.waitHere(ACRlog.qui() + "cerchio interno verde MROI", step, timeout, fast);
 
 		int[] MROIcircle = new int[4];
 		MROIcircle[0] = xmroi;
@@ -283,7 +282,7 @@ public class Ghosting_ implements PlugIn {
 		double sxroiwidth = sxgap - 2 * guard;
 		double sxroiheight = roipix / sxroiwidth;
 		double sxroiheightE = (roipix * Math.PI) / (sxroiwidth * 2); /// NON NE SONO POI TAAAANTO SICURO!!!!!
-		ACRlog.waitHere(ACRlog.qui()+"diametro maggiore ellisse" + sxroiheightE);
+		ACRlog.waitHere(ACRlog.qui() + "diametro maggiore ellisse" + sxroiheightE);
 //		double dxroiwidth = dxgap - gapFromOther * 2;
 		double dxroiwidth = dxgap - 2 * guard;
 		double dxroiheight = roipix / dxroiwidth;

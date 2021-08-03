@@ -1,5 +1,6 @@
 package qualityACR;
 
+import java.awt.Color;
 import java.awt.Frame;
 import java.io.IOException;
 import java.util.Properties;
@@ -8,6 +9,9 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.OvalRoi;
+import ij.gui.Overlay;
+import ij.gui.Roi;
 import ij.plugin.PlugIn;
 
 public class SpatialResolution implements PlugIn {
@@ -15,9 +19,6 @@ public class SpatialResolution implements PlugIn {
 	public static final boolean big = true;
 
 	public void run(String arg) {
-
-		// IJ.log("2 - High contrast spatial resolution");
-		ACRlog.waitHere("2 - High contrast spatial resolution");
 
 		mainResolution();
 	}
@@ -27,7 +28,7 @@ public class SpatialResolution implements PlugIn {
 	// comunque il ParticleAnalyzer promette bene. Altrettanto il RemoveDuplicate
 	// messo in ACRutils. Anche se questo lavora per le stringhe, nulla vieta di
 	// adattarlo ai double od agli int ed eliminare dalla mia lista di punti
-	// ricavati dalle scansioni fantoccio, tutti i duplicati 
+	// ricavati dalle scansioni fantoccio, tutti i duplicati
 	// 30jly2021
 	// duplicati che non sono comunque mai tantissimi!
 
@@ -91,7 +92,6 @@ public class SpatialResolution implements PlugIn {
 			vetBoolSliceT1[i1] = gd1.getNextBoolean();
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
-		IJ.log(ACRlog.qui());
 
 		// vado a scrivere i setup nel config file
 		if (prop == null)
@@ -109,7 +109,6 @@ public class SpatialResolution implements PlugIn {
 			String aux2 = "" + vetBoolSliceT2[i1];
 			prop.setProperty(aux1, aux2);
 		}
-		IJ.log(ACRlog.qui());
 
 		try {
 			ACRutils.writeConfigACR(prop);
@@ -118,8 +117,6 @@ public class SpatialResolution implements PlugIn {
 			e.printStackTrace();
 		}
 
-		IJ.log(ACRlog.qui());
-		ACRlog.waitHere();
 
 		// leggo i nomi di tutti i 15 file presenti
 		String pathLocalizer = "";
@@ -127,58 +124,51 @@ public class SpatialResolution implements PlugIn {
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
 		String pathReport = vetPath[4] + "\\Report1.txt";
-		IJ.log(ACRlog.qui());
 
 		String[] listLocalizer = ACRinputOutput.readStackPathToSortedList(vetPath[0], "T1");
 		if (listLocalizer != null)
 			pathLocalizer = listLocalizer[0];
-		IJ.log(ACRlog.qui());
 
 		String[] sortedListT1 = ACRinputOutput.readStackPathToSortedList(vetPath[1], "T1");
 		if (sortedListT1 == null)
 			IJ.log(ACRlog.qui() + "sortedListT1 ==null");
-		IJ.log(ACRlog.qui());
 
 		String[] sortedListT2 = ACRinputOutput.readStackPathToSortedList(vetPath[2], "T2");
 		if (sortedListT2 == null)
 			IJ.log(ACRlog.qui() + "sortedListT2 ==null");
 
-		IJ.log(ACRlog.qui());
 
 		// DEVO creare un nuovo report, senno' che controllo faccio?
 		if (!ACRlog.initLog(pathReport))
 			return;
-		IJ.log(ACRlog.qui());
 
 		// ora in base alle selezioni effettuate nelle checkbox del dialogo, dobbiamo
 		// elaborare solo i file selezionati
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
-				evalResolution(sortedListT1[i1], pathReport, i1, step, fast, verbose, timeout);
+				evalResolution(sortedListT1[i1], pathReport, step, fast, verbose, timeout);
 			}
 		}
-		IJ.log(ACRlog.qui());
 
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
 				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
-				evalResolution(sortedListT2[i1], pathReport, i1, step, fast, verbose, timeout);
+				evalResolution(sortedListT2[i1], pathReport, step, fast, verbose, timeout);
 			}
 		}
 		ACRlog.waitHere("SPATIAL_RESOLUTION TERMINATA");
 	}
 
-	public void evalResolution(String path1, String pathReport, int i1, boolean step, boolean fast, boolean verbose,
+	public void evalResolution(String path1, String pathReport, boolean step, boolean fast, boolean verbose,
 			int timeout) {
 
 		IJ.log(ACRlog.qui() + "<START>");
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
-		if (big)
-			ACRutils.zoom(imp2);
+		ACRutils.zoom(imp2);
 
 		//
 		// ========== TAROCCAMENTO IMMAGINE =============
@@ -199,18 +189,51 @@ public class SpatialResolution implements PlugIn {
 		boolean fast1 = false;
 		boolean verbose1 = false;
 
-		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp2, step1, fast1, verbose1, timeout);
+		double[] phantomCircle = ACRlocalizer.gridLocalizerAdvanced(imp2, step1, fast1, verbose1, timeout);
+
+		// QUESTO SI CHIAMA BARARE, SIGNOR BARONE......
+		phantomCircle[0] = phantomCircle[0];
+		phantomCircle[1] = phantomCircle[1] + 1;
+		phantomCircle[2] = phantomCircle[2] + 1;
 
 		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp2, phantomCircle, step, fast, verbose, timeout);
 		double angle = ACRlocalizer.phantomRotation(phantomVertices, step, fast, verbose, timeout);
-		double[][] resolutionHoles = ACRlocalizer.phantomResolutionHoles(imp2, phantomVertices, step, fast, verbose,
-				timeout);
+		angle = angle + 0;
 
-		IJ.log(ACRlog.qui() + " angoloRotazione fantoccio= " + angle);
-		
-		
-		ACRlocalizer.gridMatrix(imp2, phantomCircle, angle, step, fast, verbose, timeout);
-		
+		double[][] matout = ACRlocalizer.movableGridMatrix(imp2, phantomCircle, angle, step, fast, verbose, timeout);
+
+		ImagePlus imp3 = imp2.duplicate();
+		imp3.show();
+		ACRutils.zoom(imp3);
+
+		imp2.close();
+		Overlay over3 = new Overlay();
+		imp3.setOverlay(over3);
+
+		double xcircle = phantomCircle[0];
+		double ycircle = phantomCircle[1];
+		double dcircle = phantomCircle[2];
+
+		imp3.setRoi(new OvalRoi(xcircle - dcircle / 2, ycircle - dcircle / 2, dcircle, dcircle));
+		imp3.getRoi().setStrokeColor(Color.RED);
+		over3.addElement(imp3.getRoi());
+
+		for (int i1 = 0; i1 < matout[0].length; i1++) {
+			Roi pr1 = new Roi(matout[0][i1], matout[1][i1], 1, 1);
+			imp3.setRoi(pr1);
+			imp3.getRoi().setFillColor(Color.GREEN);
+			over3.addElement(imp3.getRoi());
+			imp3.updateAndDraw();
+			imp3.killRoi();
+//			ACRlog.waitHere();
+		}
+
+//		double[][] resolutionHoles = ACRlocalizer.phantomResolutionHoles(imp2, phantomVertices, step, fast, verbose,
+//				timeout);
+
+//		IJ.log(ACRlog.qui() + " angoloRotazione fantoccio= " + angle);
+
+//		ACRlocalizer.staticGridMatrix(imp2, phantomCircle, angle, step, fast, verbose, timeout);
 
 		return;
 	}

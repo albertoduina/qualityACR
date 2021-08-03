@@ -57,10 +57,10 @@ public class Geometric_Accuracy implements PlugIn {
 				T1[i1] = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.SliceT1[" + i1 + "]"));
 				T2[i1] = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.SliceT2[" + i1 + "]"));
 			}
-			int count=0;
-			for (int i1 = 0; i1<7; i1++) {
-				defaults[count++]=T1[i1];
-				defaults[count++]=T2[i1];
+			int count = 0;
+			for (int i1 = 0; i1 < 7; i1++) {
+				defaults[count++] = T1[i1];
+				defaults[count++] = T2[i1];
 			}
 		}
 
@@ -119,9 +119,6 @@ public class Geometric_Accuracy implements PlugIn {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		ACRlog.waitHere();
-
 		// leggo i nomi di tutti i 15 file presenti
 		String pathLocalizer = "";
 		String tmpFolderPath = IJ.getDirectory("temp");
@@ -134,10 +131,10 @@ public class Geometric_Accuracy implements PlugIn {
 			pathLocalizer = listLocalizer[0];
 		String[] sortedListT1 = ACRinputOutput.readStackPathToSortedList(vetPath[1], "T1");
 		if (sortedListT1 == null)
-			IJ.log("sortedListT1 ==null");
+			IJ.log(ACRlog.qui() + "sortedListT1 ==null");
 		String[] sortedListT2 = ACRinputOutput.readStackPathToSortedList(vetPath[2], "T2");
 		if (sortedListT2 == null)
-			IJ.log("sortedListT2 ==null");
+			IJ.log(ACRlog.qui() + "sortedListT2 ==null");
 
 		// DEVO creare un nuovo report, senno' che controllo faccio?
 		if (!ACRlog.initLog(pathReport))
@@ -151,15 +148,15 @@ public class Geometric_Accuracy implements PlugIn {
 
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
-				IJ.log("<mainGeometry> elaborazione slice T1 numero " + i1);
+				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
 				mainSliceDiameter(sortedListT1[i1], pathReport, i1, step, fast, verbose, timeout);
 			}
 		}
 
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
-				IJ.log("==================");
-				IJ.log("elaborazione slice T2 numero " + i1);
+				IJ.log(ACRlog.qui() + "==================");
+				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
 				mainSliceDiameter(sortedListT2[i1], pathReport, i1, step, fast, verbose, timeout);
 			}
 		}
@@ -174,12 +171,11 @@ public class Geometric_Accuracy implements PlugIn {
 	public void mainLocalizer(String path1, String pathReport, boolean step, boolean fast, boolean verbose,
 			int timeout) {
 
-		IJ.log("<Geometric_Accuracy.mainLocalizer START>");
+		IJ.log(ACRlog.qui() + "START>");
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
-		if (big)
-			ACRutils.zoom(imp2);
+		ACRutils.zoom(imp2);
 
 		//
 		// ========== TAROCCAMENTO IMMAGINE =============
@@ -202,7 +198,7 @@ public class Geometric_Accuracy implements PlugIn {
 		int height = imp2.getHeight();
 		int lato = 30; // lato con cui cerco lo pseudomassimo
 		double[] max1 = maximumSearch(imp2, lato);
-		double max2 = max1[0];
+		double max2 = max1[0] / 2;
 
 		Overlay over2 = new Overlay();
 		imp2.setOverlay(over2);
@@ -227,6 +223,7 @@ public class Geometric_Accuracy implements PlugIn {
 				pointXY1.add(4);
 				pointXY1.add(5);
 				pointArrayXY.add(pointXY1);
+
 				List<Integer> pointXY2 = new ArrayList<Integer>();
 				pointXY2.add(a1);
 				pointXY2.add(out1[1]);
@@ -235,7 +232,19 @@ public class Geometric_Accuracy implements PlugIn {
 				pointXY2.add(4);
 				pointXY2.add(5);
 				pointArrayXY.add(pointXY2);
+
+				Roi pr1 = new Roi(a1, out1[0], 1, 1);
+				imp2.setRoi(pr1);
+				imp2.getRoi().setFillColor(Color.GREEN);
+				over2.addElement(imp2.getRoi());
+				imp2.killRoi();
+				Roi pr2 = new Roi(a1, out1[1], 1, 1);
+				imp2.setRoi(pr2);
+				imp2.getRoi().setFillColor(Color.GREEN);
+				over2.addElement(imp2.getRoi());
+				imp2.killRoi();
 			}
+
 		}
 
 		//
@@ -264,7 +273,20 @@ public class Geometric_Accuracy implements PlugIn {
 				pointXY4.add(4);
 				pointXY4.add(5);
 				pointArrayXY.add(pointXY4);
+
+				Roi pr1 = new Roi(out2[0], b1, 1, 1);
+				imp2.setRoi(pr1);
+				imp2.getRoi().setFillColor(Color.RED);
+				over2.addElement(imp2.getRoi());
+				imp2.killRoi();
+				Roi pr2 = new Roi(out2[1], b1, 1, 1);
+				imp2.setRoi(pr2);
+				imp2.getRoi().setFillColor(Color.RED);
+				over2.addElement(imp2.getRoi());
+				imp2.killRoi();
+
 			}
+
 		}
 		// ACRlog.waitHere("pointArrayXY.size= " + pointArrayXY.size());
 		List<Integer> pointList = new ArrayList<>();
@@ -289,13 +311,13 @@ public class Geometric_Accuracy implements PlugIn {
 				vetPoints[i1][i2] = rotatedPoints[i2][i1];
 			}
 		}
-		if (verbose) {
-			for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
-				imp2.setRoi(new PointRoi(rotatedPoints[i1][0], rotatedPoints[i1][1], "medium yellow dot"));
-				over2.addElement(imp2.getRoi());
-				imp2.killRoi();
-			}
-		}
+//		if (verbose) {
+//			for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
+//				imp2.setRoi(new PointRoi(rotatedPoints[i1][0], rotatedPoints[i1][1], "medium yellow dot"));
+//				over2.addElement(imp2.getRoi());
+//				imp2.killRoi();
+//			}
+//		}
 
 		if (step)
 			ACRlog.waitHere("riportati in giallo su immagine i bordi trovati", step, timeout, fast);
@@ -354,10 +376,10 @@ public class Geometric_Accuracy implements PlugIn {
 		int[] vertexc = ACRutils.matExtractor(rotatedPoints, 4);
 		int[] vertexd = ACRutils.matExtractor(rotatedPoints, 5);
 		if (false) {
-			ACRlog.logVector(vertexa, "vertexa");
-			ACRlog.logVector(vertexb, "vertexb");
-			ACRlog.logVector(vertexc, "vertexc");
-			ACRlog.logVector(vertexd, "vertexd");
+			ACRlog.logVector(vertexa, ACRlog.qui() + "vertexa");
+			ACRlog.logVector(vertexb, ACRlog.qui() + "vertexb");
+			ACRlog.logVector(vertexc, ACRlog.qui() + "vertexc");
+			ACRlog.logVector(vertexd, ACRlog.qui() + "vertexd");
 		}
 
 		int[] posmina = ACRutils.minsearch(vertexa);
@@ -365,10 +387,10 @@ public class Geometric_Accuracy implements PlugIn {
 		int[] posminc = ACRutils.minsearch(vertexc);
 		int[] posmind = ACRutils.minsearch(vertexd);
 		if (false) {
-			ACRlog.logVector(posmina, "posmina");
-			ACRlog.logVector(posminb, "posminb");
-			ACRlog.logVector(posminc, "posminc");
-			ACRlog.logVector(posmind, "posmind");
+			ACRlog.logVector(posmina, ACRlog.qui() + "posmina");
+			ACRlog.logVector(posminb, ACRlog.qui() + "posminb");
+			ACRlog.logVector(posminc, ACRlog.qui() + "posminc");
+			ACRlog.logVector(posmind, ACRlog.qui() + "posmind");
 		}
 
 		// VERDE
@@ -389,10 +411,10 @@ public class Geometric_Accuracy implements PlugIn {
 		ACRutils.plotPoints(imp2, over2, (int) DX, (int) DY, Color.RED, 4, 4);
 //
 		if (step) {
-			ACRlog.waitHere("Riportati in i vertici oggetto trovati A= " + AX + "," + AY + " B= " + BX + "," + BY
-					+ " C= " + CX + "," + CY + " D= " + DX + "," + DY, step, timeout, fast);
-			IJ.log("<mainLocalizer>  Riportati in i vertici oggetto trovati A= " + AX + "," + AY + " B= " + BX + ","
-					+ BY + " C= " + CX + "," + CY + " D= " + DX + "," + DY);
+			ACRlog.waitHere(ACRlog.qui() + "Riportati in i vertici oggetto trovati A= " + AX + "," + AY + " B= " + BX
+					+ "," + BY + " C= " + CX + "," + CY + " D= " + DX + "," + DY, step, timeout, fast);
+			IJ.log("ACRlog.qui()+Riportati in i vertici oggetto trovati A= " + AX + "," + AY + " B= " + BX + "," + BY
+					+ " C= " + CX + "," + CY + " D= " + DX + "," + DY);
 		}
 
 		double MX = Math.round((double) (CX + DX) / (double) 2);
@@ -428,7 +450,7 @@ public class Geometric_Accuracy implements PlugIn {
 
 		double slope = (MX - PX) / (MY - PY);
 		if (verbose)
-			IJ.log("<Geometric_Accuracy.mainLocalizer> slope= " + slope);
+			IJ.log(ACRlog.qui() + "slope= " + slope);
 		double latoA = 12; // questo e'l'offset corrispondente a dove fare la misura lunghezza, rispetto
 							// all'asse verticale del fantoccio
 		double latoB = latoA * slope;
@@ -469,7 +491,7 @@ public class Geometric_Accuracy implements PlugIn {
 		double dim1 = dimPixel * ACRlocalizer.profAnal(imp2, step, fast, verbose, timeout);
 		imp2.killRoi();
 		if (step)
-			ACRlog.waitHere("<mainLocalizer> Profilo analizzato");
+			ACRlog.waitHere(ACRlog.qui() + "Profilo analizzato");
 		double SX = MX - xoffset;
 		double SY = MY;
 
@@ -491,10 +513,10 @@ public class Geometric_Accuracy implements PlugIn {
 		imp2.killRoi();
 
 		if (step)
-			ACRlog.waitHere("<mainLocalizer> Profilo analizzato");
+			ACRlog.waitHere(ACRlog.qui() + " Profilo analizzato");
 
-		IJ.log("<Geometric_Accuracy.mainLocalizer END> lunghezzaFantoccio 1= " + IJ.d2s(dim1, 3) + " mm");
-		IJ.log("<Geometric_Accuracy.mainLocalizer END> lunghezzaFantoccio 2= " + IJ.d2s(dim2, 3) + " mm");
+		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 1= " + IJ.d2s(dim1, 3) + " mm");
+		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 2= " + IJ.d2s(dim2, 3) + " mm");
 
 		ACRlog.appendLog(pathReport,
 				"lunghezzaFantoccio1= " + IJ.d2s(dim1, 3) + " lunghezzaFantoccio2= " + IJ.d2s(dim2, 3) + " mm");
