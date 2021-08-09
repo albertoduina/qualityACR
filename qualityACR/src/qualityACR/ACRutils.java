@@ -35,7 +35,33 @@ import ij.process.FloatPolygon;
 public class ACRutils {
 
 	static final boolean debug = true;
-	static final boolean big = true;
+
+	public static String[] imageInformation(ImagePlus imp1) {
+		
+		//
+		// 	0008,0080  Institution Name: Neuroradiologia Spedali Civili di Brescia 
+		//	0008,1010  Station Name: AWP46040
+		//	0008,0023  Image Date: 20210527
+		//	0018,0087  Magnetic Field Strength: 3 
+		//	0018,1030  Protocol Name: LOCALIZER 
+		//	0018,0050  Slice Thickness: 20
+		//	0020,1041  Slice Location: 0.86371147632599
+		//	0018,0081  Echo Time: 20
+		//	0018,0080  Repetition Time: 200 
+		//
+		String[] info= new String[9];
+		info[0]= ACRutils.readDicomParameter(imp1, "0008,0080");
+		info[1]= ACRutils.readDicomParameter(imp1, "0008,1010");
+		info[2]= ACRutils.readDicomParameter(imp1, "0008,0023");
+		info[3]= ACRutils.readDicomParameter(imp1, "0018,0087");
+		info[4]= ACRutils.readDicomParameter(imp1, "0018,1030");
+		info[5]= ACRutils.readDicomParameter(imp1, "0018,0050");
+		info[6]= ACRutils.readDicomParameter(imp1, "0020,1041");
+		info[7]= ACRutils.readDicomParameter(imp1, "0018,0081");
+		info[8]= ACRutils.readDicomParameter(imp1, "0018,0080");
+		
+		return info;
+	}
 
 	public static void writeConfig(String[][] property) {
 		String tmpFolderPath = IJ.getDirectory("temp");
@@ -144,7 +170,7 @@ public class ACRutils {
 				String[] str2 = str1.split("#");
 				vetList.add(str2[1]);
 			}
-			myReader.close();	
+			myReader.close();
 //			IJ.log(ACRlog.qui());
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -314,7 +340,7 @@ public class ACRutils {
 	 * @return
 	 */
 	public static double[][] cannyProfileAnalyzer(ImagePlus imp1, double dimPixel, String title, boolean showProfiles,
-			boolean step, boolean vertical, boolean fast, boolean verbose, int timeout) {
+			boolean step, boolean vertical, boolean verbose, int timeout) {
 
 //		IJ.log("cannyProfileAnalyzer riceve: showprofiles= " + showProfiles + " step= " + step + " vertical= "
 //				+ vertical + " fast= " + fast + " verbose= " + verbose);
@@ -409,7 +435,7 @@ public class ACRutils {
 			if (lw != null)
 				lw.setLocation(10, 10);
 			ACRlog.waitHere("Analizzando il profilo del segnale lungo la linea si ricavano \n"
-					+ "le coordinate delle due intersezioni con la circonferenza.", debug, timeout, fast);
+					+ "le coordinate delle due intersezioni con la circonferenza.", debug, timeout);
 			if (WindowManager.getFrame("orizzontale") != null) {
 				IJ.selectWindow("orizzontale");
 				IJ.run("Close");
@@ -431,6 +457,14 @@ public class ACRutils {
 		return peaks1;
 	}
 
+	/**
+	 * 
+	 * @param vect1
+	 * @param vect2
+	 * @param precision
+	 * @param msg
+	 * @return
+	 */
 	public static boolean compareVectors(double[] vect1, double[] vect2, double precision, String msg) {
 		if ((vect1 == null) || (vect2 == null)) {
 			if (msg.length() > 0) {
@@ -453,6 +487,14 @@ public class ACRutils {
 		return true;
 	}
 
+	/**
+	 * 
+	 * @param vect1
+	 * @param vect2
+	 * @param precision
+	 * @param msg
+	 * @return
+	 */
 	public static boolean compareVectors(float[] vect1, float[] vect2, float precision, String msg) {
 		if ((vect1 == null) || (vect2 == null)) {
 			if (msg.length() > 0) {
@@ -475,6 +517,13 @@ public class ACRutils {
 		return true;
 	}
 
+	/**
+	 * 
+	 * @param vect1
+	 * @param vect2
+	 * @param msg
+	 * @return
+	 */
 	public static boolean compareVectors(int[] vect1, int[] vect2, String msg) {
 		if ((vect1 == null) || (vect2 == null)) {
 			if (msg.length() > 0) {
@@ -496,6 +545,13 @@ public class ACRutils {
 		return true;
 	}
 
+	/**
+	 * 
+	 * @param vect1
+	 * @param vect2
+	 * @param msg
+	 * @return
+	 */
 	public static boolean compareVectors(long[] vect1, long[] vect2, String msg) {
 		if ((vect1 == null) || (vect2 == null)) {
 			if (msg.length() > 0) {
@@ -517,6 +573,13 @@ public class ACRutils {
 		return true;
 	}
 
+	/**
+	 * 
+	 * @param vect1
+	 * @param vect2
+	 * @param msg
+	 * @return
+	 */
 	public static boolean compareVectors(String[] vect1, String[] vect2, String msg) {
 		if ((vect1 == null) || (vect2 == null)) {
 			if (msg.length() > 0) {
@@ -541,6 +604,13 @@ public class ACRutils {
 		return true;
 	}
 
+	/**
+	 * 
+	 * @param aa
+	 * @param bb
+	 * @param tolerance
+	 * @return
+	 */
 	public static boolean compareDoublesWithTolerance(double aa, double bb, double tolerance) {
 		if (Double.compare(aa, bb) == 0)
 			return true;

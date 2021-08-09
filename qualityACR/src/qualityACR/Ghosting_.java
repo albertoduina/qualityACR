@@ -13,16 +13,12 @@ import ij.process.ImageStatistics;
 public class Ghosting_ implements PlugIn {
 
 	private static final boolean debug = true;
-	private static final boolean big = true;
 
 	public void run(String arg) {
 		mainGhosting();
 	}
 
 	public void mainGhosting() {
-
-		boolean demo = true; // inserisce il modo di funzionamento dimostrativo di tutte le operazioni
-		// eseguite
 
 		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
 
@@ -91,7 +87,7 @@ public class Ghosting_ implements PlugIn {
 				IJ.log("mainGhosting001 >==================");
 				IJ.log("mainGhosting001 > elaborazione slice T1 numero " + i1);
 				ImagePlus imp1 = ACRgraphic.openImageNoDisplay(sortedListT1[i1], false);
-				double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp1, step, fast, verbose, timeout);
+				double[] phantomCircle = ACRlocalizer.gridLocalizerOLD(imp1, step, fast, verbose, timeout);
 //
 //				int[] phantomCircle = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout1);
 				roiGhost(imp1, ACRutils.toInt(phantomCircle), i1, step, fast, verbose);
@@ -123,27 +119,11 @@ public class Ghosting_ implements PlugIn {
 //			}
 		// Ricerca delle coordinate e diametro del fantoccio su slice 5
 		int[] out2 = ACRlocalizer.positionSearch2(imp1, maxFitError, step, fast, verbose, timeout);
-		//
-		// per rendere le cose piu' interessanti durante il debug disegno un buco nel
-		// fantoccio riempiendolo con segnale a 1.0.n ed un altro buco con segnale 3000.
-		// RICORDARSI DI COMMENTARE PRIMA DELL' IMPIEGO EFFETIVO
-		//
-//		IJ.run(imp1, "Specify...", "width=20 height=20 x=96 y=96 oval");
-//		IJ.run(imp1, "Set...", "value=1");
-//		IJ.run(imp1, "Specify...", "width=20 height=20 x=96 y=50 oval");
-//		IJ.run(imp1, "Set...", "value=3000");
-//		imp1.updateAndDraw();
-
 		int xphantom = (int) out2[0];
 		int yphantom = (int) out2[1];
 		int dphantom = (int) out2[2];
-
 		Overlay over1 = new Overlay();
 		imp1.setOverlay(over1);
-// -----------------------------------------------------------------
-// Visualizzo sull'immagine il posizionamento, ricevuto da  positionSearch1, che verra' utilizzato: 
-// cerchio esterno fantoccio in rosso
-// -----------------------------------------------------------------
 
 		if (true) {
 			if (!imp1.isVisible()) {
@@ -155,7 +135,7 @@ public class Ghosting_ implements PlugIn {
 			over1.addElement(imp1.getRoi());
 			imp1.killRoi();
 			ACRlog.waitHere(ACRlog.qui() + "cerchio esterno rosso, fantoccio rilevato da positionSearch1", debug,
-					timeout, fast);
+					timeout);
 		}
 
 		return out2;
@@ -199,15 +179,14 @@ public class Ghosting_ implements PlugIn {
 		if (true) {
 			if (!imp1.isVisible()) {
 				imp1.show();
-				if (big)
-					ACRutils.zoom(imp1);
+				ACRutils.zoom(imp1);
 			}
 			imp1.setRoi(new OvalRoi(xphantom - involucro / 2, yphantom - involucro / 2, involucro, involucro));
 			imp1.getRoi().setStrokeColor(Color.RED);
 			over1.addElement(imp1.getRoi());
 			imp1.killRoi();
 
-			ACRlog.waitHere(ACRlog.qui() + "cerchio esterno blu, involucro esterno fantoccio", step, timeout, fast);
+			ACRlog.waitHere(ACRlog.qui() + "cerchio esterno blu, involucro esterno fantoccio", step, timeout);
 		}
 
 		// -----------------------------------------------------------------
@@ -238,7 +217,7 @@ public class Ghosting_ implements PlugIn {
 		over1.addElement(imp1.getRoi());
 		imp1.killRoi();
 		if (true)
-			ACRlog.waitHere(ACRlog.qui() + "cerchio interno verde MROI", step, timeout, fast);
+			ACRlog.waitHere(ACRlog.qui() + "cerchio interno verde MROI", step, timeout);
 
 		int[] MROIcircle = new int[4];
 		MROIcircle[0] = xmroi;

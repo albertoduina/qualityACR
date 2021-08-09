@@ -43,7 +43,7 @@ public class ACRlocalizer {
 	 * @return
 	 */
 	public static double[] positionSearch1(ImagePlus imp11, double maxFitError, double maxBubbleGapLimit, boolean step,
-			boolean fast, boolean verbose, int timeout) {
+			boolean verbose, int timeout) {
 
 		//
 		// ================================================================================
@@ -90,8 +90,7 @@ public class ACRlocalizer {
 		if (verbose) {
 			imp11.show();
 			ACRutils.zoom(imp11);
-			ACRlog.waitHere("L'immagine in input viene processata con il Canny Edge Detector", ACRutils.debug, timeout,
-					fast);
+			ACRlog.waitHere("L'immagine in input viene processata con il Canny Edge Detector", ACRutils.debug, timeout);
 		}
 		ACRcannyEdgeDetector mce = new ACRcannyEdgeDetector();
 		mce.setGaussianKernelRadius(2.0f);
@@ -103,10 +102,8 @@ public class ACRlocalizer {
 		if (verbose) {
 			imp12.show();
 			ACRutils.zoom(imp12);
-			ACRlog.waitHere(
-					"L'immagine risultante e' una immagine ad 8 bit, con i soli valori \n"
-							+ "0 e 255. Lo spessore del perimetro del cerchio e' di 1 pixel",
-					ACRutils.debug, timeout, fast);
+			ACRlog.waitHere("L'immagine risultante e' una immagine ad 8 bit, con i soli valori \n"
+					+ "0 e 255. Lo spessore del perimetro del cerchio e' di 1 pixel", ACRutils.debug, timeout);
 		}
 		double[][] peaks9 = new double[4][1];
 		double[][] peaks10 = new double[4][1];
@@ -190,8 +187,8 @@ public class ACRlocalizer {
 			if (showProfiles)
 				profilo = true;
 
-			myPeaks = ACRutils.cannyProfileAnalyzer(imp12, dimPixel, vetTitle[i1], profilo, step, vertical, fast,
-					verbose, timeout);
+			myPeaks = ACRutils.cannyProfileAnalyzer(imp12, dimPixel, vetTitle[i1], profilo, step, vertical, verbose,
+					timeout);
 
 			String direction1 = ACRutils.readDicomParameter(imp11, ACRconst.DICOM_IMAGE_ORIENTATION);
 
@@ -243,7 +240,7 @@ public class ACRlocalizer {
 			}
 		}
 		if (verbose)
-			ACRlog.waitHere("Tracciate tutte le linee", ACRutils.debug, timeout, fast);
+			ACRlog.waitHere("Tracciate tutte le linee", ACRutils.debug, timeout);
 		int[] xPoints3 = new int[1];
 		int[] yPoints3 = new int[1];
 		if (count >= 1) {
@@ -279,7 +276,7 @@ public class ACRlocalizer {
 			over12.addElement(imp12.getRoi());
 		}
 		if (verbose)
-			ACRlog.waitHere("La circonferenza risultante dal fit e' mostrata in rosso", ACRutils.debug, timeout, fast);
+			ACRlog.waitHere("La circonferenza risultante dal fit e' mostrata in rosso", ACRutils.debug, timeout);
 		Rectangle boundRec = imp12.getProcessor().getRoi();
 		xCenterCircle = Math.round(boundRec.x + boundRec.width / 2);
 		yCenterCircle = Math.round(boundRec.y + boundRec.height / 2);
@@ -321,8 +318,7 @@ public class ACRlocalizer {
 		//
 		if (verbose && !manual) {
 			ACRgraphic.drawCenter(imp12, over12, xCenterCircle, yCenterCircle, colore1);
-			ACRlog.waitHere("Il centro del fantoccio e' contrassegnato dal pallino rosso", ACRutils.debug, timeout,
-					fast);
+			ACRlog.waitHere("Il centro del fantoccio e' contrassegnato dal pallino rosso", ACRutils.debug, timeout);
 		}
 		// =============================================================
 		// COMPENSAZIONE PER EVENTUALE BOLLA D'ARIA NEL FANTOCCIO
@@ -339,7 +335,7 @@ public class ACRlocalizer {
 				imp12.updateAndDraw();
 			}
 			peaks9 = ACRutils.cannyProfileAnalyzer(imp12, dimPixel, "BISETTRICE VERTICALE FANTOCCIO", false, false,
-					false, false, false, 1);
+					false, false, 1);
 			// logMatrix(peaks9, "peaks9");
 			// ACRutils.waitHere();
 			// PLOTTAGGIO PUNTI
@@ -356,7 +352,7 @@ public class ACRlocalizer {
 				imp12.updateAndDraw();
 			}
 			peaks10 = ACRutils.cannyProfileAnalyzer(imp12, dimPixel, "BISETTRICE ORIZZONTALE FANTOCCIO", false, false,
-					false, false, false, 1);
+					false, false, 1);
 			double gapOrizz = 0;
 			if (peaks10 != null) {
 //				ImageUtils.plotPoints(imp12, over12, peaks10);
@@ -365,7 +361,7 @@ public class ACRlocalizer {
 			if (verbose)
 				ACRlog.waitHere("Si determina ora l'eventuale dimensione delle bolla d'aria, \n"
 						+ "essa viene automaticamente compensata entro il limite del \n" + "\"maxBubbleGapLimit\"= "
-						+ maxBubbleGapLimit, ACRutils.debug, timeout, fast);
+						+ maxBubbleGapLimit, ACRutils.debug, timeout);
 			// Effettuo in ogni caso la correzione, solo che in assenza di
 			// bolla d'aria la correzione sara' irrisoria, in presenza di bolla la
 			// correzione sara' apprezzabile
@@ -380,7 +376,7 @@ public class ACRlocalizer {
 			// ---------------------------------------
 			// diamMROI = (int) Math.round(diamCircle * MyConst.P3_AREA_PERC_80_DIAM);
 			if (verbose)
-				ACRlog.waitHere("DiamCircle= " + diamCircle, ACRutils.debug, timeout, fast);
+				ACRlog.waitHere("DiamCircle= " + diamCircle, ACRutils.debug, timeout);
 			diamMROI = (int) Math.round(84 / dimPixel);
 
 			xCenterMROI = xCenterCircle + xcorr;
@@ -398,7 +394,7 @@ public class ACRlocalizer {
 			}
 			// showProfiles = true;
 			peaks11 = ACRutils.cannyProfileAnalyzer(imp12, dimPixel, "BISETTRICE VERTICALE MROI x VERIFICA", false,
-					false, false, false, false, 1);
+					false, false, false, 1);
 			if (peaks11 != null) {
 				// ImageUtils.plotPoints(imp12, over12, peaks11);
 			}
@@ -409,7 +405,7 @@ public class ACRlocalizer {
 				imp12.updateAndDraw();
 			}
 			peaks12 = ACRutils.cannyProfileAnalyzer(imp12, dimPixel, "BISETTRICE ORIZZONTALE MROI x VERIFICA", false,
-					false, false, false, false, 1);
+					false, false, false, 1);
 			if (peaks12 != null) {
 				// ImageUtils.plotPoints(imp12, over12, peaks12);
 			}
@@ -451,11 +447,11 @@ public class ACRlocalizer {
 			imp12.getRoi().setStrokeColor(colore2);
 			over12.addElement(imp12.getRoi());
 			ACRlog.waitHere("Viene mostrata la circonferenza con area 80% del fantoccio, chiamata MROI", ACRutils.debug,
-					timeout, fast);
+					timeout);
 			ACRgraphic.drawCenter(imp12, over12, xCenterCircle + xcorr, yCenterCircle + ycorr, colore2);
-			ACRlog.waitHere("Il centro della MROI e' contrassegnato dal pallino verde", ACRutils.debug, timeout, fast);
+			ACRlog.waitHere("Il centro della MROI e' contrassegnato dal pallino verde", ACRutils.debug, timeout);
 			IJ.beep();
-			ACRlog.waitHere("TERMINE PHANTOM SEARCH VERBOSE", ACRutils.debug, timeout, fast);
+			ACRlog.waitHere("TERMINE PHANTOM SEARCH VERBOSE", ACRutils.debug, timeout);
 		}
 		imp12.close();
 		if (imp11.isVisible()) {
@@ -490,14 +486,14 @@ public class ACRlocalizer {
 			IJ.log("<ACRlocalizer.positionSearch2 START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
 
 		if (step)
-			ACRlog.waitHere(">>> 01 - RICERCA POSIZIONE E DIAMETRO FANTOCCIO <<<", ACRutils.debug, timeout, fast);
+			ACRlog.waitHere(">>> 01 - RICERCA POSIZIONE E DIAMETRO FANTOCCIO <<<", ACRutils.debug, timeout);
 
 		// ricerca posizione e diametro fantoccio
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
 		ImageWindow iw2 = imp2.getWindow();
-		if (ACRutils.big)
-			ACRutils.zoom(imp2);
+
+		ACRutils.zoom(imp2);
 
 		Overlay over2 = new Overlay();
 		imp2.setOverlay(over2);
@@ -591,7 +587,7 @@ public class ACRlocalizer {
 				IJ.log(ACRlog.qui() + "PUNTO INIZIALE " + xpoint1 + " , " + ypoint1);
 				IJ.log(ACRlog.qui() + "PUNTO FINALE " + xpoint2 + " , " + ypoint2);
 				ACRlog.waitHere("PROFILO " + vetTitle[i1] + " con punti trovati, riportati anche su immagine",
-						ACRutils.debug, timeout, fast);
+						ACRutils.debug, timeout);
 			}
 
 			if (verbose) {
@@ -636,7 +632,7 @@ public class ACRlocalizer {
 			over2.addElement(imp2.getRoi());
 		}
 		if (verbose) {
-			ACRlog.waitHere("La circonferenza risultante dal fit e' mostrata in verde", true, timeout, fast);
+			ACRlog.waitHere("La circonferenza risultante dal fit e' mostrata in verde", true, timeout);
 			ACRlog.waitHere();
 		}
 		Rectangle boundRec = imp2.getProcessor().getRoi();
@@ -677,13 +673,13 @@ public class ACRlocalizer {
 			IJ.log(ACRlog.qui() + "START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
 
 		if (step)
-			ACRlog.waitHere(">>> 02 - MISURA PRECISA DIAMETRI FANTOCCIO <<<", ACRutils.debug, timeout, fast);
+			ACRlog.waitHere(">>> 02 - MISURA PRECISA DIAMETRI FANTOCCIO <<<", ACRutils.debug, timeout);
 
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
 		ImageWindow iw2 = imp2.getWindow();
-		if (ACRutils.big)
-			ACRutils.zoom(imp2);
+
+		ACRutils.zoom(imp2);
 
 		Overlay over2 = new Overlay();
 		imp2.setOverlay(over2);
@@ -811,7 +807,7 @@ public class ACRlocalizer {
 
 			if (step)
 				ACRlog.waitHere("PROFILO " + vetTitle[i1] + " con punti trovati, riportati anche su immagine",
-						ACRutils.debug, timeout, fast);
+						ACRutils.debug, timeout);
 
 			double dist = Math
 					.sqrt(Math.pow((vetout[0][2] - vetout[0][3]), 2) + Math.pow((vetout[1][2] - vetout[1][3]), 2));
@@ -837,7 +833,7 @@ public class ACRlocalizer {
 	 * @param timeout
 	 * @return
 	 */
-	public static double[] gridLocalizer1(ImagePlus imp1, boolean step, boolean fast, boolean verbose, int timeout) {
+	public static double[] gridLocalizerOLD(ImagePlus imp1, boolean step, boolean fast, boolean verbose, int timeout) {
 
 		boolean verbose2 = false;
 
@@ -1000,7 +996,7 @@ public class ACRlocalizer {
 
 		if (step) {
 			ACRlog.waitHere(ACRlog.qui() + "La circonferenza risultante dal fit non interpolato e' mostrata in GIALLO",
-					true, timeout, fast);
+					true, timeout);
 		}
 
 		float[] vetX3 = ACRcalc.arrayListToArrayFloat(arrIntX);
@@ -1021,7 +1017,7 @@ public class ACRlocalizer {
 	}
 
 	/**
-	 * Ricerca rapida di oggetti nell'imagine, con sacnsioni verticale ed
+	 * Ricerca rapida fantoccio circolare nell'imagine, con scansioni verticale ed
 	 * orizzontale. Versione basata sugli integer e che non utilizza le
 	 * interpolazioni.
 	 * 
@@ -1032,8 +1028,7 @@ public class ACRlocalizer {
 	 * @param timeout
 	 * @return
 	 */
-	public static double[] gridLocalizerAdvanced(ImagePlus imp1, boolean step, boolean fast, boolean verbose,
-			int timeout) {
+	public static double[] phantomLocalizerAdvanced(ImagePlus imp1, boolean step, boolean verbose, int timeout) {
 
 		boolean verbose2 = false;
 
@@ -1089,7 +1084,7 @@ public class ACRlocalizer {
 			}
 		}
 		if (step || verbose)
-			ACRlog.waitHere(ACRlog.qui() + "scansione orizzontale su interi colore giallo");
+			ACRlog.waitHere("scansione orizzontale su interi colore giallo", ACRutils.debug, timeout);
 
 		// scansione per colonne
 		for (int x1 = 1; x1 < width - 1; x1++) {
@@ -1117,7 +1112,7 @@ public class ACRlocalizer {
 		// ACRlog.waitHere();
 
 		if (step || verbose)
-			ACRlog.waitHere(ACRlog.qui() + "scansione verticale su interi colore blu");
+			ACRlog.waitHere("scansione verticale su interi colore blu", ACRutils.debug, timeout);
 
 		int[] vetX = ACRcalc.arrayListToArrayInt(arrX);
 		int[] vetY = ACRcalc.arrayListToArrayInt(arrY);
@@ -1148,8 +1143,7 @@ public class ACRlocalizer {
 		imp2.killRoi();
 
 		if (verbose || step) {
-			ACRlog.waitHere(ACRlog.qui() + "La circonferenza risultante dal fit non interpolato e' mostrata in GIALLO",
-					true, timeout, fast);
+			ACRlog.waitHere("La circonferenza risultante dal fit non interpolato e' mostrata in GIALLO", true, timeout);
 		}
 
 		imp2.close();
@@ -1481,7 +1475,7 @@ public class ACRlocalizer {
 
 		double pmax = ACRutils.pseudomax(line1, pseudomaxlen);
 		double pmin = ACRutils.pseudomin(line1, pseudomaxlen);
-		IJ.log("pmax= " + pmax + " pmin= " + pmin);
+		// IJ.log("pmax= " + pmax + " pmin= " + pmin);
 		double fwhmlevel = pmax / 2;
 		double[] xVetLineHalf = new double[2];
 		double[] yVetLineHalf = new double[2];
@@ -1490,7 +1484,7 @@ public class ACRlocalizer {
 		yVetLineHalf[0] = fwhmlevel;
 		yVetLineHalf[1] = fwhmlevel;
 		String title = titolo;
-		Plot plot1 = ACRutils.ACRplot(line1, title, Color.GREEN, true);
+		Plot plot1 = ACRutils.ACRplot(line1, title, Color.GREEN, false);
 		plot1.addPoints(xVetLineHalf, yVetLineHalf, Plot.LINE);
 		plot1.draw();
 		int[] duepuntisopra = ACRlocalizer.findPointsopra(line1, (int) fwhmlevel);
@@ -1516,7 +1510,7 @@ public class ACRlocalizer {
 
 		double fwhmPixel = (duepuntisopra[1] - duepuntisopra[0]); // PIXEL
 
-		ACRlog.waitHere("FWHMpixel= " + fwhmPixel);
+		// ACRlog.waitHere("FWHMpixel= " + fwhmPixel);
 
 		return fwhmPixel;
 	}
@@ -1600,7 +1594,7 @@ public class ACRlocalizer {
 	 * @return matrice coi risultati
 	 */
 	public static double[][] FWHMpoints3vNEW(double[][] line3, int pseudomaxlen, String titolo, boolean step,
-			boolean fast, boolean verbose) {
+			boolean verbose) {
 		//
 		// [][] line3 ha il formato:
 		// line3[0] = profiX coordinata x del pixel sulla immagine
@@ -1612,9 +1606,9 @@ public class ACRlocalizer {
 		int trunc = 4;
 
 		if (verbose) {
-			IJ.log(ACRlog.qui() + " START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + " START>  step= " + step + " verbose= " + verbose);
 			IJ.log(ACRlog.qui() + " START>  analisi del profilo ricevuto per ottenere la FWHM");
-			IJ.log(ACRlog.qui() + "  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + "  step= " + step + " verbose= " + verbose);
 			ACRlog.logMatrix(line3, ACRlog.qui() + "line3");
 		}
 
@@ -2096,7 +2090,8 @@ public class ACRlocalizer {
 //			wc2 = ACRutils.dblTruncate(wc2, trunc);
 
 //			if (slope > 0) {
-			if (verbose) IJ.log(ACRlog.qui() + "slope > 0  slope= " + slope);
+			if (verbose)
+				IJ.log(ACRlog.qui() + "slope > 0  slope= " + slope);
 			// punto sx
 			xinterpsx = wc1 * sin + xoffset;
 			yinterpsx = wc1 * cos + yoffset;
@@ -2750,7 +2745,7 @@ public class ACRlocalizer {
 	 * @param imp2
 	 * @return
 	 */
-	public static double profAnal(ImagePlus imp2, boolean step, boolean fast, boolean verbose, int timeout) {
+	public static double profAnal(ImagePlus imp2, boolean step, boolean verbose, int timeout) {
 		// e come caspita potrei abbreviare profile analyzer? Ci sono 2 soluzioni:
 		// analProf oppure profAnal ai posteri(ori) la scelta!!
 		if (verbose)
@@ -2758,8 +2753,7 @@ public class ACRlocalizer {
 		int pseudomaxlen = 3; // dimensioni roi di ricerca pseudomassimo
 		double[][] decomposed3v = ACRutils.decomposer3v(imp2);
 		double[][] zeropadded3v = ACRutils.zeropadProfile3v(decomposed3v);
-		double[][] vetout = ACRlocalizer.FWHMpoints3vNEW(zeropadded3v, pseudomaxlen, "PROFILO LINEA", step, fast,
-				verbose);
+		double[][] vetout = ACRlocalizer.FWHMpoints3vNEW(zeropadded3v, pseudomaxlen, "PROFILO LINEA", step, verbose);
 //		if (step) ACRlog.waitHere("profilo analizzato");
 		//
 		// posso misurare il diametro "con precisione?" utilizzando i due punti
@@ -2787,21 +2781,21 @@ public class ACRlocalizer {
 	}
 
 	/**
+	 * Estrae dalla slice1 l'inserto centrale e lo analizza per trovarne i vertici
 	 * 
 	 * @param imp1
 	 * @param phantomCircle
 	 * @param step
-	 * @param fast
 	 * @param verbose
 	 * @param timeout
 	 * @return
 	 */
-	public static double[][] phantomReferences(ImagePlus imp1, double[] phantomCircle, boolean step, boolean fast,
-			boolean verbose, int timeout) {
+	public static double[][] phantomReferences(ImagePlus imp1, double[] phantomCircle, boolean step, boolean verbose,
+			int timeout) {
 
-		boolean verbose2 = false;
-		if (verbose)
+		if (verbose || step)
 			IJ.log(ACRlog.qui() + "START");
+		boolean verbose2 = false;
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
 		ACRutils.zoom(imp2);
@@ -2814,7 +2808,7 @@ public class ACRlocalizer {
 		// elaboro e filtro l'immagine, in modo da renderla binaria ed isolare i
 		// particolari che in seguito andro'a rilevare
 		//
-		ImagePlus imp4 = phantomFilter(imp2, phantomCircle, step, fast, verbose, timeout);
+		ImagePlus imp4 = phantomFilter(imp2, phantomCircle, step, verbose, timeout);
 		Overlay over4 = new Overlay();
 		imp4.setOverlay(over4);
 		//
@@ -2831,7 +2825,6 @@ public class ACRlocalizer {
 		ArrayList<Integer> arrY = new ArrayList<>();
 		// scansione per colonne
 		for (int x1 = 1; x1 < width - 1; x1++) {
-			verbose2 = false;
 			out2 = verticalSearch(imp4, threshold, x1, verbose2);
 			if (out2 != null) {
 				xpoint1 = x1;
@@ -2882,7 +2875,7 @@ public class ACRlocalizer {
 		if (verbose)
 			ACRlog.logMatrix(matout1, ACRlog.qui() + "matout1");
 		if (step)
-			ACRlog.waitHere();
+			ACRlog.waitHere("INSERTO FILTRATO", ACRutils.debug, timeout);
 		int[][] rotated = ACRutils.matRotate(matout1);
 		// analizzo tutti i punti trovati, per ricavare i piu'prossimi agli angoli
 		// dell'immagine
@@ -2904,7 +2897,7 @@ public class ACRlocalizer {
 		int DY = matout2[1][3];
 		if (step)
 			ACRlog.waitHere("A= " + AX + " , " + AY + " B= " + BX + " , " + BY + " C= " + CX + " , " + CY + " D= " + DX
-					+ " , " + DY);
+					+ " , " + DY, ACRutils.debug, timeout);
 
 		ACRutils.plotPoints(imp4, over4, AX, AY, Color.RED, 4, 4);
 		ACRutils.plotPoints(imp4, over4, BX, BY, Color.YELLOW, 4, 4);
@@ -2928,16 +2921,17 @@ public class ACRlocalizer {
 
 		if (verbose) {
 			ACRlog.logMatrix(matout, ACRlog.qui() + "matout");
-			IJ.log(ACRlog.qui() + "END");
 		}
 		if (!step && !verbose)
 			imp4.close();
 		imp2.close();
+		if (verbose || step)
+			IJ.log(ACRlog.qui() + "END");
 		return matout;
 	}
 
 	/**
-	 * Dati i vertici trovati, calcola l'angolo ri rotazione del fantoccio
+	 * Dati i vertici trovati, calcola l'angolo di rotazione del fantoccio
 	 * 
 	 * @param vertices
 	 * @param step
@@ -2946,7 +2940,7 @@ public class ACRlocalizer {
 	 * @param timeout
 	 * @return
 	 */
-	static double phantomRotation(double[][] vertices, boolean step, boolean fast, boolean verbose, int timeout) {
+	static double phantomRotation(double[][] vertices, boolean step, boolean verbose, int timeout) {
 
 		int CX = (int) Math.round(vertices[0][2]);
 		int CY = (int) Math.round(vertices[1][2]);
@@ -2972,11 +2966,10 @@ public class ACRlocalizer {
 	 * @return
 	 */
 	public static double[] parallela(double[][] punti, double distanza) {
-		double ax = punti[0][0];
-		double ay = punti[1][0];
-		double bx = punti[0][1];
-		double by = punti[1][1];
-		IJ.log("a= " + ax + " , " + ay + " b= " + bx + " , " + by);
+		double ax = punti[0][2];
+		double ay = punti[1][2];
+		double bx = punti[0][3];
+		double by = punti[1][3];
 		double slope = (ax - bx) / (ay - by);
 		double perpendicolar = -1 / slope;
 		double sinperpendicolar = perpendicolar / Math.sqrt(1 + perpendicolar * perpendicolar);
@@ -2987,12 +2980,15 @@ public class ACRlocalizer {
 		double xoffset = distanza * sinperpendicolar;
 		double yoffset = distanza * cosperpendicolar;
 
-		IJ.log(ACRlog.qui() + "slope= " + slope);
-		IJ.log(ACRlog.qui() + "perp= " + perpendicolar);
-		IJ.log(ACRlog.qui() + "sinperp= " + sinperpendicolar);
-		IJ.log(ACRlog.qui() + "cosperp= " + cosperpendicolar);
-		IJ.log(ACRlog.qui() + "xoffset= " + xoffset);
-		IJ.log(ACRlog.qui() + "yoffset= " + yoffset);
+		if (false) {
+			IJ.log(ACRlog.qui() + "input a= " + ax + " , " + ay + " b= " + bx + " , " + by);
+			IJ.log(ACRlog.qui() + "slope= " + slope);
+			IJ.log(ACRlog.qui() + "perp= " + perpendicolar);
+			IJ.log(ACRlog.qui() + "sinperp= " + sinperpendicolar);
+			IJ.log(ACRlog.qui() + "cosperp= " + cosperpendicolar);
+			IJ.log(ACRlog.qui() + "xoffset= " + xoffset);
+			IJ.log(ACRlog.qui() + "yoffset= " + yoffset);
+		}
 
 		double[] vetout = new double[2];
 		vetout[0] = xoffset;
@@ -3001,58 +2997,40 @@ public class ACRlocalizer {
 	}
 
 	/**
+	 * Effettua il filtraggio, in modo da lasciare solo la silouette degli inserti
+	 * interni della slice1 USATO DA THICKNESS E RESOLUTION
 	 * 
-	 * @param imp1
-	 * @param phantomCircle
+	 * @param imp1          immagine da analizzare
+	 * @param phantomCircle dati profilo circolare esterno fantoccio
 	 * @param step
 	 * @param fast
 	 * @param verbose
 	 * @param timeout
-	 * @return
+	 * @return ImagePlus con immagine filtrata
 	 */
-	public static ImagePlus phantomFilter(ImagePlus imp1, double[] phantomCircle, boolean step, boolean fast,
-			boolean verbose, int timeout) {
+	public static ImagePlus phantomFilter(ImagePlus imp1, double[] phantomCircle, boolean step, boolean verbose,
+			int timeout) {
 
-		IJ.log(ACRlog.qui() + "START");
-
+		if (verbose || step)
+			IJ.log(ACRlog.qui() + "START");
 		double xcircle = phantomCircle[0];
 		double ycircle = phantomCircle[1];
 		double dcircle = phantomCircle[2] - 4;
 		ImagePlus imp3 = imp1.duplicate();
-		imp3.setTitle("003");
 		ImagePlus imp4 = applyThreshold1(imp3);
-		imp4.setTitle("004");
-
-//		imp4.updateAndDraw();
-//		imp4.show();
-//
-//		ACRlog.waitHere();
-
-		ImageProcessor ip4 = imp4.getProcessor();
 		imp4.setRoi(new OvalRoi(xcircle - dcircle / 2, ycircle - dcircle / 2, dcircle, dcircle));
+		ImageProcessor ip4 = imp4.getProcessor();
 		ip4.setColor(Color.WHITE);
 		ip4.fillOutside(imp4.getRoi());
-
 		imp4.updateAndDraw();
 		imp4.show();
 		ACRutils.zoom(imp4);
-//		ACRlog.waitHere();
-
-//		Thresholder at1 = new Thresholder();
-//		at1.setBackground("White");
-//
-//		at1.setMethod("Default");
-//		ByteProcessor ipt1 = Thresholder.createMask(imp4);
-//		ImagePlus impt1 = new ImagePlus("thresholded", ipt1);
-//		impt1.show();
-//		ACRutils.zoom(impt1);
 		int options = ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES + ParticleAnalyzer.SHOW_MASKS
 				+ ParticleAnalyzer.INCLUDE_HOLES;
 		int minCirc = 0;
 		int maxCirc = 1;
 		int minSizePixels = 3500;
 		int maxSizePixels = 300000;
-
 		ResultsTable rt1 = new ResultsTable();
 		int measurements = Measurements.CENTER_OF_MASS + Measurements.AREA;
 		ParticleAnalyzer pa1 = new ParticleAnalyzer(options, measurements, rt1, minSizePixels, maxSizePixels, minCirc,
@@ -3060,21 +3038,21 @@ public class ACRlocalizer {
 		pa1.setHideOutputImage(false);
 		pa1.analyze(imp4);
 		ImagePlus imp5 = pa1.getOutputImage();
-		imp5.setTitle("005");
 		if (imp5 == null)
 			ACRlog.waitHere("imp5==null niente immagine da particle analyzer");
+		imp5.setTitle("005");
 		imp5.show();
 		ACRutils.zoom(imp5);
 		imp3.close();
 		imp4.close();
-
-//		ACRlog.waitHere();
-
+		if (verbose || step)
+			IJ.log(ACRlog.qui() + "END");
 		return imp5;
 
 	}
 
 	/**
+	 * Effettua il threshold dell'immagine
 	 * 
 	 * @param imp1
 	 * @param phantomCircle
@@ -3084,49 +3062,22 @@ public class ACRlocalizer {
 	 * @param timeout
 	 * @return
 	 */
-	public static ImagePlus phantomFilter32(ImagePlus imp1, double[] phantomCircle, boolean step, boolean fast,
-			boolean verbose, int timeout) {
+	public static ImagePlus phantomFilter32(ImagePlus imp1, double[] phantomCircle, boolean step, boolean verbose,
+			int timeout) {
 
 		IJ.log(ACRlog.qui() + "START");
-
-//		double xcircle = phantomCircle[0];
-//		double ycircle = phantomCircle[1];
-//		double dcircle = phantomCircle[2] - 4;
+		if (imp1 == null)
+			ACRlog.waitHere(ACRlog.qui() + "imp1==null!!!");
 		ImagePlus imp3 = imp1.duplicate();
-
-//		int threshold = computeThreshold(imp3);
 		imp3.setTitle("003");
-
-		int threshold = computeThreshold32(imp3);
-
+//		int threshold = computeThreshold32(imp3);
 		ImagePlus imp4 = applyThreshold32(imp3, "Otsu");
-
 		imp4.setTitle("phFilter32/apThresh32");
 		IJ.log(ACRlog.qui());
 		imp4.updateAndDraw();
 		imp4.show();
 		ACRutils.zoom(imp4);
 		ACRlog.waitHere("THRESHOLDED");
-
-//		ImageProcessor ip4 = imp4.getProcessor();
-//		imp4.setRoi(new OvalRoi(xcircle - dcircle / 2, ycircle - dcircle / 2, dcircle, dcircle));
-//		ip4.setColor(Color.WHITE);
-//		ip4.fillOutside(imp4.getRoi());
-//		IJ.log(ACRlog.qui());
-//		imp4.updateAndDraw();
-//		imp4.show();
-//		ACRutils.zoom(imp4);
-//		IJ.log(ACRlog.qui() + "MASCHERA CIRCOLARE");
-//		ACRlog.waitHere();
-
-//		Thresholder at1 = new Thresholder();
-//		at1.setBackground("White");
-//
-//		at1.setMethod("Default");
-//		ByteProcessor ipt1 = Thresholder.createMask(imp4);
-//		ImagePlus impt1 = new ImagePlus("thresholded", ipt1);
-//		impt1.show();
-//		ACRutils.zoom(impt1);
 		int options = ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES + ParticleAnalyzer.SHOW_MASKS
 				+ ParticleAnalyzer.INCLUDE_HOLES;
 		int minCirc = 0;
@@ -3135,8 +3086,6 @@ public class ACRlocalizer {
 		int maxSizePixels = 300000;
 		IJ.log(ACRlog.qui());
 		ResultsTable rt1 = new ResultsTable();
-
-		IJ.log(ACRlog.qui());
 		int measurements = Measurements.CENTER_OF_MASS + Measurements.AREA;
 		ParticleAnalyzer pa1 = new ParticleAnalyzer(options, measurements, rt1, minSizePixels, maxSizePixels, minCirc,
 				maxCirc);
@@ -3145,19 +3094,15 @@ public class ACRlocalizer {
 		pa1.analyze(imp4);
 		ImagePlus imp5 = pa1.getOutputImage();
 		IJ.log(ACRlog.qui());
-		imp5.setTitle("005");
 		if (imp5 == null)
 			ACRlog.waitHere("imp5==null niente immagine da particle analyzer");
+		imp5.setTitle("005");
 		imp5.show();
 		ACRutils.zoom(imp5);
 		IJ.log(ACRlog.qui() + "DOPO PARTICLEANALYZER");
 		imp3.close();
 		imp4.close();
-
-//		ACRlog.waitHere();
-
 		return imp5;
-
 	}
 
 	/**
@@ -3215,6 +3160,9 @@ public class ACRlocalizer {
 				pixels2[i1] = (byte) 0;
 			}
 		}
+		ip2.setThreshold(0, 127);
+		imp2.updateAndDraw();
+		IJ.log(ACRlog.qui());
 //		ip2.resetMinAndMax();
 		return imp2;
 	}
@@ -3438,7 +3386,7 @@ public class ACRlocalizer {
 	 * @return
 	 */
 	public static double[][] phantomResolutionHoles(ImagePlus imp1, double[][] phantomVertices, boolean step,
-			boolean fast, boolean verbose, int timeout) {
+			boolean verbose, int timeout) {
 
 //		phantomVertices[0][0] = AX; phantomVertices[0][2] = CX;
 //		phantomVertices[1][0] = AY;	phantomVertices[1][2] = CY;
@@ -3456,7 +3404,8 @@ public class ACRlocalizer {
 		int height = imp2.getHeight();
 		Overlay over1 = new Overlay();
 		imp2.setOverlay(over1);
-		//
+
+		ACRlog.logMatrix(phantomVertices, ACRlog.qui() + "phantomVertices");
 
 		double A0X = phantomVertices[0][0];
 		double A0Y = phantomVertices[1][0];
@@ -3467,15 +3416,15 @@ public class ACRlocalizer {
 		double D0X = phantomVertices[0][3];
 		double D0Y = phantomVertices[1][3];
 
-		double[][] punti = new double[2][2];
-		punti[0][0] = A0X;
-		punti[1][0] = A0Y;
-		punti[0][1] = B0X;
-		punti[1][1] = B0Y;
+//		double[][] punti = new double[2][2];
+//		punti[0][0] = A0X;
+//		punti[1][0] = A0Y;
+//		punti[0][1] = B0X;
+//		punti[1][1] = B0Y;
 
 		double distanza = 15;
 
-		double[] spostamento = ACRlocalizer.parallela(punti, distanza);
+		double[] spostamento = ACRlocalizer.parallela(phantomVertices, distanza);
 
 		double A1X = A0X + spostamento[0];
 		double A1Y = A0Y + spostamento[1];
@@ -3492,7 +3441,10 @@ public class ACRlocalizer {
 		ip2.setColor(Color.BLACK);
 		ip2.fillOutside(imp2.getRoi());
 		imp2.updateAndDraw();
-
+		ImagePlus imp3 = imp2.duplicate();
+		imp2.close();
+		imp3.show();
+		ACRutils.zoom(imp3);
 		ACRlog.waitHere("ROTATED RECTANGLE PULITO FUORI");
 
 		double[] phantomCircle = { 0 };
@@ -3500,7 +3452,8 @@ public class ACRlocalizer {
 		// elaboro e filtro l'immagine, in modo da renderla binaria ed isolare i
 		// particolari che in seguito andro'a rilevare
 		//
-		ImagePlus imp4 = phantomFilter32(imp2, phantomCircle, step, fast, verbose, timeout);
+//		ImagePlus imp4 = phantomFilter(imp2, phantomCircle, step, fast, verbose, timeout);
+		ImagePlus imp4 = phantomFilter32(imp3, phantomCircle, step, verbose, timeout);
 		Overlay over4 = new Overlay();
 		imp4.setOverlay(over4);
 		//
@@ -3642,7 +3595,7 @@ public class ACRlocalizer {
 	 * @return
 	 */
 	public static double[][] rototrasla(ImagePlus imp1, double[][] matin, double[] phantomCircle, double angle,
-			boolean step, boolean fast, boolean verbose, int timeout) {
+			boolean step, boolean verbose, int timeout) {
 
 		double[][] matout = new double[matin.length][matin[0].length];
 		ImagePlus imp2 = imp1.duplicate();
@@ -3807,7 +3760,8 @@ public class ACRlocalizer {
 			conta++;
 		}
 
-		double[][] matout = ACRlocalizer.rototrasla(imp2, punti, phantomCircle, angle, step, fast, verbose, timeout);
+		double[][] matout = ACRlocalizer.rototrasla(imp2, punti, phantomCircle, angle, step, verbose, timeout);
+		imp2.changes = false;
 		imp2.close();
 		return matout;
 

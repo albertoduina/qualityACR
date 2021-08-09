@@ -16,7 +16,6 @@ import ij.plugin.PlugIn;
 
 public class SpatialResolution implements PlugIn {
 	public static final boolean debug = false;
-	public static final boolean big = true;
 
 	public void run(String arg) {
 
@@ -31,15 +30,15 @@ public class SpatialResolution implements PlugIn {
 	// ricavati dalle scansioni fantoccio, tutti i duplicati
 	// 30jly2021
 	// duplicati che non sono comunque mai tantissimi!
+	//
+	// Del pattern in alto si analizzano le righe, del pattern in basso si
+	// analizzano le colonne
 
 	public void mainResolution() {
 
 		Properties prop = ACRutils.readConfigACR();
-		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
+		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
 		IJ.log(ACRlog.qui() + "START");
-//		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
-//		boolean[] defaults = { true, false, true, false, false, false, false, true, true, true, false, false, false,
-//				true };
 		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
 		boolean[] defaults = { true, false, false, false, false, false, false, false, false, false, false, false, false,
 				false };
@@ -92,6 +91,10 @@ public class SpatialResolution implements PlugIn {
 			vetBoolSliceT1[i1] = gd1.getNextBoolean();
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
+		if (fast)
+			timeout = 2000;
+		else
+			timeout = 0;
 
 		// vado a scrivere i setup nel config file
 		if (prop == null)
@@ -113,21 +116,14 @@ public class SpatialResolution implements PlugIn {
 		try {
 			ACRutils.writeConfigACR(prop);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-
 		// leggo i nomi di tutti i 15 file presenti
-		String pathLocalizer = "";
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
 		String pathReport = vetPath[4] + "\\Report1.txt";
-
-		String[] listLocalizer = ACRinputOutput.readStackPathToSortedList(vetPath[0], "T1");
-		if (listLocalizer != null)
-			pathLocalizer = listLocalizer[0];
 
 		String[] sortedListT1 = ACRinputOutput.readStackPathToSortedList(vetPath[1], "T1");
 		if (sortedListT1 == null)
@@ -136,7 +132,6 @@ public class SpatialResolution implements PlugIn {
 		String[] sortedListT2 = ACRinputOutput.readStackPathToSortedList(vetPath[2], "T2");
 		if (sortedListT2 == null)
 			IJ.log(ACRlog.qui() + "sortedListT2 ==null");
-
 
 		// DEVO creare un nuovo report, senno' che controllo faccio?
 		if (!ACRlog.initLog(pathReport))
@@ -185,19 +180,21 @@ public class SpatialResolution implements PlugIn {
 		// ===============================================
 		//
 
-		boolean step1 = false;
-		boolean fast1 = false;
-		boolean verbose1 = false;
+		boolean step1 = step;
+		boolean verbose1 = verbose;
 
-		double[] phantomCircle = ACRlocalizer.gridLocalizerAdvanced(imp2, step1, fast1, verbose1, timeout);
+		double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step1, verbose1, timeout);
 
 		// QUESTO SI CHIAMA BARARE, SIGNOR BARONE......
-		phantomCircle[0] = phantomCircle[0];
-		phantomCircle[1] = phantomCircle[1] + 1;
-		phantomCircle[2] = phantomCircle[2] + 1;
+		// in pratica se applico le seguenti correzioni ai parametri del cerchio
+		// miglioro la situazione, ovviamente funziona solo per questa immagine, pertanto inutile
 
-		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp2, phantomCircle, step, fast, verbose, timeout);
-		double angle = ACRlocalizer.phantomRotation(phantomVertices, step, fast, verbose, timeout);
+//		phantomCircle[0] = phantomCircle[0];
+//		phantomCircle[1] = phantomCircle[1] + 1;
+//		phantomCircle[2] = phantomCircle[2] + 1;
+
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp2, phantomCircle, step, verbose, timeout);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, step, verbose, timeout);
 		angle = angle + 0;
 
 		double[][] matout = ACRlocalizer.movableGridMatrix(imp2, phantomCircle, angle, step, fast, verbose, timeout);
@@ -206,6 +203,8 @@ public class SpatialResolution implements PlugIn {
 		imp3.show();
 		ACRutils.zoom(imp3);
 
+		// istruzioni inutili, da eliminare, se non introduco altro
+		imp2.changes = false;   // permette di chiudere l'immagine senza domande da parte del sistema
 		imp2.close();
 		Overlay over3 = new Overlay();
 		imp3.setOverlay(over3);
@@ -215,19 +214,20 @@ public class SpatialResolution implements PlugIn {
 		double dcircle = phantomCircle[2];
 
 		imp3.setRoi(new OvalRoi(xcircle - dcircle / 2, ycircle - dcircle / 2, dcircle, dcircle));
-		imp3.getRoi().setStrokeColor(Color.RED);
+		imp3.getRoi().setStrokeColor(Color.GREEN);
 		over3.addElement(imp3.getRoi());
 
 		for (int i1 = 0; i1 < matout[0].length; i1++) {
-			Roi pr1 = new Roi(matout[0][i1], matout[1][i1], 1, 1);
+			Roi pr1 = new Roi(matout[0][i1] - 2, matout[1][i1] - 2, 4, 4);
 			imp3.setRoi(pr1);
-			imp3.getRoi().setFillColor(Color.GREEN);
+			imp3.getRoi().setStrokeColor(Color.YELLOW);
 			over3.addElement(imp3.getRoi());
 			imp3.updateAndDraw();
 			imp3.killRoi();
-//			ACRlog.waitHere();
 		}
 
+		
+// NON SO COME ANDARE AVANTI, NON HO SUFFICIENTE PRECISIONE		
 //		double[][] resolutionHoles = ACRlocalizer.phantomResolutionHoles(imp2, phantomVertices, step, fast, verbose,
 //				timeout);
 

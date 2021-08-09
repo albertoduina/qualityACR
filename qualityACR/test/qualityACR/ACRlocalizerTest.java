@@ -52,7 +52,7 @@ public class ACRlocalizerTest {
 	public final void testPhantomRotation() {
 		double[][] matin = { { 0, 1, 156, 20 }, { 0, 1, 138, 99 } };
 		ACRlog.logMatrix(matin, ACRlog.qui() + "matin");
-		double angle = ACRlocalizer.phantomRotation(matin, true, true, true, 0);
+		double angle = ACRlocalizer.phantomRotation(matin, true, true, 0);
 		IJ.log("Angle= " + angle);
 		double expected = -16.001022853845996;
 		// ACRlog.waitHere("Angle= " + angle + " gradi");
@@ -70,7 +70,7 @@ public class ACRlocalizerTest {
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		imp1.show();
 		ACRutils.zoom(imp1);
-		double[] phantomCircle = ACRlocalizer.gridLocalizerAdvanced(imp1, false, false, false, timeout);
+		double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp1, false, false, timeout);
 
 //		IJ.log("Angle= " + angle);
 //		double expected = 163.6104596659652;
@@ -88,13 +88,12 @@ public class ACRlocalizerTest {
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		imp1.show();
 		ACRutils.zoom(imp1);
-		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp1, false, false, false, timeout);
+		double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp1, false, false, timeout);
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, timeout);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, timeout);
+		double[][] matout = ACRlocalizer.phantomResolutionHoles(imp1, phantomVertices, true, true, timeout);
 
-		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, false, timeout);
-		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, false, timeout);
-
-		double[][] matout = ACRlocalizer.phantomResolutionHoles(imp1, phantomVertices, true, false, true, timeout);
-
+		ACRlog.waitHere();
 //		IJ.log("Angle= " + angle);
 //		double expected = 163.6104596659652;
 //		assertTrue(ACRutils.compareDoublesWithTolerance(angle, expected, 1e-11));
@@ -114,9 +113,9 @@ public class ACRlocalizerTest {
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		imp1.show();
 		ACRutils.zoom(imp1);
-		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp1, false, false, false, timeout);
-		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, false, timeout);
-		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, false, timeout);
+		double[] phantomCircle = ACRlocalizer.gridLocalizerOLD(imp1, false, false, false, timeout);
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, timeout);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, timeout);
 
 		ACRlog.logVector(phantomCircle, ACRlog.qui() + "phantomCircle");
 		ACRlog.logMatrix(phantomVertices, ACRlog.qui() + "phantomVertices");
@@ -169,14 +168,14 @@ public class ACRlocalizerTest {
 		Overlay over2 = new Overlay();
 		imp2.setOverlay(over1);
 
-		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp2, false, false, false, 0);
-		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp2, phantomCircle, false, false, false, 0);
-		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, false, 0);
+		double[] phantomCircle = ACRlocalizer.gridLocalizerOLD(imp2, false, false, false, 0);
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp2, phantomCircle, false, false, 0);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, 0);
 		ACRlog.logVector(phantomCircle, ACRlog.qui() + "phantomCircle");
 		ACRlog.logMatrix(phantomVertices, ACRlog.qui() + "phantomVertices");
 		IJ.log(ACRlog.qui() + "angle= " + angle);
 
-		double[][] matout = ACRlocalizer.rototrasla(imp2, matin, phantomCircle, angle, false, false, false, 0);
+		double[][] matout = ACRlocalizer.rototrasla(imp2, matin, phantomCircle, angle, false, false, 0);
 
 		for (int i1 = 0; i1 < matin[0].length; i1++) {
 			imp2.setRoi(new PointRoi(matout[0][i1], matout[1][i1]));
@@ -214,9 +213,9 @@ public class ACRlocalizerTest {
 		imp1.killRoi();
 		imp1.show();
 		ACRutils.zoom(imp1);
-		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp1, false, false, false, timeout);
-		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, false, timeout);
-		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, false, timeout);
+		double[] phantomCircle = ACRlocalizer.gridLocalizerOLD(imp1, false, false, false, timeout);
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, timeout);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, timeout);
 		ACRlog.logVector(phantomCircle, ACRlog.qui() + "phantomCircle");
 
 		double[][] matout = ACRlocalizer.movableGridMatrix(imp1, phantomCircle, angle, step, fast, verbose, timeout);
@@ -257,9 +256,9 @@ public class ACRlocalizerTest {
 
 		int width = imp1.getWidth();
 		int height = imp1.getHeight();
-		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp1, false, false, false, 0);
-		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, false, 0);
-		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, false, 0);
+		double[] phantomCircle = ACRlocalizer.gridLocalizerOLD(imp1, false, false, false, 0);
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, 0);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, 0);
 
 		ACRlog.logVector(phantomCircle, ACRlog.qui() + "phantomCircle");
 		ACRlog.logMatrix(phantomVertices, ACRlog.qui() + "phantomVertices");
@@ -312,9 +311,9 @@ public class ACRlocalizerTest {
 		double dimPixel = ACRutils
 				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp1, ACRconst.DICOM_PIXEL_SPACING), 1));
 
-		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp1, false, false, false, 0);
-		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, false, 0);
-		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, false, 0);
+		double[] phantomCircle = ACRlocalizer.gridLocalizerOLD(imp1, false, false, false, 0);
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp1, phantomCircle, false, false, 0);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, false, false, 0);
 
 		ACRlog.logVector(phantomCircle, ACRlog.qui() + "phantomCircle");
 		ACRlog.logMatrix(phantomVertices, ACRlog.qui() + "phantomVertices");

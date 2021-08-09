@@ -31,7 +31,6 @@ import ij.process.ShortProcessor;
  */
 public class Uniformity_ implements PlugIn {
 	private static final boolean debug = true;
-	private static final boolean big = true;
 
 	public void run(String arg) {
 
@@ -155,7 +154,6 @@ public class Uniformity_ implements PlugIn {
 		if (sortedListT2 == null)
 			IJ.log("sortedListT2 ==null");
 
-		ACRlog.waitHere();
 		//
 		// Effettuo le varie elaborazioni richieste su ogni slice selezionata
 		//
@@ -169,10 +167,7 @@ public class Uniformity_ implements PlugIn {
 				ImagePlus imp2 = imp1.duplicate();
 				imp2.show();
 				ACRutils.zoom(imp2);
-				ACRlog.waitHere();
-
-				double[] phantomCircle = ACRlocalizer.gridLocalizerAdvanced(imp2, step, fast, verbose, timeout);
-				ACRlog.waitHere();
+				double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
 
 //				double[] phantomposition = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout);
 				phantomCalculations(imp2, phantomCircle, i1, step, fast, verbose, timeout);
@@ -186,7 +181,7 @@ public class Uniformity_ implements PlugIn {
 				ImagePlus imp2 = imp1.duplicate();
 				imp2.show();
 				ACRutils.zoom(imp2);
-				double[] phantomCircle = ACRlocalizer.gridLocalizerAdvanced(imp2, step, fast, verbose, timeout);
+				double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
 //				double[] phantomposition = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout);
 				phantomCalculations(imp2, phantomCircle, i1, step, fast, verbose, timeout);
 			}
@@ -216,7 +211,7 @@ public class Uniformity_ implements PlugIn {
 
 //			}
 		// Ricerca delle coordinate e diametro del fantoccio su slice 5
-		double[] out2 = ACRlocalizer.positionSearch1(imp1, maxFitError, maxBubbleGapLimit, step, fast, verbose,
+		double[] out2 = ACRlocalizer.positionSearch1(imp1, maxFitError, maxBubbleGapLimit, step, verbose,
 				timeout);
 		//
 		// per rendere le cose piu' interessanti durante il debug disegno un buco nel
@@ -251,8 +246,7 @@ public class Uniformity_ implements PlugIn {
 			imp1.getRoi().setStrokeColor(Color.RED);
 			over1.addElement(imp1.getRoi());
 			imp1.killRoi();
-			ACRlog.waitHere("MainUnifor> cerchio esterno rosso, fantoccio rilevato da positionSearch1", debug, timeout,
-					fast);
+			ACRlog.waitHere("MainUnifor> cerchio esterno rosso, fantoccio rilevato da positionSearch1", debug, timeout);
 		}
 
 		return out2;
@@ -289,7 +283,7 @@ public class Uniformity_ implements PlugIn {
 		imp2.show();
 		ACRutils.zoom(imp2);
 		ACRlog.waitHere(
-				"ATTENZIONE: IL DIAMETRO DEL FANTOCCIO DOPO LE ELABORAZIONI DELL'ARTICOLO E'NOTEVOLMENTE DIVERSO DAL DIAMETRO REALE !!!!!!!");
+				"ATTENZIONE: IL DIAMETRO DEL FANTOCCIO DOPO LE ELABORAZIONI \nDELL'ARTICOLO E'NOTEVOLMENTE DIVERSO DAL DIAMETRO REALE !!!!!!!");
 
 		double dimPixel = ACRutils
 				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp2, ACRconst.DICOM_PIXEL_SPACING), 1));
@@ -344,8 +338,7 @@ public class Uniformity_ implements PlugIn {
 		over1.addElement(imp2.getRoi());
 		imp2.killRoi();
 		if (verbose || step)
-			ACRlog.waitHere("MainUnifor> cerchio interno verde MROI", debug, timeout1, fast);
-		ACRlog.waitHere();
+			ACRlog.waitHere("MainUnifor> cerchio interno verde MROI", debug, timeout1);
 
 		int[] phantomcircle = new int[4];
 		phantomcircle[0] = xphantom;
@@ -386,7 +379,7 @@ public class Uniformity_ implements PlugIn {
 //
 //		IJ.log("Valore 96,96 su imp12= " + ip12.getPixelValue(96, 96));
 //		IJ.log("Valore 96,96 su imp777= " + ip777.getPixelValue(96, 96));
-		ACRlog.waitHere("FINE ELABORAZIONE SLICE " + slice, debug, timeout1, fast);
+		ACRlog.waitHere("FINE ELABORAZIONE SLICE " + slice, debug, timeout1);
 
 	}
 
@@ -550,11 +543,10 @@ public class Uniformity_ implements PlugIn {
 			}
 			impKernel.updateAndDraw();
 			impKernel.show();
-			if (big)
-				ACRutils.zoom(impKernel);
+			ACRutils.zoom(impKernel);
 
 			ACRlog.waitHere("byteVetMaskBuilder byte[] pixel  0 contorno blu,  pixel 255 contorno rosso", debug,
-					timeout, fast);
+					timeout);
 		}
 		byte[] pixels = (byte[]) ipKernel.getPixels();
 		return (pixels);
@@ -603,8 +595,7 @@ public class Uniformity_ implements PlugIn {
 		}
 		impKernel.updateAndDraw();
 		impKernel.show();
-		if (big)
-			ACRutils.zoom(impKernel);
+		ACRutils.zoom(impKernel);
 		ACRlog.waitHere("impKernel pixel  0 contorno blu,  pixel 255 contorno rosso");
 		return (impKernel);
 	}
@@ -647,9 +638,8 @@ public class Uniformity_ implements PlugIn {
 			}
 			impKernel.updateAndDraw();
 			impKernel.show();
-			if (big)
-				ACRutils.zoom(impKernel);
-			ACRlog.waitHere("impKernel byte[]  0 contorno blu,  pixel 255 contorno rosso", debug, timeout, fast);
+			ACRutils.zoom(impKernel);
+			ACRlog.waitHere("impKernel byte[]  0 contorno blu,  pixel 255 contorno rosso", debug, timeout);
 		}
 		return (impKernel);
 	}
@@ -844,7 +834,7 @@ public class Uniformity_ implements PlugIn {
 			}
 			imp3.updateAndDraw();
 			imp3.show();
-			ACRlog.waitHere("extractSubmatrix byte[] contorno pixel a 0 blu pixel a 255 rosso", debug, timeout, fast);
+			ACRlog.waitHere("extractSubmatrix byte[] contorno pixel a 0 blu pixel a 255 rosso", debug, timeout);
 		}
 		return vetByteSubmatrix;
 	}
@@ -913,9 +903,8 @@ public class Uniformity_ implements PlugIn {
 			}
 			imp3.updateAndDraw();
 			imp3.show();
-			if (big)
-				ACRutils.zoom(imp3);
-			ACRlog.waitHere("extractSubmatrix double[] contorno pixels giallo", debug, timeout, fast);
+			ACRutils.zoom(imp3);
+			ACRlog.waitHere("extractSubmatrix double[] contorno pixels giallo", debug, timeout);
 		}
 		return vetDoubleSubmatrix;
 	}
@@ -971,9 +960,8 @@ public class Uniformity_ implements PlugIn {
 			}
 			imp3.updateAndDraw();
 			imp3.show();
-			if (big)
-				ACRutils.zoom(imp3);
-			ACRlog.waitHere("kernelsAND byte[] contorno pixel a 0 blu pixel a 255 rosso", debug, timeout, fast);
+			ACRutils.zoom(imp3);
+			ACRlog.waitHere("kernelsAND byte[] contorno pixel a 0 blu pixel a 255 rosso", debug, timeout);
 		}
 
 		return kernelout;
@@ -1106,8 +1094,7 @@ public class Uniformity_ implements PlugIn {
 		imp2.setOverlay(over2);
 		if (verbose) {
 			imp2.show();
-			if (big)
-				ACRutils.zoom(imp2);
+			ACRutils.zoom(imp2);
 
 			// ACRutils.zoom(imp2);
 		}
@@ -1144,7 +1131,7 @@ public class Uniformity_ implements PlugIn {
 		imp2.getRoi().setStrokeColor(Color.BLUE);
 		over2.addElement(imp2.getRoi());
 		if (verbose)
-			ACRlog.waitHere("Area di scansione in BLU", debug, timeout, fast);
+			ACRlog.waitHere("Area di scansione in BLU", debug, timeout);
 		impOut.setRoi(new OvalRoi(x1 - d2 / 2, y1 - d2 / 2, d2, d2));
 		Roi roiCircle = impOut.getRoi();
 		int a = 0;
@@ -1184,9 +1171,8 @@ public class Uniformity_ implements PlugIn {
 		impOut.updateAndDraw();
 		impOut.show();
 		if (verbose) {
-			if (big)
-				ACRutils.zoom(impOut);
-			ACRlog.waitHere("visualizzata impOut come MEAN", debug, timeout, fast);
+			ACRutils.zoom(impOut);
+			ACRlog.waitHere("visualizzata impOut come MEAN", debug, timeout);
 		}
 		d2 = d1;
 		if (verbose) {
@@ -1195,7 +1181,7 @@ public class Uniformity_ implements PlugIn {
 			overOut.addElement(impOut.getRoi());
 			impOut.killRoi();
 			ACRlog.waitHere("applico MROI su immagine MEAN ed all'interno di questa cerco MINIMI e MAXIMI", debug,
-					timeout, fast);
+					timeout);
 		}
 		impOut.setRoi(new OvalRoi(x1 - d2 / 2, y1 - d2 / 2, d2, d2));
 		Roi roiOut1 = impOut.getRoi();
@@ -1259,8 +1245,8 @@ public class Uniformity_ implements PlugIn {
 		if (verbose) {
 			ACRlog.waitHere(
 					"TROVATO max1= " + amax + " in " + xmax + "," + ymax + " min1= " + amin + " in" + xmin + "," + ymin,
-					debug, timeout, fast);
-			ACRlog.waitHere("TERMINE MAX MIN VERBOSE ALBERTO", debug, timeout, fast);
+					debug, timeout);
+			ACRlog.waitHere("TERMINE MAX MIN VERBOSE ALBERTO", debug, timeout);
 		}
 
 		int xposmin = vetxmin[0];
@@ -1449,8 +1435,7 @@ public class Uniformity_ implements PlugIn {
 		imp12.setRoi(new OvalRoi(xphantom - dphantom / 2, yphantom - dphantom / 2, dphantom, dphantom));
 		imp12.updateAndDraw();
 		imp12.show();
-		if (big)
-			ACRutils.zoom(imp12);
+		ACRutils.zoom(imp12);
 		ImageProcessor ip12 = imp12.getProcessor();
 // 	test generando massimi e minimi multipli per vedere se li trova		
 //		ip12.putPixelValue(85, 80, 4486.44);
@@ -1495,9 +1480,9 @@ public class Uniformity_ implements PlugIn {
 		int[] vetxmin = ACRcalc.arrayListToArrayInt(vetXminpos);
 		int[] vetymin = ACRcalc.arrayListToArrayInt(vetYminpos);
 		if (vetxmax.length != 1)
-			ACRlog.waitHere("HOUSTON abbiamo un numero di massimi diverso da 1: CHE FAMO?", debug, timeout1 * 2, fast);
+			ACRlog.waitHere("HOUSTON abbiamo un numero di massimi diverso da 1: CHE FAMO?", debug, timeout1 * 2);
 		if (vetxmin.length != 1)
-			ACRlog.waitHere("HOUSTON abbiamo un numero di massimi diverso da 1: CHE FAMO?", debug, timeout1 * 2, fast);
+			ACRlog.waitHere("HOUSTON abbiamo un numero di massimi diverso da 1: CHE FAMO?", debug, timeout1 * 2);
 		Overlay over12 = new Overlay();
 		imp12.setOverlay(over12);
 		for (int i1 = 0; i1 < vetxmax.length; i1++) {
@@ -1518,7 +1503,7 @@ public class Uniformity_ implements PlugIn {
 		int yposmax = vetymax[0];
 
 		if (verbose)
-			ACRlog.waitHere("TERMINE MAXMIN ARTICOLO", debug, timeout1, fast);
+			ACRlog.waitHere("TERMINE MAXMIN ARTICOLO", debug, timeout1);
 
 		double[] vetOut = new double[6];
 		vetOut[0] = (double) xposmin;
@@ -1558,33 +1543,17 @@ public class Uniformity_ implements PlugIn {
 		int xposmin = (int) minmaxValues[0];
 		int yposmin = (int) minmaxValues[1];
 		double amin = minmaxValues[2];
-		int xposmax = (int) minmaxValues[3];
-		int yposmax = (int) minmaxValues[4];
+//		int xposmax = (int) minmaxValues[3];
+//		int yposmax = (int) minmaxValues[4];
 		double amax = minmaxValues[5];
-
-		Overlay over2 = imp2.getOverlay();
 		imp2.setRoi(new OvalRoi(xposmin - pixint100 / 2, yposmin - pixint100 / 2, pixint100, pixint100));
 
 		// non so se mi basti utilizzare il valore del pixel, calcolato come
 		// dal'articolo, oppure se devo ricalcolare la media in maniera tradizionale (se
 		// siamo sul bordo otterremo risultati totalmente diversi CHIEDERE
-
-//		ImageStatistics stat11 = imp2.getStatistics();
-//		double UNIFORlow = stat11.mean;
-//		imp2.getRoi().setStrokeColor(Color.BLUE);
-//		over2.addElement(imp2.getRoi());
-//
-//		imp2.setRoi(new OvalRoi(xposmax - pixint100 / 2, yposmax - pixint100 / 2, pixint100, pixint100));
-//		ImageStatistics stat12 = imp2.getStatistics();
-//		double UNIFORhigh = stat12.mean;
-//		imp2.getRoi().setStrokeColor(Color.RED);
-//		over2.addElement(imp2.getRoi());
-//		imp2.updateAndDraw();
-//		ImageUtils.imageToFront(imp2);
-
+		//
 		double UNIFORlow = amin;
 		double UNIFORhigh = amax;
-
 		double PIU_UNIFOR = 100 * (1.0 - ((UNIFORhigh - UNIFORlow) / (UNIFORhigh + UNIFORlow)));
 		IJ.log("uniforACR> calcolo uniformita': UNIFORhigh= " + String.format("%.4f", UNIFORhigh) + " UNIFORlow= "
 				+ String.format("%.4f", UNIFORlow) + " PIU_UNIFOR= " + String.format("%.4f", PIU_UNIFOR));

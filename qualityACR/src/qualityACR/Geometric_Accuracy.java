@@ -28,7 +28,6 @@ import ij.util.Tools;
 public class Geometric_Accuracy implements PlugIn {
 
 	public static final boolean debug = true;
-	public static final boolean big = true;
 
 	public void run(String arg) {
 		mainGeometry();
@@ -36,7 +35,7 @@ public class Geometric_Accuracy implements PlugIn {
 
 	public void mainGeometry() {
 		Properties prop = ACRutils.readConfigACR();
-		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
+		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
 		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
 		boolean[] defaults = { false, false, false, false, false, false, false, false, false, false, false, false,
 				false, false };
@@ -76,13 +75,11 @@ public class Geometric_Accuracy implements PlugIn {
 			return;
 		}
 
-		IJ.log(" ");
 		Frame f1 = WindowManager.getFrame("Log");
 		if (f1 != null) {
 			f1.setSize(100, 400);
 			f1.setLocation(10, 10);
 		}
-//		String str1 = gd1.getNextRadioButton();
 		boolean fast = gd1.getNextBoolean();
 		boolean step = gd1.getNextBoolean();
 		boolean verbose = gd1.getNextBoolean();
@@ -94,8 +91,10 @@ public class Geometric_Accuracy implements PlugIn {
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
 
-		// vado a scrivere i setup nel config file
+		if (fast)
+			timeout = 2000;
 
+		// scrive nel config file
 		if (prop == null)
 			prop = new Properties();
 		prop.setProperty("Geometric_Accuracy.fast", "" + fast);
@@ -116,10 +115,9 @@ public class Geometric_Accuracy implements PlugIn {
 		try {
 			ACRutils.writeConfigACR(prop);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// leggo i nomi di tutti i 15 file presenti
+		// leggo i nomi di tutti i file presenti (dovrebbero essere 15)
 		String pathLocalizer = "";
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
@@ -140,11 +138,11 @@ public class Geometric_Accuracy implements PlugIn {
 		if (!ACRlog.initLog(pathReport))
 			return;
 
-		// ora in base alle selezioni effettuate nelle checkbox del dialogo, dobbiamo
-		// elaborare solo i file selezionati
+		// elaborazione file selezionati dall'operatore
+		if (geomLocalizer) {
+			mainLocalizer(pathLocalizer, pathReport, step, verbose, timeout);
 
-		if (geomLocalizer)
-			mainLocalizer(pathLocalizer, pathReport, step, fast, verbose, timeout);
+		}
 
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
@@ -168,8 +166,12 @@ public class Geometric_Accuracy implements PlugIn {
 	 * 
 	 * @param path1
 	 */
-	public void mainLocalizer(String path1, String pathReport, boolean step, boolean fast, boolean verbose,
-			int timeout) {
+	public void mainLocalizer(String path1, String pathReport, boolean step, boolean verbose, int timeout) {
+
+		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
+		// apertura immagine, display, zoom
+		// chiamata prima subroutine passando l'immagine pronta
+		// eccetraz ecceteraz
 
 		IJ.log(ACRlog.qui() + "START>");
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
@@ -180,8 +182,7 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		// ========== TAROCCAMENTO IMMAGINE =============
 		//
-		// MI RESTA DA SPIEGARE PERCHE' RUOTANDO L'IMMAGINE
-		// CAMBIA IL RISULTATO!!!!!
+		// RUOTANDO L'IMMAGINE CAMBIA(va) IL RISULTATO!!!!!
 		//
 		// IJ.run(imp2, "Flip Horizontally", "");
 		//
@@ -191,17 +192,48 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		// ===============================================
 		//
+
+		double[] vetout1 = localizerImageLength(imp2, step, verbose, timeout);
+		double dim1 = vetout1[0];
+		double dim2 = vetout1[0];
+
+		if (step)
+			ACRlog.waitHere(" Profilo analizzato", debug, timeout);
+
+		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 1= " + IJ.d2s(dim1, 3) + " mm");
+		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 2= " + IJ.d2s(dim2, 3) + " mm");
+
+		/// PROBABILE SALVATAGGIO IMMAGINE PER REPORT HTML
+//		ImagePlus imp = IJ.getImage();
+//		IJ.saveAs(imp, "PNG", "D:/Dati/ACR_TEST/Study_1_20210527/REPORTS/localizer.png");
+		
+		
+
+		ACRlog.appendLog(pathReport,
+				"lunghezzaFantoccio1= " + IJ.d2s(dim1, 3) + " lunghezzaFantoccio2= " + IJ.d2s(dim2, 3) + " mm");
+//		ACRlog.waitHere("dim1= " + dim1 + " dim2= " + dim2 + " mm");
+	}
+
+	/**
+	 * Elaborazione immagine localizer per ottenere lunghezza fantoccio
+	 * 
+	 * @param path1
+	 */
+	public double[] localizerImageLength(ImagePlus imp1, boolean step, boolean verbose, int timeout) {
+
+		IJ.log(ACRlog.qui() + "START>");
+
 		double dimPixel = ACRutils
 				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp1, ACRconst.DICOM_PIXEL_SPACING), 1));
 
-		int width = imp2.getWidth();
-		int height = imp2.getHeight();
-		int lato = 30; // lato con cui cerco lo pseudomassimo
-		double[] max1 = maximumSearch(imp2, lato);
+		int width = imp1.getWidth();
+		int height = imp1.getHeight();
+		int latoRoiPseudomax = 30;
+		double[] max1 = maximumSearch(imp1, latoRoiPseudomax);
 		double max2 = max1[0] / 2;
 
 		Overlay over2 = new Overlay();
-		imp2.setOverlay(over2);
+		imp1.setOverlay(over2);
 
 		//
 		// Ricerca dei bordi in direzione verticale
@@ -213,7 +245,7 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		for (int i1 = 0; i1 < width; i1++) { // era i1 +=3
 			int a1 = i1;
-			int[] out1 = ACRlocalizer.verticalSearch(imp2, max2, a1, false);
+			int[] out1 = ACRlocalizer.verticalSearch(imp1, max2, a1, false);
 			if (out1 != null) {
 				List<Integer> pointXY1 = new ArrayList<Integer>();
 				pointXY1.add(a1);
@@ -234,15 +266,15 @@ public class Geometric_Accuracy implements PlugIn {
 				pointArrayXY.add(pointXY2);
 
 				Roi pr1 = new Roi(a1, out1[0], 1, 1);
-				imp2.setRoi(pr1);
-				imp2.getRoi().setFillColor(Color.GREEN);
-				over2.addElement(imp2.getRoi());
-				imp2.killRoi();
+				imp1.setRoi(pr1);
+				imp1.getRoi().setFillColor(Color.GREEN);
+				over2.addElement(imp1.getRoi());
+				imp1.killRoi();
 				Roi pr2 = new Roi(a1, out1[1], 1, 1);
-				imp2.setRoi(pr2);
-				imp2.getRoi().setFillColor(Color.GREEN);
-				over2.addElement(imp2.getRoi());
-				imp2.killRoi();
+				imp1.setRoi(pr2);
+				imp1.getRoi().setFillColor(Color.GREEN);
+				over2.addElement(imp1.getRoi());
+				imp1.killRoi();
 			}
 
 		}
@@ -254,7 +286,7 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		for (int i1 = 0; i1 < height; i1++) { // era i1 +=3
 			int b1 = i1;
-			int[] out2 = ACRlocalizer.horizontalSearch(imp2, max2, b1, false);
+			int[] out2 = ACRlocalizer.horizontalSearch(imp1, max2, b1, false);
 
 			if (out2 != null) {
 				List<Integer> pointXY3 = new ArrayList<Integer>();
@@ -275,20 +307,19 @@ public class Geometric_Accuracy implements PlugIn {
 				pointArrayXY.add(pointXY4);
 
 				Roi pr1 = new Roi(out2[0], b1, 1, 1);
-				imp2.setRoi(pr1);
-				imp2.getRoi().setFillColor(Color.RED);
-				over2.addElement(imp2.getRoi());
-				imp2.killRoi();
+				imp1.setRoi(pr1);
+				imp1.getRoi().setFillColor(Color.RED);
+				over2.addElement(imp1.getRoi());
+				imp1.killRoi();
 				Roi pr2 = new Roi(out2[1], b1, 1, 1);
-				imp2.setRoi(pr2);
-				imp2.getRoi().setFillColor(Color.RED);
-				over2.addElement(imp2.getRoi());
-				imp2.killRoi();
+				imp1.setRoi(pr2);
+				imp1.getRoi().setFillColor(Color.RED);
+				over2.addElement(imp1.getRoi());
+				imp1.killRoi();
 
 			}
 
 		}
-		// ACRlog.waitHere("pointArrayXY.size= " + pointArrayXY.size());
 		List<Integer> pointList = new ArrayList<>();
 		int count = 0;
 		int[][] rotatedPoints = new int[pointArrayXY.size()][];
@@ -311,26 +342,11 @@ public class Geometric_Accuracy implements PlugIn {
 				vetPoints[i1][i2] = rotatedPoints[i2][i1];
 			}
 		}
-//		if (verbose) {
-//			for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
-//				imp2.setRoi(new PointRoi(rotatedPoints[i1][0], rotatedPoints[i1][1], "medium yellow dot"));
-//				over2.addElement(imp2.getRoi());
-//				imp2.killRoi();
-//			}
-//		}
-
 		if (step)
-			ACRlog.waitHere("riportati in giallo su immagine i bordi trovati", step, timeout, fast);
+			ACRlog.waitHere("riportati in giallo su immagine i bordi trovati", step, timeout);
 
-		// mi piacciono i rotatedPoints perche'li posso impunemente importare in
-		// excel2003, altrimenti dovrei utilizzare excel2007 perche'ha piu'colonne!
-		// ma alla lunga ho ceduto
-		//
-		// lo strano problema dei punti non coincidenti con i vertici NON E' AFFATTO
-		// LEGATO AI DOPPIONI, che sono troppo pigro per cercare di rimuovere, e poi
-		// "esercitano" il programma!
-		//
-		// estraggo l'arrayX ed arrayY dalle coordinate dei punti
+		// i rotatedPoints vengono buoni se si vuole esportarli in excel2003 che ha solo
+		// 256 colonne
 
 		int[] vetX = new int[rotatedPoints.length];
 		int[] vetY = new int[rotatedPoints.length];
@@ -349,13 +365,10 @@ public class Geometric_Accuracy implements PlugIn {
 		int dx = 0;
 		int dy = height;
 		//
-		// FORSE HO TROVATO IL MODO: PER OGNI PUNTO SI CALCOLA:
-		// ABS(distanza da un vertice su X)+ABS(distanza da un vertice su Y)
+		// PER OGNI PUNTO SI CALCOLA:
+		// ABS(distanza da un vertice su X) + ABS(distanza da un vertice su Y)
 		// si hanno cosi' 4 colonne, coincidenti con le coordinate X ed Y del punto.
-		// Il minimo per ogni colonna rappresenta quel particolare vertice
-		//
-		// SE FUNZIONA E'UNA FIGATA, PURE ELEGANTE E LOGICA COME SOLUZIONE!
-		//
+		// Il minimo per ogni colonna rappresenta il punto piu'vicino a quel vertice.
 		//
 		for (int i1 = 0; i1 < rotatedPoints.length; i1++) {
 			px = rotatedPoints[i1][0];
@@ -367,31 +380,28 @@ public class Geometric_Accuracy implements PlugIn {
 //			STRANAMENTE il calcolo qui sopra da'risultati migliori del calcolo dell'ipotenusa, piu'complicato			
 		}
 
-//		if (verbose)
-//			ACRlog.printMatrix(rotatedPoints, "rotatedPoints");
-
 		// estraggo dalla matrice gli array con il calcolo per i vertici
 		int[] vertexa = ACRutils.matExtractor(rotatedPoints, 2);
 		int[] vertexb = ACRutils.matExtractor(rotatedPoints, 3);
 		int[] vertexc = ACRutils.matExtractor(rotatedPoints, 4);
 		int[] vertexd = ACRutils.matExtractor(rotatedPoints, 5);
-		if (false) {
-			ACRlog.logVector(vertexa, ACRlog.qui() + "vertexa");
-			ACRlog.logVector(vertexb, ACRlog.qui() + "vertexb");
-			ACRlog.logVector(vertexc, ACRlog.qui() + "vertexc");
-			ACRlog.logVector(vertexd, ACRlog.qui() + "vertexd");
-		}
+//		if (false) {
+//			ACRlog.logVector(vertexa, ACRlog.qui() + "vertexa");
+//			ACRlog.logVector(vertexb, ACRlog.qui() + "vertexb");
+//			ACRlog.logVector(vertexc, ACRlog.qui() + "vertexc");
+//			ACRlog.logVector(vertexd, ACRlog.qui() + "vertexd");
+//		}
 
 		int[] posmina = ACRutils.minsearch(vertexa);
 		int[] posminb = ACRutils.minsearch(vertexb);
 		int[] posminc = ACRutils.minsearch(vertexc);
 		int[] posmind = ACRutils.minsearch(vertexd);
-		if (false) {
-			ACRlog.logVector(posmina, ACRlog.qui() + "posmina");
-			ACRlog.logVector(posminb, ACRlog.qui() + "posminb");
-			ACRlog.logVector(posminc, ACRlog.qui() + "posminc");
-			ACRlog.logVector(posmind, ACRlog.qui() + "posmind");
-		}
+//		if (false) {
+//			ACRlog.logVector(posmina, ACRlog.qui() + "posmina");
+//			ACRlog.logVector(posminb, ACRlog.qui() + "posminb");
+//			ACRlog.logVector(posminc, ACRlog.qui() + "posminc");
+//			ACRlog.logVector(posmind, ACRlog.qui() + "posmind");
+//		}
 
 		// VERDE
 		int AX = rotatedPoints[posmina[1]][0];
@@ -405,17 +415,28 @@ public class Geometric_Accuracy implements PlugIn {
 		// AZZURRO
 		int DX = rotatedPoints[posmind[1]][0];
 		int DY = rotatedPoints[posmind[1]][1];
-		ACRutils.plotPoints(imp2, over2, (int) AX, (int) AY, Color.RED, 4, 4);
-		ACRutils.plotPoints(imp2, over2, (int) BX, (int) BY, Color.RED, 4, 4);
-		ACRutils.plotPoints(imp2, over2, (int) CX, (int) CY, Color.RED, 4, 4);
-		ACRutils.plotPoints(imp2, over2, (int) DX, (int) DY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp1, over2, (int) AX, (int) AY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp1, over2, (int) BX, (int) BY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp1, over2, (int) CX, (int) CY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp1, over2, (int) DX, (int) DY, Color.RED, 4, 4);
 //
 		if (step) {
-			ACRlog.waitHere(ACRlog.qui() + "Riportati in i vertici oggetto trovati A= " + AX + "," + AY + " B= " + BX
-					+ "," + BY + " C= " + CX + "," + CY + " D= " + DX + "," + DY, step, timeout, fast);
+			ACRlog.waitHere("Riportati in i vertici oggetto trovati\n A= " + AX + "," + AY + " B= " + BX + "," + BY
+					+ " C= " + CX + "," + CY + " D= " + DX + "," + DY, step, timeout);
 			IJ.log("ACRlog.qui()+Riportati in i vertici oggetto trovati A= " + AX + "," + AY + " B= " + BX + "," + BY
 					+ " C= " + CX + "," + CY + " D= " + DX + "," + DY);
 		}
+		double[][] phantomVertices = new double[2][4];
+		phantomVertices[0][0] = AX;
+		phantomVertices[1][0] = AY;
+		phantomVertices[0][1] = BX;
+		phantomVertices[1][1] = BY;
+		phantomVertices[0][2] = CX;
+		phantomVertices[1][2] = CY;
+		phantomVertices[0][3] = DX;
+		phantomVertices[1][3] = DY;
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, step, verbose, timeout);
+		ACRlog.waitHere("angle= " + angle);
 
 		double MX = Math.round((double) (CX + DX) / (double) 2);
 		double MY = Math.round((double) (CY + DY) / (double) 2);
@@ -430,23 +451,23 @@ public class Geometric_Accuracy implements PlugIn {
 //		ACRutils.plotPoints(imp2, over2, (int) MX, (int) MY, Color.CYAN, 2, 4);
 //		ACRutils.plotPoints(imp2, over2, (int) PX, (int) PY, Color.CYAN, 2, 4);
 
-		ACRutils.plotPoints(imp2, over2, (int) AX, (int) AY, Color.RED, 4, 4);
-		ACRutils.plotPoints(imp2, over2, (int) BX, (int) BY, Color.RED, 4, 4);
-		ACRutils.plotPoints(imp2, over2, (int) CX, (int) CY, Color.RED, 4, 4);
-		ACRutils.plotPoints(imp2, over2, (int) DX, (int) DY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp1, over2, (int) AX, (int) AY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp1, over2, (int) BX, (int) BY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp1, over2, (int) CX, (int) CY, Color.RED, 4, 4);
+		ACRutils.plotPoints(imp1, over2, (int) DX, (int) DY, Color.RED, 4, 4);
 
-		imp2.setRoi(new RotatedRectRoi(MX, MY, PX, PY, LL));
-		imp2.getRoi().setStrokeColor(Color.RED);
-		over2.addElement(imp2.getRoi());
-		imp2.killRoi();
+		imp1.setRoi(new RotatedRectRoi(MX, MY, PX, PY, LL));
+		imp1.getRoi().setStrokeColor(Color.RED);
+		over2.addElement(imp1.getRoi());
+		imp1.killRoi();
 
-		imp2.setRoi(new Line(MX, MY, PX, PY));
-		imp2.getRoi().setStrokeColor(Color.CYAN);
-		over2.addElement(imp2.getRoi());
+		imp1.setRoi(new Line(MX, MY, PX, PY));
+		imp1.getRoi().setStrokeColor(Color.CYAN);
+		over2.addElement(imp1.getRoi());
 
 		if (step)
-			ACRlog.waitHere("Riportato in rosso il RotatedRectangle trovato, piu' o meno coincidente con l'oggetto",
-					step, timeout, fast);
+			ACRlog.waitHere("Riportato in rosso il RotatedRectangle trovato,\npiu' o meno coincidente con l'oggetto",
+					step, timeout);
 
 		double slope = (MX - PX) / (MY - PY);
 		if (verbose)
@@ -459,39 +480,21 @@ public class Geometric_Accuracy implements PlugIn {
 		// il nuovo punto da cui passare con la retta diventa
 		double RX = MX + xoffset;
 		double RY = MY;
-//		ACRutils.plotPoints(imp2, over2, (int) RX, (int) RY, Color.GREEN, 3, 5);
-//		ACRlog.waitHere("verifica il punto!");
-//		double edgeLeft = 0.;
-//		double edgeRight = width;
-//		double edgeBottom = height;
-//		double edgeTop = 0;
 		double q = RX - slope * RY;
-
 		double y0src = 0;
 		double y1src = height;
 		double x0src = y0src * slope + q;
 		double x1src = y1src * slope + q;
-//
-//		IJ.log("Lo slope vale: " + slope);
-//		IJ.log("Le coordinate sarebbero: " + x0src + " , " + y0src);
-//		IJ.log("Le coordinate sarebbero: " + x1src + " , " + y1src);
-//
-//		ACRutils.plotPoints(imp2, over2, (int) x0src, (int) y0src, Color.red, 2, 2);
-//		ACRutils.plotPoints(imp2, over2, (int) x1src, (int) y1src, Color.yellow, 2, 2);
-//		ACRlog.waitHere("verifica i punti");
-
-//		double[] clippings1 = ACRgraphic.liangBarsky(edgeLeft, edgeRight, edgeBottom, edgeTop, x0src, y0src, x1src,y1src);
-
 		// traccio una Line e poi analizzero'imagePlus estraendo la matrice della linea
 		// per trovare la FWHM
-		imp2.setRoi(new Line(x0src, y0src, x1src, y1src));
-		imp2.getRoi().setStrokeColor(Color.GREEN);
-		over2.addElement(imp2.getRoi());
+		imp1.setRoi(new Line(x0src, y0src, x1src, y1src));
+		imp1.getRoi().setStrokeColor(Color.GREEN);
+		over2.addElement(imp1.getRoi());
 
-		double dim1 = dimPixel * ACRlocalizer.profAnal(imp2, step, fast, verbose, timeout);
-		imp2.killRoi();
+		double dim1 = dimPixel * ACRlocalizer.profAnal(imp1, step, verbose, timeout);
+		imp1.killRoi();
 		if (step)
-			ACRlog.waitHere(ACRlog.qui() + "Profilo analizzato");
+			ACRlog.waitHere("Profilo analizzato", debug, timeout);
 		double SX = MX - xoffset;
 		double SY = MY;
 
@@ -502,25 +505,26 @@ public class Geometric_Accuracy implements PlugIn {
 		y1src = height;
 		x0src = y0src * slope + q;
 		x1src = y1src * slope + q;
-//		double[] clippings2 = ACRgraphic.liangBarsky(edgeLeft, edgeRight, edgeBottom, edgeTop, x0src, y0src, x1src,
-//				y1src);
 
-		imp2.setRoi(new Line(x0src, y0src, x1src, y1src));
-		imp2.getRoi().setStrokeColor(Color.GREEN);
-		over2.addElement(imp2.getRoi());
+		imp1.setRoi(new Line(x0src, y0src, x1src, y1src));
+		imp1.getRoi().setStrokeColor(Color.GREEN);
+		over2.addElement(imp1.getRoi());
 
-		double dim2 = dimPixel * ACRlocalizer.profAnal(imp2, step, fast, verbose, timeout);
-		imp2.killRoi();
+		double dim2 = dimPixel * ACRlocalizer.profAnal(imp1, step, verbose, timeout);
+		imp1.killRoi();
 
 		if (step)
-			ACRlog.waitHere(ACRlog.qui() + " Profilo analizzato");
+			ACRlog.waitHere(" Profilo analizzato", debug, timeout);
 
 		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 1= " + IJ.d2s(dim1, 3) + " mm");
 		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 2= " + IJ.d2s(dim2, 3) + " mm");
 
-		ACRlog.appendLog(pathReport,
-				"lunghezzaFantoccio1= " + IJ.d2s(dim1, 3) + " lunghezzaFantoccio2= " + IJ.d2s(dim2, 3) + " mm");
-//		ACRlog.waitHere("dim1= " + dim1 + " dim2= " + dim2 + " mm");
+		double[] vetout1 = new double[10];
+		vetout1[0] = dim1;
+		vetout1[1] = dim2;
+		vetout1[2] = angle;
+
+		return vetout1;
 	}
 
 	/**
@@ -707,7 +711,7 @@ public class Geometric_Accuracy implements PlugIn {
 		phantomCircle[2] = dphantom;
 
 		if (step)
-			ACRlog.waitHere("FIT DEL CERCHIO ESEGUITO, FANTOCCIO LOCALIZZATO", debug, timeout, fast);
+			ACRlog.waitHere("FIT DEL CERCHIO ESEGUITO, FANTOCCIO LOCALIZZATO", debug, timeout);
 		boolean step2 = step;
 		boolean fast2 = fast;
 		boolean verbose2 = verbose;
@@ -856,15 +860,15 @@ public class Geometric_Accuracy implements PlugIn {
 	/**
 	 * Calcolo della distanza tra due punti [pixel]
 	 * 
-	 * @param x
-	 * @param y
 	 * @param x1
 	 * @param y1
+	 * @param x2
+	 * @param y2
 	 * @return
 	 */
-	private static double distBetweenPoints(double x, double y, double x1, double y1) {
-		double xx = x1 - x;
-		double yy = y1 - y;
+	private static double distBetweenPoints(double x1, double y1, double x2, double y2) {
+		double xx = x2 - x1;
+		double yy = y2 - y1;
 
 		return (double) Math.sqrt(xx * xx + yy * yy);
 	}

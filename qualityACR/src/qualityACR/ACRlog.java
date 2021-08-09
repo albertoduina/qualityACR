@@ -278,31 +278,31 @@ public class ACRlog {
 	 * @param timeout millisecondi di visualizzazione prima di ok automatico
 	 * @param animate attivazione ok automatico
 	 */
-	public static void waitHere(String str, boolean debug, int timeout, boolean animate) {
-
-		String where = "";
-		if (debug)
-			where = " \nfile=" + Thread.currentThread().getStackTrace()[2].getFileName() + " " + " line="
-					+ Thread.currentThread().getStackTrace()[2].getLineNumber() + " \n \n";
-
-		if ((timeout > 0) && animate) {
-			final WaitForUserDialog wfud = new WaitForUserDialog(where + str);
-
-			ScheduledExecutorService s = Executors.newSingleThreadScheduledExecutor();
-			s.schedule(new Runnable() {
-				public void run() {
-					wfud.close();
-					wfud.dispose();
-				}
-			}, timeout, TimeUnit.MILLISECONDS);
-			wfud.setBackground(Color.yellow);
-			wfud.show();
-		} else {
-			final WaitForUserDialog wfud = new WaitForUserDialog(where + str);
-
-			wfud.show();
-		}
-	}
+//	public static void waitHere(String str, boolean debug, int timeout, boolean animate) {
+//
+//		String where = "";
+//		if (debug)
+//			where = " \nfile=" + Thread.currentThread().getStackTrace()[2].getFileName() + " " + " line="
+//					+ Thread.currentThread().getStackTrace()[2].getLineNumber() + " \n \n";
+//
+//		if ((timeout > 0) && animate) {
+//			final WaitForUserDialog wfud = new WaitForUserDialog(where + str);
+//
+//			ScheduledExecutorService s = Executors.newSingleThreadScheduledExecutor();
+//			s.schedule(new Runnable() {
+//				public void run() {
+//					wfud.close();
+//					wfud.dispose();
+//				}
+//			}, timeout, TimeUnit.MILLISECONDS);
+//			wfud.setBackground(Color.yellow);
+//			wfud.show();
+//		} else {
+//			final WaitForUserDialog wfud = new WaitForUserDialog(where + str);
+//
+//			wfud.show();
+//		}
+//	}
 
 	public static void waitHere() {
 		new WaitForUserDialog("file=" + Thread.currentThread().getStackTrace()[2].getFileName() + " " + " line="

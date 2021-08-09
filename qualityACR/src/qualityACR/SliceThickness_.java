@@ -17,7 +17,6 @@ import ij.plugin.PlugIn;
 
 public class SliceThickness_ implements PlugIn {
 	public static final boolean debug = true;
-	public static final boolean big = true;
 
 	public void run(String arg) {
 
@@ -35,7 +34,7 @@ public class SliceThickness_ implements PlugIn {
 
 	public void mainThickness() {
 		Properties prop = ACRutils.readConfigACR();
-		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
+		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
 		IJ.log(ACRlog.qui() + "START");
 //		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
 //		boolean[] defaults = { true, false, true, false, false, false, false, true, true, true, false, false, false,
@@ -58,10 +57,10 @@ public class SliceThickness_ implements PlugIn {
 				T1[i1] = Boolean.parseBoolean(prop.getProperty("Thickness.SliceT1[" + i1 + "]"));
 				T2[i1] = Boolean.parseBoolean(prop.getProperty("Thickness.SliceT2[" + i1 + "]"));
 			}
-			int count=0;
-			for (int i1 = 0; i1<7; i1++) {
-				defaults[count++]=T1[i1];
-				defaults[count++]=T2[i1];
+			int count = 0;
+			for (int i1 = 0; i1 < 7; i1++) {
+				defaults[count++] = T1[i1];
+				defaults[count++] = T2[i1];
 			}
 		}
 
@@ -94,6 +93,11 @@ public class SliceThickness_ implements PlugIn {
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
 
+		if (fast)
+			timeout = 2000;
+		else
+			timeout = 0;
+
 		// vado a scrivere i setup nel config file
 		if (prop == null)
 			prop = new Properties();
@@ -117,10 +121,6 @@ public class SliceThickness_ implements PlugIn {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		ACRlog.waitHere();
-
-		
 		// leggo i nomi di tutti i 15 file presenti
 		String pathLocalizer = "";
 		String tmpFolderPath = IJ.getDirectory("temp");
@@ -184,42 +184,54 @@ public class SliceThickness_ implements PlugIn {
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.setTitle("002");
 		imp2.show();
-		if (big)
-			ACRutils.zoom(imp2);
+		ACRutils.zoom(imp2);
 		Overlay over2 = new Overlay();
 		imp2.setOverlay(over2);
 
-		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp2, step, fast, verbose, timeout);
+//		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp2, step, fast, verbose, timeout);
 
-		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp2, phantomCircle, step, fast, verbose, timeout);
-		double angle = ACRlocalizer.phantomRotation(phantomVertices, step, fast, verbose, timeout);
+		double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
+
+		IJ.log(ACRlog.qui());
+		double[][] phantomVertices = ACRlocalizer.phantomReferences(imp2, phantomCircle, step, verbose, timeout);
+		IJ.log(ACRlog.qui());
+		if (step)
+			ACRlog.waitHere("VERTICI", debug, timeout);
+		double angle = ACRlocalizer.phantomRotation(phantomVertices, step, verbose, timeout);
 		double dist1 = -5;
+		IJ.log(ACRlog.qui());
+		if (step)
+			ACRlog.waitHere("ANGOLO", debug, timeout);
 		double[] parallela1 = ACRlocalizer.parallela(phantomVertices, dist1);
+		if (step)
+			ACRlog.waitHere("PARALLELA", debug, timeout);
+		IJ.log(ACRlog.qui());
 
 		ImagePlus imp3 = imp1.duplicate();
 		imp3.setTitle("003");
 		imp3.show();
-		if (big)
-			ACRutils.zoom(imp3);
+		ACRutils.zoom(imp3);
 		Overlay over3 = new Overlay();
 		imp3.setOverlay(over3);
 
-		ACRlog.logMatrix(phantomVertices, ACRlog.qui() + "phantomVertices");
+		if (verbose)
+			ACRlog.logMatrix(phantomVertices, ACRlog.qui() + "phantomVertices");
 
 		// andiamo a plottare i punti trovati
 		// VERDE
-		int CX = (int) Math.round(phantomVertices[0][0]);
-		int CY = (int) Math.round(phantomVertices[1][0]);
+		int CX = (int) Math.round(phantomVertices[0][2]);
+		int CY = (int) Math.round(phantomVertices[1][2]);
 		// AZZURRO
-		int DX = (int) Math.round(phantomVertices[0][1]);
-		int DY = (int) Math.round(phantomVertices[1][1]);
+		int DX = (int) Math.round(phantomVertices[0][3]);
+		int DY = (int) Math.round(phantomVertices[1][3]);
 
 		int EX = DX + (int) Math.round(parallela1[0]);
 		int EY = DY + (int) Math.round(parallela1[1]);
 		int FX = CX + (int) Math.round(parallela1[0]);
 		int FY = CY + (int) Math.round(parallela1[1]);
 
-		IJ.log("E= " + EX + " , " + EY + " F= " + FX + " , " + FY);
+		if (verbose)
+			IJ.log("E= " + EX + " , " + EY + " F= " + FX + " , " + FY);
 
 		ACRutils.plotPoints(imp3, over3, EX, EY, Color.MAGENTA, 4, 4);
 		ACRutils.plotPoints(imp3, over3, FX, FY, Color.MAGENTA, 4, 4);
@@ -232,34 +244,43 @@ public class SliceThickness_ implements PlugIn {
 		int HX = CX + (int) Math.round(parallela2[0]);
 		int HY = CY + (int) Math.round(parallela2[1]);
 
-		IJ.log("G= " + GX + " , " + GY + " H= " + HX + " , " + HY);
+		if (verbose) {
+			IJ.log("G= " + GX + " , " + GY + " H= " + HX + " , " + HY);
 
-		ACRutils.plotPoints(imp3, over3, GX, GY, Color.CYAN, 4, 4);
-		ACRutils.plotPoints(imp3, over3, HX, HY, Color.CYAN, 4, 4);
-		ACRlog.waitHere("punti visibili?");
+			ACRutils.plotPoints(imp3, over3, GX, GY, Color.CYAN, 4, 4);
+			ACRutils.plotPoints(imp3, over3, HX, HY, Color.CYAN, 4, 4);
+			ACRlog.waitHere("punti allineati?", debug, timeout);
+		}
 
 		Line.setWidth(5);
 		imp3.setRoi(new Line(EX, EY, FX, FY));
 		imp3.updateAndDraw();
+		imp3.getRoi().setStrokeColor(Color.GREEN);
+		over3.addElement(imp3.getRoi());
+
 		Roi roi3 = imp3.getRoi();
 		double[] profi3 = ((Line) roi3).getPixels();
 		// linea calcolo segnale mediato
 		// boolean invert = false;
 		double fwhm1 = ACRlocalizer.FWHMcalc(profi3, 3, "primoProfilo");
+		ACRlog.waitHere("PROFILO", debug, timeout);
 		imp3.setRoi(new Line(GX, GY, HX, HY));
+		imp3.getRoi().setStrokeColor(Color.GREEN);
+		over3.addElement(imp3.getRoi());
 		imp3.updateAndDraw();
 		Roi roi4 = imp3.getRoi();
 		double[] profi4 = ((Line) roi4).getPixels();
 		double fwhm2 = ACRlocalizer.FWHMcalc(profi4, 3, "secondoProfilo");
+		ACRlog.waitHere("PROFILO", debug, timeout);
 		// linea calcolo segnale mediato
 		Line.setWidth(1);
 //		title = "ABnormal";
 //		Plot plot4 = ACRgraphic.basePlot(profi4, title, Color.RED);
 //		plot4.draw();
 //		plot4.show();
-		ACRlog.waitHere("fwhm1= " + fwhm1 + " fwhm2= " + fwhm2);
+		ACRlog.waitHere("fwhm1= " + fwhm1 + " fwhm2= " + fwhm2, debug, timeout);
 		if ((Double.compare(fwhm1, 0) <= 0 || Double.compare(fwhm2, 0) <= 0))
-			ACRlog.waitHere("IMPOSSIBILE CALCOLARE LA THICKNESS, FANTOCCIO O LASER DI RIFERIMENTO MALPOSIZIONATI");
+			ACRlog.waitHere("IMPOSSIBILE CALCOLARE LA THICKNESS,\nPROBLEMA IMMAGINE???");
 
 		return;
 	}

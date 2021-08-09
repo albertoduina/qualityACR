@@ -9,8 +9,6 @@ import ij.plugin.PlugIn;
 
 public class Folder_Selector implements PlugIn {
 
-	private static final boolean debug = true;
-	private static final boolean big = true;
 
 	public void run(String arg) {
 		// ============================================================================================
