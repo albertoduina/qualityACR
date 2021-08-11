@@ -1,6 +1,12 @@
 package qualityACR;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +17,17 @@ import ij.ImageStack;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
 
+
 public class ACRinputOutput {
+
+	public static void purgeDirectory(File dir) {
+//		ACRlog.waitHere("dir= " + dir);
+		for (File file : dir.listFiles()) {
+			if (file.isDirectory())
+				purgeDirectory(file);
+			file.delete();
+		}
+	}
 
 	public static ImagePlus readStackPathsToImage(String startingDir1, String title) {
 
@@ -317,6 +333,157 @@ public class ACRinputOutput {
 			return false;
 		else
 			return true;
+	}
+
+	/***
+	 * Legge i dati da un file e li restituisce in un array string
+	 * 
+	 * @param fileName
+	 * @return
+	 */
+	public static String[] readStringArrayFromFile(String fileName) {
+
+		File file = new File(fileName);
+		if (!file.exists()) {
+			IJ.log("readStringArrayFromFile.fileNotExists " + fileName);
+		}
+
+		ArrayList<String> vetList = new ArrayList<String>();
+		try {
+			BufferedReader in = new BufferedReader(new FileReader(fileName));
+			String str = "";
+			while ((str = in.readLine()) != null) {
+				vetList.add(str);
+			}
+			in.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		// ora trasferiamo tutto nel vettore
+		String[] vetResult = new String[vetList.size()];
+		for (int i1 = 0; i1 < vetList.size(); i1++) {
+			vetResult[i1] = vetList.get(i1).trim();
+		}
+		return vetResult;
+	}
+
+	/**
+	 * Trova un file risorsa, partendo dal nome del file.
+	 * 
+	 * @param name nome del file
+	 * @return path del file
+	 */
+	public static String findResource(String name) {
+		URL url1 = new ACRinputOutput().getClass().getClassLoader().getResource(name);
+		String path = "";
+		if (url1 == null)
+			return null;
+		else
+			path = url1.getPath();
+		return path;
+	}
+
+	/**
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public boolean findTemplate(String name) {
+
+		// URL url3 =
+		// this.getClass().getClassLoader().getResource("contMensili/Sequenze_.class");
+		URL url3 = new ACRinputOutput().getClass().getClassLoader().getResource(name);
+		String myString = url3.toString();
+		int start = myString.indexOf("plugins");
+		int end = myString.lastIndexOf("!");
+		String myPart1 = myString.substring(start, end);
+		end = myPart1.lastIndexOf("/");
+		String myPart2 = myPart1.substring(0, end + 1);
+		// definizione del nome del file che andremo a scrivere
+		File outFile = new File(myPart2 + name);
+		// Viene testata l'esistenza del file, se esiste non lo si copia, cos�
+		// vengono mantenute eventuali modifiche dell'utlizzatore
+		boolean present = checkFile(outFile.getPath());
+		if (present) {
+			// NON CANCELLO; in modo che l'utilizzatore possa personalizzare il
+			// file. Per me organizzo in modo che sia lo script di
+			// distribuzione a cancellare i file
+			// outFile.delete();
+			// MyLog.waitHere("skip perch� file gi� esistente");
+			return true;
+		}
+		// ricerco la risorsa da copiare, perch� qui arrivo solo se la risorsa
+		// non esiste al di fuori del file jar
+		URL url1 = this.getClass().getResource("/" + name);
+		if (url1 == null) {
+			ACRlog.waitHere("file " + name + " not found in jar");
+			return false;
+		}
+		try {
+			// tento la copia
+			InputStream is = this.getClass().getResourceAsStream("/" + name);
+			FileOutputStream fos = new FileOutputStream(outFile);
+			while (is.available() > 0) {
+				// MyLog.waitHere("SCRIVO "+fileName);
+				fos.write(is.read());
+			}
+			fos.close();
+			is.close();
+		} catch (IOException e) {
+			ACRlog.waitHere("ERRORE ACCESSO");
+		}
+		present = checkFile(outFile.getPath());
+		if (present) {
+			// MyLog.waitHere("file estratto");
+		} else {
+			ACRlog.waitHere("FALLIMENTO, FILE NON COPIATO");
+		}
+		return present;
+	}
+
+	/***
+	 * Verifica la disponibilit� di un file
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public static boolean checkFile(String name) {
+		File fileCheck = new File(name);
+		if (!fileCheck.exists())
+			return false;
+		else
+			return true;
+	}
+
+	public static void extractor(String name1, String name2) throws java.io.IOException {
+		name1 = "E:/sqljdbc4.jar";
+		name2 = "E:/abc/";
+		java.util.jar.JarFile jarfile = new java.util.jar.JarFile(new java.io.File(name1)); // jar file path(here
+																							// sqljdbc4.jar)
+		java.util.Enumeration<java.util.jar.JarEntry> enu = jarfile.entries();
+		while (enu.hasMoreElements()) {
+			String destdir = name2; // abc is my destination directory
+			java.util.jar.JarEntry je = enu.nextElement();
+
+			ACRlog.waitHere(je.getName());
+
+			java.io.File fl = new java.io.File(destdir, je.getName());
+			if (!fl.exists()) {
+				fl.getParentFile().mkdirs();
+				fl = new java.io.File(destdir, je.getName());
+			}
+			if (je.isDirectory()) {
+				continue;
+			}
+			java.io.InputStream is = jarfile.getInputStream(je);
+			java.io.FileOutputStream fo = new java.io.FileOutputStream(fl);
+			while (is.available() > 0) {
+				fo.write(is.read());
+			}
+			fo.close();
+			is.close();
+		}
+
 	}
 
 }

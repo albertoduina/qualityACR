@@ -41,14 +41,18 @@ public class ACRlog {
 			gd1.enableYesNoCancel("Continua", "No");
 			gd1.hideCancelButton();
 			gd1.showDialog();
-			if (gd1.wasOKed())
-				f1.delete();
+			if (gd1.wasOKed()) {
+				// f1.delete();
+				ACRinputOutput.purgeDirectory(f1);
+			}
 			if (gd1.wasCanceled())
 				return false;
 		}
 		appendLog(path, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+
 		return true;
 	}
+
 
 	public static void appendLog(String completePath, String linea) {
 
@@ -471,7 +475,7 @@ public class ACRlog {
 			IJ.log("" + aa);
 		}
 
-			return;
+		return;
 	}
 
 	public static void logArrayListTable2(ArrayList<ArrayList<String>> matrixTable, String title) {

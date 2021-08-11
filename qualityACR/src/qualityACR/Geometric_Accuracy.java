@@ -122,7 +122,7 @@ public class Geometric_Accuracy implements PlugIn {
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
-		String pathReport = vetPath[4] + "\\Report1.txt";
+		String pathReport = vetPath[4] + "\\ReportGeometrico.txt";
 
 		String[] listLocalizer = ACRinputOutput.readStackPathToSortedList(vetPath[0], "T1");
 		if (listLocalizer != null)
@@ -135,7 +135,7 @@ public class Geometric_Accuracy implements PlugIn {
 			IJ.log(ACRlog.qui() + "sortedListT2 ==null");
 
 		// DEVO creare un nuovo report, senno' che controllo faccio?
-		if (!ACRlog.initLog(pathReport))
+		if (!ACRlog.initLog(vetPath[4]))
 			return;
 
 		// elaborazione file selezionati dall'operatore
@@ -158,7 +158,7 @@ public class Geometric_Accuracy implements PlugIn {
 				mainSliceDiameter(sortedListT2[i1], pathReport, i1, step, fast, verbose, timeout);
 			}
 		}
-		ACRlog.waitHere("GEOMETRIC_ACCURACY TERMINATA");
+		ACRlog.waitHere("GEOMETRIC_ACCURACY TERMINATA", debug, timeout);
 	}
 
 	/**
@@ -203,15 +203,27 @@ public class Geometric_Accuracy implements PlugIn {
 		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 1= " + IJ.d2s(dim1, 3) + " mm");
 		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 2= " + IJ.d2s(dim2, 3) + " mm");
 
-		/// PROBABILE SALVATAGGIO IMMAGINE PER REPORT HTML
-//		ImagePlus imp = IJ.getImage();
-//		IJ.saveAs(imp, "PNG", "D:/Dati/ACR_TEST/Study_1_20210527/REPORTS/localizer.png");
-		
-		
+		/// SALVATAGGIO IMMAGINI PER REPORT HTML
+		// ImagePlus imp = IJ.getImage();
+		// IJ.saveAs(imp, "PNG",
+		/// "D:/Dati/ACR_TEST/Study_1_20210527/REPORTS/localizer.png");
 
-		ACRlog.appendLog(pathReport,
-				"lunghezzaFantoccio1= " + IJ.d2s(dim1, 3) + " lunghezzaFantoccio2= " + IJ.d2s(dim2, 3) + " mm");
-//		ACRlog.waitHere("dim1= " + dim1 + " dim2= " + dim2 + " mm");
+		String[] info1 = ACRutils.imageInformation(imp1);
+		for (int i1 = 0; i1 < info1.length; i1++) {
+			ACRlog.appendLog(pathReport, "#"+ String.format("%03d", i1)+"#  "+info1[i1]);
+		}
+		String imageName = "localizer001.png";
+		String path10 = pathReport.substring(0, pathReport.lastIndexOf("\\"));
+		String pathImage = path10 + "\\" + imageName;
+		ACRlog.appendLog(pathReport, ACRlog.qui() +"imageName: " + imageName);
+		IJ.saveAs(imp2, "PNG", pathImage);
+
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "length1: " + vetout1[0]);
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "length2: " + vetout1[1]);
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle: " + vetout1[2]);
+
+		imp2.changes = false;
+		imp2.close();
 	}
 
 	/**
@@ -345,8 +357,8 @@ public class Geometric_Accuracy implements PlugIn {
 		if (step)
 			ACRlog.waitHere("riportati in giallo su immagine i bordi trovati", step, timeout);
 
-		// i rotatedPoints vengono buoni se si vuole esportarli in excel2003 che ha solo
-		// 256 colonne
+		// i rotatedPoints vengono buoni se si vuole esportarli nel mio excel2003 che ha
+		// solo 256 colonne
 
 		int[] vetX = new int[rotatedPoints.length];
 		int[] vetY = new int[rotatedPoints.length];
@@ -436,7 +448,7 @@ public class Geometric_Accuracy implements PlugIn {
 		phantomVertices[0][3] = DX;
 		phantomVertices[1][3] = DY;
 		double angle = ACRlocalizer.phantomRotation(phantomVertices, step, verbose, timeout);
-		ACRlog.waitHere("angle= " + angle);
+		ACRlog.waitHere("angle= " + angle, debug, timeout);
 
 		double MX = Math.round((double) (CX + DX) / (double) 2);
 		double MY = Math.round((double) (CY + DY) / (double) 2);

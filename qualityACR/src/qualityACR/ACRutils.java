@@ -31,35 +31,38 @@ import ij.gui.Plot;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.process.FloatPolygon;
+import ij.util.DicomTools;
 
 public class ACRutils {
 
 	static final boolean debug = true;
 
 	public static String[] imageInformation(ImagePlus imp1) {
-		
+
 		//
-		// 	0008,0080  Institution Name: Neuroradiologia Spedali Civili di Brescia 
-		//	0008,1010  Station Name: AWP46040
-		//	0008,0023  Image Date: 20210527
-		//	0018,0087  Magnetic Field Strength: 3 
-		//	0018,1030  Protocol Name: LOCALIZER 
-		//	0018,0050  Slice Thickness: 20
-		//	0020,1041  Slice Location: 0.86371147632599
-		//	0018,0081  Echo Time: 20
-		//	0018,0080  Repetition Time: 200 
+		// 0008,0080 Institution Name: Neuroradiologia Spedali Civili di Brescia
+		// 0008,0070  Manufacturer: SIEMENS 		// 0008,1010 Station Name: AWP46040
+		// 0008,0023 Image Date: 20210527
+		// 0018,0087 Magnetic Field Strength: 3
+		// 0018,1030 Protocol Name: LOCALIZER
+		// 0018,0050 Slice Thickness: 20
+		// 0020,1041 Slice Location: 0.86371147632599
+		// 0018,0081 Echo Time: 20
+		// 0018,0080 Repetition Time: 200
 		//
-		String[] info= new String[9];
-		info[0]= ACRutils.readDicomParameter(imp1, "0008,0080");
-		info[1]= ACRutils.readDicomParameter(imp1, "0008,1010");
-		info[2]= ACRutils.readDicomParameter(imp1, "0008,0023");
-		info[3]= ACRutils.readDicomParameter(imp1, "0018,0087");
-		info[4]= ACRutils.readDicomParameter(imp1, "0018,1030");
-		info[5]= ACRutils.readDicomParameter(imp1, "0018,0050");
-		info[6]= ACRutils.readDicomParameter(imp1, "0020,1041");
-		info[7]= ACRutils.readDicomParameter(imp1, "0018,0081");
-		info[8]= ACRutils.readDicomParameter(imp1, "0018,0080");
-		
+		String[] info = new String[10];
+
+		info[0] = ACRutils.readDicomString(imp1, "0008,0080");
+		info[1] = ACRutils.readDicomString(imp1, "0008,0070");
+		info[2] = ACRutils.readDicomString(imp1, "0008,1010");
+		info[3] = ACRutils.readDicomString(imp1, "0008,0023");
+		info[4] = ACRutils.readDicomString(imp1, "0018,0087");
+		info[5] = ACRutils.readDicomString(imp1, "0018,1030");
+		info[6] = ACRutils.readDicomString(imp1, "0018,0050");
+		info[7] = ACRutils.readDicomString(imp1, "0020,1041");
+		info[8] = ACRutils.readDicomString(imp1, "0018,0081");
+		info[9] = ACRutils.readDicomString(imp1, "0018,0080");
+
 		return info;
 	}
 
@@ -1039,6 +1042,15 @@ public class ACRutils {
 			return (null);
 		}
 	}
+	
+	
+	public static String readDicomString(ImagePlus imp1, String tag) {
+		
+		String parameter = tag + " " + DicomTools.getTagName(tag) + ":" + DicomTools.getTag(imp1, tag);
+				return (parameter);
+	}
+
+	
 
 	/**
 	 * legge un valore double da una stringa

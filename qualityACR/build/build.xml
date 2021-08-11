@@ -17,13 +17,14 @@
 	<echo message="work= ${work}" />
 	<echo message="basedir= ${basedir}" />
 	<echo message="ant.file= ${ant.file}" />
-	
+
 	<property name="user" location="${basedir}\.." />
 	<echo message="user= ${user}" />
 
 	<property name="repo" location="${basedir}\..\..\..\" />
 	<echo message="repo= ${repo}" />
-		
+
+
 	<property name="pathImageJ" location="${repo}\git\imagej1\imagej1\ij.jar" />
 	<echo message="pathImageJ= ${pathImageJ}" />
 	<echo message="DEVE ESSERE= C:\Users\Alberto\Repository\git\imagej1\imagej1\ij.jar" />
@@ -43,7 +44,9 @@
 	<property name="distribuzione" location="distribuzione" />
 	<property name="data" location="data" />
 	<property name="test" location="test/qualityACR" />
-	
+	<property name="html" location="html" />
+
+
 	<!--echo message="++++ C:\Users\Alberto\eclipse-workspace\imagej\ij.jar ++++" / -->
 
 	<property name="eclipse-home" value="${basedir}\..\.." />
@@ -53,20 +56,19 @@
 		<format property="time.stamp" pattern="yyyyMMMdd_HHmm" />
 	</tstamp>
 	<echo message="tstamp= ${time.stamp}" />
-	<echo message= "java version= ${java.version}" />
-	<echo message= "java home= ${java.home}" />
+	<echo message="java version= ${java.version}" />
+	<echo message="java home= ${java.home}" />
 
 	<!-- ##############			MAIN ROUTINE 		############## -->
-	<target name="main" 
-		depends="init, 
+	<target name="main" depends="init, 
 		compile, 
-		move1,  
-		jar, 
+		move1,    
+		jar,
 		zipdistribution, 
 		cond_INS, 
 		cond_OLD, 
 		cond_WIN7, 
-		cond_FIJI" >
+		cond_FIJI">
 	</target>
 
 
@@ -105,15 +107,7 @@
 		<echo message="Eseguo COMPILE" />
 		<!-- Build everything; add debug="on" to debug -->
 		<!--javac srcdir="${source}" destdir="${output}" optimize="on" target="1.5" encoding="iso8859-1" debug="on" classpath="${pathImageJ};${pathJfreechart};${pathJcommon}" /-->
-		<javac srcdir="${source}" 
-			destdir="${output}" 
-			optimize="on" 
-			includeAntRuntime="yes"
-			target="1.8" 
-			source="1.8" 
-			encoding="iso8859-1" 
-			debug="on" 
-			classpath="${pathImageJ}" />
+		<javac srcdir="${source}" destdir="${output}" optimize="on" includeAntRuntime="yes" target="1.8" source="1.8" encoding="iso8859-1" debug="on" classpath="${pathImageJ}" />
 	</target>
 
 
@@ -124,6 +118,8 @@
 			<fileset dir="." includes=" *.txt , *.pdf, *.rtf, *.number, *.jpg, *.xml, *.config, *.csv" />
 		</copy>
 	</target >
+
+
 
 
 	<!-- Create MANIFEST and JARS application  -->
@@ -140,6 +136,7 @@
 		<jar destfile="${output}/QualityACR_${time.stamp}.jar" manifest="MANIFEST.MF">
 			<!--jar destfile="${output}/ContMens_b${build.number}.jar" manifest="MANIFEST.MF"-->
 			<fileset dir="${output}" />
+			<fileset dir="${html}" />
 		</jar>
 		<delete dir="${output}/qualityACR" />
 		<!-- copy todir="${dist}">
@@ -152,6 +149,23 @@
 		<delete failonerror="false" verbose="true">
 			<fileset dir="${output}" includes="*.jar" />
 		</delete>
+	</target>
+
+
+	<target name="zipp1" description="Zip HTML">
+		<echo message="Eseguo ZIPP1" />
+		<zip destfile="${output}/html.zip">
+			<fileset dir="${html}">
+				<include name="*.*" />
+				<include name="*.txt" />
+			</fileset>
+			<!--fileset dir="${html}">
+				<include name="QualityACR_b${build.number}.jar" />
+			</fileset -->
+			<!--fileset dir="${baseIw2ayv}">
+				<include name="iw2ayv.jar" />
+			</fileset-->
+		</zip>
 	</target>
 
 

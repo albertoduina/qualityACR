@@ -1,0 +1,2 @@
+Questo file ha un suo perche': serve a determinare il path del file JAR. 
+NON CANCELLARE SE NON VOLETE CHE VI SPEZZI IL BRACCINO .... CRACK
