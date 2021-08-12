@@ -186,7 +186,7 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		// IJ.run(imp2, "Flip Horizontally", "");
 		//
-		IJ.run(imp2, "Rotate... ", "angle=8 grid=1 interpolation=Bilinear");
+		// IJ.run(imp2, "Rotate... ", "angle=8 grid=1 interpolation=Bilinear");
 		//
 		// IJ.run(imp2, "Rotate... ", "angle=-8 grid=1 interpolation=Bilinear");
 		//
@@ -195,32 +195,34 @@ public class Geometric_Accuracy implements PlugIn {
 
 		double[] vetout1 = localizerImageLength(imp2, step, verbose, timeout);
 		double dim1 = vetout1[0];
-		double dim2 = vetout1[0];
+		double dim2 = vetout1[1];
+		double angle = vetout1[2];
 
 		if (step)
 			ACRlog.waitHere(" Profilo analizzato", debug, timeout);
 
-		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 1= " + IJ.d2s(dim1, 3) + " mm");
-		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 2= " + IJ.d2s(dim2, 3) + " mm");
-
-		/// SALVATAGGIO IMMAGINI PER REPORT HTML
-		// ImagePlus imp = IJ.getImage();
-		// IJ.saveAs(imp, "PNG",
-		/// "D:/Dati/ACR_TEST/Study_1_20210527/REPORTS/localizer.png");
+		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 1= " + IJ.d2s(dim1, 4) + " mm");
+		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 2= " + IJ.d2s(dim2, 4) + " mm");
+		IJ.log(ACRlog.qui() + "END>  angoloFantoccio= " + IJ.d2s(angle, 4) + " mm");
 
 		String[] info1 = ACRutils.imageInformation(imp1);
 		for (int i1 = 0; i1 < info1.length; i1++) {
-			ACRlog.appendLog(pathReport, "#"+ String.format("%03d", i1)+"#  "+info1[i1]);
+			ACRlog.appendLog(pathReport, "#" + String.format("%03d", i1) + "#  " + info1[i1]);
 		}
 		String imageName = "localizer001.png";
 		String path10 = pathReport.substring(0, pathReport.lastIndexOf("\\"));
 		String pathImage = path10 + "\\" + imageName;
-		ACRlog.appendLog(pathReport, ACRlog.qui() +"imageName: " + imageName);
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName: #100#" + pathImage);
 		IJ.saveAs(imp2, "PNG", pathImage);
 
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "length1: " + vetout1[0]);
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "length2: " + vetout1[1]);
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle: " + vetout1[2]);
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "length1: #101#" + IJ.d2s(vetout1[0], 4));
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "length2: #102#" + IJ.d2s(vetout1[1], 4));
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "length limits: #103#" + "98 - 102");
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "length1 p/f: #104#" + "Pass");
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "length2 p/f: #105#" + "Fail");
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle: #106#" + IJ.d2s(vetout1[2], 4));
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle limits: #107#"+"+-1");
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle p/f: #108#" + "Fail");
 
 		imp2.changes = false;
 		imp2.close();

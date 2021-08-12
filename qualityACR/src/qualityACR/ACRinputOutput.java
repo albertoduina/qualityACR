@@ -17,8 +17,54 @@ import ij.ImageStack;
 import ij.io.Opener;
 import ij.process.ImageProcessor;
 
-
 public class ACRinputOutput {
+
+	/**
+	 * Deletes all files and subdirectories under dir. Returns true if all deletions
+	 * were successful. If a deletion fails, the method stops attempting to delete
+	 * and returns false. http://javaalmanac.com/egs/java.io/DeleteDir.html
+	 */
+	public static boolean deleteDir(File dir) {
+
+		if (!dir.exists())
+			IJ.log("non esiste la dir= " + dir);
+
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (int i1 = 0; i1 < children.length; i1++) {
+				boolean success = deleteDir(new File(dir, children[i1]));
+				if (!success) {
+					IJ.log("errore delete dir= " + dir);
+					return false;
+				}
+			}
+			int num = dir.list().length;
+			if (num > 0)
+				ACRlog.waitHere("files residui= " + num);
+		}
+
+		// The directory is now empty so delete it
+		boolean ok = dir.delete();
+		if (!ok)
+		 IJ.log("errore cancellazione dir da java= "+dir);
+		return ok;
+	}
+
+	/**
+	 * Create a directory; all ancestor directories must exist
+	 * http://javaalmanac.com/egs/java.io/DeleteDir.html
+	 * 
+	 * @param dir
+	 * @return booleano true se ok
+	 */
+	public static boolean createDir(File dir) {
+
+		boolean success = dir.mkdir();
+		if (!success) {
+			return false;
+		} else
+			return true;
+	}
 
 	public static void purgeDirectory(File dir) {
 //		ACRlog.waitHere("dir= " + dir);

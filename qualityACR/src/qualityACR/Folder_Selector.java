@@ -4,11 +4,11 @@ import java.io.File;
 import java.util.List;
 
 import ij.IJ;
+import ij.gui.GenericDialog;
 import ij.io.DirectoryChooser;
 import ij.plugin.PlugIn;
 
 public class Folder_Selector implements PlugIn {
-
 
 	public void run(String arg) {
 		// ============================================================================================
@@ -35,25 +35,38 @@ public class Folder_Selector implements PlugIn {
 
 		DirectoryChooser od1 = new DirectoryChooser("SELEZIONARE LA CARTELLA LOCALIZER");
 		String startingDir1 = od1.getDirectory();
-		IJ.log("startingDir1= "+ startingDir1);
+		IJ.log("startingDir1= " + startingDir1);
 		if (startingDir1 == null)
 			return;
 		DirectoryChooser od2 = new DirectoryChooser("SELEZIONARE CARTELLA IMMAGINI T1");
 		String startingDir2 = od2.getDirectory();
-		IJ.log("startingDir2= "+ startingDir2);
+		IJ.log("startingDir2= " + startingDir2);
 		if (startingDir2 == null)
 			return;
 		DirectoryChooser od3 = new DirectoryChooser("SELEZIONARE LA CARTELLA IMMAGINI T2");
 		String startingDir3 = od3.getDirectory();
-		IJ.log("startingDir3= "+ startingDir3);
+		IJ.log("startingDir3= " + startingDir3);
 		if (startingDir3 == null)
 			return;
-		DirectoryChooser od4 = new DirectoryChooser("SELEZIONARE LA CARTELLA DI OUTPUT");
-		String outDir = od4.getDirectory();
-		IJ.log("outDir= "+ outDir);
-		if (outDir == null)
+		GenericDialog gd1 = new GenericDialog("REPORT");
+		gd1.addMessage("DEVO INIZIALIZZARE/CANCELLARE LA CARTELLA REPORTS, procedo?");
+		gd1.enableYesNoCancel("Continua", "No");
+		gd1.hideCancelButton();
+		gd1.showDialog();
+		String outDir = "";
+		if (gd1.wasOKed()) {
+			String root1 = startingDir1.substring(0, startingDir1.lastIndexOf("\\"));
+			String root = root1.substring(0, root1.lastIndexOf("\\"));
+			int aux1 = startingDir1.lastIndexOf("\\");
+			ACRlog.waitHere("start= " + startingDir1 + "\nroot= " + root + "\naux1= " + aux1);
+			File fil1 = new File(root + "\\REPORT");
+			boolean ok1 = ACRinputOutput.deleteDir(fil1);
+			ACRlog.waitHere("root= " + root + " ok1= " + ok1);
+			boolean ok2 = ACRinputOutput.createDir(fil1);
+			ACRlog.waitHere("root= " + root + " ok2= " + ok2);
+			outDir = fil1.getPath();
+		} else
 			return;
-
 
 		// ora devo leggere i nomi di tutti i file contenuti nelle due cartelle
 		// la prima cartella

@@ -1046,7 +1046,7 @@ public class ACRutils {
 	
 	public static String readDicomString(ImagePlus imp1, String tag) {
 		
-		String parameter = tag + " " + DicomTools.getTagName(tag) + ":" + DicomTools.getTag(imp1, tag);
+		String parameter = tag + " -- " + DicomTools.getTagName(tag) + ":" + DicomTools.getTag(imp1, tag);
 				return (parameter);
 	}
 
