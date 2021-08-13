@@ -70,9 +70,6 @@ public class Uniformity_ implements PlugIn {
 		gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
 		gd1.addCheckbox("STEP", stepdefault);
 		gd1.addCheckbox("VERBOSE", verbosedefault);
-//		gd1.addCheckbox("MINMAX ALBERTO", false);
-//		gd1.addCheckbox("MINMAX ARTICOLO", true);
-//		gd1.addCheckbox("UNIFORMITY", true);
 		gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
 
 		gd1.showDialog();
@@ -81,23 +78,15 @@ public class Uniformity_ implements PlugIn {
 			return;
 		}
 
-		String str1 = gd1.getNextRadioButton();
 		boolean fast = gd1.getNextBoolean();
 		boolean step = gd1.getNextBoolean();
 		boolean verbose = gd1.getNextBoolean();
-//		boolean maxminAlberto = gd1.getNextBoolean();
-//		boolean maxminArticolo = gd1.getNextBoolean();
-//		boolean uniformity = gd1.getNextBoolean();
 		boolean[] vetBoolSliceT1 = new boolean[7];
 		boolean[] vetBoolSliceT2 = new boolean[7];
 		for (int i1 = 0; i1 < 7; i1++) {
 			vetBoolSliceT1[i1] = gd1.getNextBoolean();
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
-
-//		boolean maxminAlberto = false;
-//		boolean maxminArticolo = true;
-//		boolean uniformity = true;
 
 		// vado a scrivere i setup nel config file
 		if (prop == null) {
@@ -116,19 +105,12 @@ public class Uniformity_ implements PlugIn {
 			String aux2 = "" + vetBoolSliceT2[i1];
 			prop.setProperty(aux1, aux2);
 		}
-
 		try {
 			ACRutils.writeConfigACR(prop);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-//		boolean[] comandi = new boolean[3];
-//		comandi[0] = false; // maxminAlberto;
-//		comandi[1] = maxminArticolo;
-//		comandi[2] = uniformity;
-
 		String uno = "";
 		String due = "";
 
@@ -136,17 +118,10 @@ public class Uniformity_ implements PlugIn {
 			uno = uno + "," + i1 + " " + vetBoolSliceT1[i1];
 			due = due + "," + i1 + " " + vetBoolSliceT2[i1];
 		}
-//		IJ.log(ACRlog.qui()+"slices T1 = " + uno);
-//		IJ.log(ACRlog.qui()+"slices T2 = " + due);
-
 		// leggo i nomi di tutti i 15 file presenti
-//		String pathLocalizer = "";
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
-//		String[] listLocalizer = ACRinputOutput.readStackPathToSortedList(vetPath[1], "T1");
-//		if (listLocalizer != null)
-//			pathLocalizer = listLocalizer[0];
 		String[] sortedListT1 = ACRinputOutput.readStackPathToSortedList(vetPath[1], "T1");
 		if (sortedListT1 == null)
 			IJ.log("sortedListT1 ==null");
@@ -168,8 +143,6 @@ public class Uniformity_ implements PlugIn {
 				imp2.show();
 				ACRutils.zoom(imp2);
 				double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
-
-//				double[] phantomposition = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout);
 				phantomCalculations(imp2, phantomCircle, i1, step, fast, verbose, timeout);
 			}
 		}
@@ -182,11 +155,10 @@ public class Uniformity_ implements PlugIn {
 				imp2.show();
 				ACRutils.zoom(imp2);
 				double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
-//				double[] phantomposition = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout);
 				phantomCalculations(imp2, phantomCircle, i1, step, fast, verbose, timeout);
 			}
 		}
-
+		
 	}
 
 	/**

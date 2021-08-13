@@ -94,7 +94,7 @@ public class SliceThickness_ implements PlugIn {
 		}
 
 		if (fast)
-			timeout = 2000;
+			timeout = 200;
 		else
 			timeout = 0;
 
@@ -126,7 +126,10 @@ public class SliceThickness_ implements PlugIn {
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
-		String pathReport = vetPath[4] + "\\Report1.txt";
+		String pathReport = vetPath[4] + "\\ReportThick.txt";
+		IJ.log(vetPath[0]);
+		IJ.log(vetPath[1]);
+		IJ.log(vetPath[2]);
 
 		String[] listLocalizer = ACRinputOutput.readStackPathToSortedList(vetPath[0], "T1");
 		if (listLocalizer != null)
@@ -161,7 +164,7 @@ public class SliceThickness_ implements PlugIn {
 		ACRlog.waitHere("SLICE THICKNESS TERMINATA");
 	}
 
-	public void evalThickness(String path1, String pathReport, int i1, boolean step, boolean fast, boolean verbose,
+	public void evalThickness(String path1, String pathReport, int s1, boolean step, boolean fast, boolean verbose,
 			int timeout) {
 
 		IJ.log(ACRlog.qui() + "<START>");
@@ -187,6 +190,8 @@ public class SliceThickness_ implements PlugIn {
 		ACRutils.zoom(imp2);
 		Overlay over2 = new Overlay();
 		imp2.setOverlay(over2);
+		double dimPixel = ACRutils
+				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp2, ACRconst.DICOM_PIXEL_SPACING), 1));
 
 //		double[] phantomCircle = ACRlocalizer.gridLocalizer1(imp2, step, fast, verbose, timeout);
 
@@ -252,36 +257,55 @@ public class SliceThickness_ implements PlugIn {
 			ACRlog.waitHere("punti allineati?", debug, timeout);
 		}
 
+		over3.clear();
 		Line.setWidth(5);
 		imp3.setRoi(new Line(EX, EY, FX, FY));
 		imp3.updateAndDraw();
-		imp3.getRoi().setStrokeColor(Color.GREEN);
+//		imp3.getRoi().setStrokeColor(Color.GREEN);
 		over3.addElement(imp3.getRoi());
 
 		Roi roi3 = imp3.getRoi();
 		double[] profi3 = ((Line) roi3).getPixels();
 		// linea calcolo segnale mediato
 		// boolean invert = false;
-		double fwhm1 = ACRlocalizer.FWHMcalc(profi3, 3, "primoProfilo");
-		ACRlog.waitHere("PROFILO", debug, timeout);
+		double fwhm1pixel = ACRlocalizer.FWHMcalc(profi3, 3, "primoProfilo");
+		if (step || verbose)
+			ACRlog.waitHere("PROFILO", true, timeout);
 		imp3.setRoi(new Line(GX, GY, HX, HY));
-		imp3.getRoi().setStrokeColor(Color.GREEN);
+//		imp3.getRoi().setStrokeColor(Color.GREEN);
 		over3.addElement(imp3.getRoi());
 		imp3.updateAndDraw();
 		Roi roi4 = imp3.getRoi();
 		double[] profi4 = ((Line) roi4).getPixels();
-		double fwhm2 = ACRlocalizer.FWHMcalc(profi4, 3, "secondoProfilo");
-		ACRlog.waitHere("PROFILO", debug, timeout);
+		double fwhm2pixel = ACRlocalizer.FWHMcalc(profi4, 3, "secondoProfilo");
+		if (step || verbose)
+			ACRlog.waitHere("PROFILO", true, timeout);
 		// linea calcolo segnale mediato
 		Line.setWidth(1);
 //		title = "ABnormal";
 //		Plot plot4 = ACRgraphic.basePlot(profi4, title, Color.RED);
 //		plot4.draw();
 //		plot4.show();
-		ACRlog.waitHere("fwhm1= " + fwhm1 + " fwhm2= " + fwhm2, debug, timeout);
-		if ((Double.compare(fwhm1, 0) <= 0 || Double.compare(fwhm2, 0) <= 0))
+		if (step||verbose) ACRlog.waitHere("fwhm1= " + fwhm1pixel + " fwhm2= " + fwhm2pixel, debug, timeout);
+		if ((Double.compare(fwhm1pixel, 0) == 0 || Double.compare(fwhm2pixel, 0) == 0))
 			ACRlog.waitHere("IMPOSSIBILE CALCOLARE LA THICKNESS,\nPROBLEMA IMMAGINE???");
 
+		double thickpixel = 0.2 * (fwhm1pixel * fwhm1pixel) / (fwhm1pixel + fwhm1pixel);
+
+		double thickmm = thickpixel * dimPixel;
+		if (step||verbose) ACRlog.waitHere("thickmm= " + thickmm);
+		
+		String[] info1 = ACRutils.imageInformation(imp1);
+		for (int i1 = 0; i1 < info1.length; i1++) {
+			ACRlog.appendLog(pathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
+		}
+		String imageName = "thickness001.png";
+		String path10 = pathReport.substring(0, pathReport.lastIndexOf("\\"));
+		String pathImage = path10 + "\\" + imageName;
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName: #100#" + pathImage);
+		IJ.saveAs(imp3, "PNG", pathImage);
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "thick: #101#" + IJ.d2s(thickmm, 4));
+		
 		return;
 	}
 

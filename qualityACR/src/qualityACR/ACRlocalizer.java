@@ -479,11 +479,11 @@ public class ACRlocalizer {
 	 * @param timeout     millisecondi per OK
 	 * @return vettore contenente i dati del fantoccio circolare localizzato
 	 */
-	public static int[] positionSearch2(ImagePlus imp1, double maxFitError, boolean step, boolean fast, boolean verbose,
+	public static int[] positionSearch2(ImagePlus imp1, double maxFitError, boolean step, boolean verbose,
 			int timeout) {
 
 		if (verbose)
-			IJ.log("<ACRlocalizer.positionSearch2 START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log("<ACRlocalizer.positionSearch2 START>  step= " + step + " verbose= " + verbose);
 
 		if (step)
 			ACRlog.waitHere(">>> 01 - RICERCA POSIZIONE E DIAMETRO FANTOCCIO <<<", ACRutils.debug, timeout);
@@ -564,7 +564,7 @@ public class ACRlocalizer {
 				IJ.log(ACRlog.qui() + " ==== PROFILO " + vetTitle[i1] + " ====");
 			int pseudomaxlen = 3;
 			double[][] vetout = ACRlocalizer.FWHManalyzer(zeropadded3v, pseudomaxlen, "PROFILO " + vetTitle[i1], step,
-					fast, verbose);
+					verbose);
 
 			// vetout[0][0] = leftx nature;___ vetout[1][0] = lefty nature
 			// vetout[0][1] = rightx nature;__ vetout[1][1] = rightx nature
@@ -607,7 +607,7 @@ public class ACRlocalizer {
 
 			if (step) {
 				ACRlog.waitHere("<ACRlocalizer.positionSearch2> Punti plottati VERDE su immagine con coordinate "
-						+ xpoint1 + "," + ypoint1 + "   " + xpoint2 + "," + ypoint2);
+						+ xpoint1 + "," + ypoint1 + "   " + xpoint2 + "," + ypoint2, Geometric_Accuracy.debug, timeout);
 			}
 			imp2.updateAndDraw();
 			iw2.toFront();
@@ -632,8 +632,8 @@ public class ACRlocalizer {
 			over2.addElement(imp2.getRoi());
 		}
 		if (verbose) {
-			ACRlog.waitHere("La circonferenza risultante dal fit e' mostrata in verde", true, timeout);
-			ACRlog.waitHere();
+			ACRlog.waitHere("La circonferenza risultante dal fit e' mostrata in verde", Geometric_Accuracy.debug,
+					timeout);
 		}
 		Rectangle boundRec = imp2.getProcessor().getRoi();
 		int xCenterCircle = Math.round(boundRec.x + boundRec.width / 2);
@@ -661,8 +661,8 @@ public class ACRlocalizer {
 	 * @return array contenente i dati del cerchio localizzato ed i punti delle
 	 *         quattro misure eseguite
 	 */
-	public static double[] positionSearch3(ImagePlus imp1, int[] phantomCircle, boolean step, boolean fast,
-			boolean verbose, int timeout) {
+	public static double[] positionSearch3(ImagePlus imp1, int[] phantomCircle, boolean step, boolean verbose,
+			int timeout) {
 
 		// al contrario di positionSearch2, dove non conoscevamo posizione e diametro
 		// del fantoccio, in questo caso questi dati ci sono noti, ora vogliamo fare una
@@ -670,7 +670,7 @@ public class ACRlocalizer {
 		// centro reale del fantoccio circolare
 
 		if (verbose)
-			IJ.log(ACRlog.qui() + "START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + "START>  step= " + step + " verbose= " + verbose);
 
 		if (step)
 			ACRlog.waitHere(">>> 02 - MISURA PRECISA DIAMETRI FANTOCCIO <<<", ACRutils.debug, timeout);
@@ -776,7 +776,7 @@ public class ACRlocalizer {
 			double[][] decomposed3v = ACRutils.decomposer3v(imp2);
 			double[][] zeropadded3v = ACRutils.zeropadProfile3v(decomposed3v);
 			double[][] vetout = ACRlocalizer.FWHManalyzer(zeropadded3v, pseudomaxlen, "PROFILO " + vetTitle[i1], step,
-					fast, verbose);
+					verbose);
 			// vetout[0][0] = leftx nature;___ vetout[1][0] = lefty nature
 			// vetout[0][1] = rightx nature;__ vetout[1][1] = rightx nature
 			// vetout[0][2] = leftx interp;___ vetout[1][2] = lefty interp
@@ -1474,45 +1474,65 @@ public class ACRlocalizer {
 	public static double FWHMcalc(double[] line1, int pseudomaxlen, String titolo) {
 
 		double pmax = ACRutils.pseudomax(line1, pseudomaxlen);
-		double pmin = ACRutils.pseudomin(line1, pseudomaxlen);
-		// IJ.log("pmax= " + pmax + " pmin= " + pmin);
-		double fwhmlevel = pmax / 2;
+		double threshold = pmax / 2;
 		double[] xVetLineHalf = new double[2];
 		double[] yVetLineHalf = new double[2];
 		xVetLineHalf[0] = 0;
 		xVetLineHalf[1] = line1.length;
-		yVetLineHalf[0] = fwhmlevel;
-		yVetLineHalf[1] = fwhmlevel;
+		yVetLineHalf[0] = threshold;
+		yVetLineHalf[1] = threshold;
 		String title = titolo;
 		Plot plot1 = ACRutils.ACRplot(line1, title, Color.GREEN, false);
 		plot1.addPoints(xVetLineHalf, yVetLineHalf, Plot.LINE);
 		plot1.draw();
-		int[] duepuntisopra = ACRlocalizer.findPointsopra(line1, (int) fwhmlevel);
+		int[] quattropunti = ACRlocalizer.findFWHMpoints(line1, threshold);
 		double[] duepuntix = new double[2];
-		duepuntix[0] = (double) duepuntisopra[0];
-		duepuntix[1] = (double) duepuntisopra[1];
+		duepuntix[0] = (double) quattropunti[0];
+		duepuntix[1] = (double) quattropunti[2];
 		double[] duepuntiy = new double[2];
-		duepuntiy[0] = line1[duepuntisopra[0]];
-		duepuntiy[1] = line1[duepuntisopra[1]];
-		// ACRutils.vetPrint(duepuntix, "duepuntix SOPRA");
-		// ACRutils.vetPrint(duepuntiy, "duepuntiy SOPRA");
+		duepuntiy[0] = line1[quattropunti[0]];
+		duepuntiy[1] = line1[quattropunti[2]];
+		plot1.setLineWidth(6);
 		plot1.setColor(Color.RED);
-		plot1.addPoints(duepuntix, duepuntiy, Plot.CIRCLE);
-		int[] duepuntisotto = ACRlocalizer.findPointsotto(line1, (int) fwhmlevel);
-		duepuntix[0] = (double) duepuntisotto[0];
-		duepuntix[1] = (double) duepuntisotto[1];
-		duepuntiy[0] = line1[duepuntisotto[0]];
-		duepuntiy[1] = line1[duepuntisotto[1]];
-		// ACRutils.vetPrint(duepuntix, "duepuntix SOTTO");
-		// ACRutils.vetPrint(duepuntiy, "duepuntiy SOTTO");
+		plot1.addPoints(duepuntix, duepuntiy, Plot.DOT);
+		duepuntix[0] = (double) quattropunti[1];
+		duepuntix[1] = (double) quattropunti[3];
+		duepuntiy[0] = line1[quattropunti[1]];
+		duepuntiy[1] = line1[quattropunti[3]];
+//		plot1.setLineWidth(6);
 		plot1.setColor(Color.BLUE);
-		plot1.addPoints(duepuntix, duepuntiy, Plot.CIRCLE);
+		plot1.addPoints(duepuntix, duepuntiy, Plot.DOT);
 
-		double fwhmPixel = (duepuntisopra[1] - duepuntisopra[0]); // PIXEL
+		double xa1 = (double) quattropunti[0];
+		double ya1 = (double) line1[quattropunti[0]];
+		double xb1 = (double) quattropunti[1];
+		double yb1 = (double) line1[quattropunti[1]];
+		double yc1 = threshold;
+		double xc1 = ACRutils.xLinearInterpolation(xa1, ya1, xb1, yb1, yc1);
 
-		// ACRlog.waitHere("FWHMpixel= " + fwhmPixel);
+		double xa2 = (double) quattropunti[2];
+		double ya2 = (double) line1[quattropunti[2]];
+		double xb2 = (double) quattropunti[3];
+		double yb2 = (double) line1[quattropunti[3]];
+		double yc2 = threshold;
+		double xc2 = ACRutils.xLinearInterpolation(xa2, ya2, xb2, yb2, yc2);
 
-		return fwhmPixel;
+		double fwhmpixel1 = quattropunti[3] - quattropunti[0]; // PIXEL
+		double fwhmpixel2 = xc2 - xc1; // PIXEL
+		// ho fatto delle prove ed ho visto che i quattro punti sono sempre in pixel
+		// adiacenti
+
+//		ACRlog.waitHere(ACRlog.qui() + "fwhmpixel1= " + fwhmpixel1 + " fwhmpixel2= " + fwhmpixel2, true, 200);
+//
+//		IJ.log("----------------");
+//		for (int i1 = 0; i1 < quattropunti.length; i1++) {
+//			IJ.log("punto " + i1 + " x=" + quattropunti[i1] + " y= " + IJ.d2s(line1[quattropunti[i1]], 2));
+//		}
+//		IJ.log("----------------");
+//
+//		ACRlog.waitHere(ACRlog.qui() + "PUNTI DISPONIBILI", true, 200);
+
+		return fwhmpixel2;
 	}
 
 	/**
@@ -1884,7 +1904,7 @@ public class ACRlocalizer {
 	 * @param titolo       titolo per i plot
 	 * @return matrice coi risultati
 	 */
-	public static double[][] FWHManalyzer(double[][] line3, int pseudomaxlen, String titolo, boolean step, boolean fast,
+	public static double[][] FWHManalyzer(double[][] line3, int pseudomaxlen, String titolo, boolean step,
 			boolean verbose) {
 
 		// line3[0][] = profiX coordinata x del pixel sulla immagine
@@ -1893,9 +1913,9 @@ public class ACRlocalizer {
 		// line3[3][] = profiW coordinata W "ipotenusa", la ascissa del profilo
 		int trunc = 4; // usata solo durante i test, per troncare il numero dei decimali
 		if (verbose) {
-			IJ.log(ACRlog.qui() + " START>  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + " START>  step= " + step + " verbose= " + verbose);
 			IJ.log(ACRlog.qui() + " START>  analisi del profilo ricevuto per ottenere la FWHM");
-			IJ.log(ACRlog.qui() + "  step= " + step + " fast= " + fast + " verbose= " + verbose);
+			IJ.log(ACRlog.qui() + "  step= " + step + " verbose= " + verbose);
 			ACRlog.logMatrix(line3, ACRlog.qui() + "line3");
 		}
 		Plot plot1 = null;
@@ -2167,31 +2187,123 @@ public class ACRlocalizer {
 	}
 
 	/**
-	 * Ricerca punti al di sopra del livello di halfmax
+	 * Analizza il profilo e ricerca punti sopra e sotto del livello di threshold
 	 * 
 	 * @param line1
-	 * @param halfmax
+	 * @param threshold
 	 * @return
 	 */
-	public static int[] findPointsopra(double[] line1, double halfmax) {
+	public static int[] findFWHMpoints(double[] line1, double threshold) {
+
+		int leftUp = 0;
+		int rightUp = 0;
+		int leftDw = 0;
+		int rightDw = 0;
+		boolean valido = false;
+		for (int i1 = 0; i1 < line1.length; i1++) {
+			if (Double.compare(line1[i1], threshold) < 0)
+				valido = true;
+			if (valido && Double.compare(line1[i1], threshold) >= 0) {
+				leftUp = i1;
+				break;
+			}
+		}
+		leftDw = leftUp - 1;
+		valido = false;
+		for (int i1 = line1.length - 1; i1 >= 0; i1--) {
+			if (Double.compare(line1[i1], threshold) < 0)
+				valido = true;
+			if (valido && Double.compare(line1[i1], threshold) >= 0) {
+				rightUp = i1;
+				break;
+			}
+		}
+		rightDw = rightUp + 1;
+		int[] out1 = new int[4];
+		out1[0] = leftUp;
+		out1[1] = leftDw;
+		out1[2] = rightUp;
+		out1[3] = rightDw;
+
+		return out1;
+	}
+
+	/**
+	 * Ricerca punti sopra e sotto del livello di threshold autocalcolato
+	 * 
+	 * @param line1
+	 * @param threshold
+	 * @return
+	 */
+	public static int[] findFWHMpoints(double[] line1) {
+
+		int leftUp = 0;
+		int rightUp = 0;
+		int leftDw = 0;
+		int rightDw = 0;
+		boolean valido = false;
+		double[] smooth1 = ACRcalc.vetSmooth3x3(line1);
+		double threshold = ACRcalc.vetMax(smooth1) / 2;
+
+		ACRlog.logVector(line1, ACRlog.qui() + "line1");
+		ACRlog.waitHere();
+		for (int i1 = 0; i1 < line1.length; i1++) {
+			if (Double.compare(line1[i1], threshold) < 0)
+				valido = true;
+			if (valido && Double.compare(line1[i1], threshold) >= 0) {
+				leftUp = i1;
+				break;
+			}
+		}
+		leftDw = leftUp - 1;
+		valido = false;
+		for (int i1 = line1.length - 1; i1 >= 0; i1--) {
+			if (Double.compare(line1[i1], threshold) < 0)
+				valido = true;
+			if (valido && Double.compare(line1[i1], threshold) >= 0) {
+				rightUp = i1;
+				break;
+			}
+		}
+		rightDw = rightUp + 1;
+		int[] out1 = new int[4];
+		out1[0] = leftUp;
+		out1[1] = rightUp;
+		out1[2] = leftDw;
+		out1[3] = rightDw;
+
+		return out1;
+	}
+
+	/**
+	 * Ricerca punti al di sopra del livello di threshold in corso di sostituzione
+	 * con findFWHMpoints
+	 * 
+	 * @param line1
+	 * @param threshold
+	 * @return
+	 */
+	@Deprecated(forRemoval = true)
+	public static int[] findPointsopra(double[] line1, double threshold) {
 
 		int left = 0;
 		int right = 0;
 		boolean valido = false;
-
+		ACRlog.logVector(line1, ACRlog.qui() + "line1");
+		ACRlog.waitHere();
 		for (int i1 = 0; i1 < line1.length; i1++) {
-			if (Double.compare(line1[i1], halfmax / 4) < 0)
+			if (Double.compare(line1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(line1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(line1[i1], threshold) >= 0) {
 				left = i1;
 				break;
 			}
 		}
 		valido = false;
 		for (int i1 = line1.length - 1; i1 >= 0; i1--) {
-			if (Double.compare(line1[i1], halfmax / 4) < 0)
+			if (Double.compare(line1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(line1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(line1[i1], threshold) >= 0) {
 				right = i1;
 				break;
 			}
@@ -2204,14 +2316,14 @@ public class ACRlocalizer {
 	}
 
 	/**
-	 * Ricerca punti al di sopra livello halfmax, partendo dai bordi del profilo e
+	 * Ricerca punti al di sopra livello threshold, partendo dai bordi del profilo e
 	 * andando verso il centro
 	 * 
-	 * @param line3   matrice profilo
-	 * @param halfmax valore di threshold
+	 * @param line3           matrice profilo
+	 * @param thresholdvalore di threshold
 	 * @return matrice di output
 	 */
-	public static double[][] findPointsopra3v(double[][] line3, double halfmax) {
+	public static double[][] findPointsopra3v(double[][] line3, double threshold) {
 
 		// line3 [4][n]
 		// line3[0] = coordinata X punto
@@ -2248,9 +2360,9 @@ public class ACRlocalizer {
 		// uguaglia la meta'altezza del segnale
 		boolean valido = false;
 		for (int i1 = 0; i1 < z1.length; i1++) {
-			if (Double.compare(z1[i1], halfmax / 4) < 0)
+			if (Double.compare(z1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(z1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(z1[i1], threshold) >= 0) {
 				leftx = x1[i1];
 				lefty = y1[i1];
 				leftz = z1[i1];
@@ -2260,9 +2372,9 @@ public class ACRlocalizer {
 		}
 		valido = false;
 		for (int i1 = z1.length - 1; i1 >= 0; i1--) {
-			if (Double.compare(z1[i1], halfmax / 4) < 0)
+			if (Double.compare(z1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(z1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(z1[i1], threshold) >= 0) {
 				rightx = x1[i1];
 				righty = y1[i1];
 				rightz = z1[i1];
@@ -2287,10 +2399,10 @@ public class ACRlocalizer {
 	/**
 	 * 
 	 * @param line3
-	 * @param halfmax
+	 * @param threshold
 	 * @return
 	 */
-	public static double[][] findPointsopraAYV(double[][] line3, double halfmax) {
+	public static double[][] findPointsopraAYV(double[][] line3, double threshold) {
 
 		double leftx = 0;
 		double lefty = 0;
@@ -2321,9 +2433,9 @@ public class ACRlocalizer {
 		// cerco, partendo da sinistra del segmento il valore di pixel che supera od
 		// uguaglia la meta'altezza del segnale
 		for (int i1 = 0; i1 < z1.length; i1++) {
-			if (Double.compare(z1[i1], halfmax / 4) < 0)
+			if (Double.compare(z1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(z1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(z1[i1], threshold) >= 0) {
 				leftx = x1[i1];
 				lefty = y1[i1];
 				leftz = z1[i1];
@@ -2333,9 +2445,9 @@ public class ACRlocalizer {
 		}
 		valido = false;
 		for (int i1 = z1.length - 1; i1 >= 0; i1--) {
-			if (Double.compare(z1[i1], halfmax / 4) < 0)
+			if (Double.compare(z1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(z1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(z1[i1], threshold) >= 0) {
 				rightx = x1[i1];
 				righty = y1[i1];
 				rightz = z1[i1];
@@ -2362,27 +2474,28 @@ public class ACRlocalizer {
 	/**
 	 * 
 	 * @param line1
-	 * @param halfmax
+	 * @param threshold
 	 * @return
 	 */
-	public static int[] findPointsotto(double[] line1, double halfmax) {
+	@Deprecated(forRemoval = true)
+	public static int[] findPointsotto(double[] line1, double threshold) {
 
 		int left = 0;
 		int right = 0;
 		boolean valido = false;
 		for (int i1 = 0; i1 < line1.length; i1++) {
-			if (Double.compare(line1[i1], halfmax / 4) < 0)
+			if (Double.compare(line1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(line1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(line1[i1], threshold) >= 0) {
 				left = i1 - 1;
 				break;
 			}
 		}
 		valido = false;
 		for (int i1 = line1.length - 1; i1 >= 0; i1--) {
-			if (Double.compare(line1[i1], halfmax / 4) < 0)
+			if (Double.compare(line1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(line1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(line1[i1], threshold) >= 0) {
 				right = i1 + 1;
 				break;
 			}
@@ -2397,10 +2510,10 @@ public class ACRlocalizer {
 	/**
 	 * 
 	 * @param line3
-	 * @param halfmax
+	 * @param threshold
 	 * @return
 	 */
-	public static double[][] findPointsotto3v(double[][] line3, double halfmax) {
+	public static double[][] findPointsotto3v(double[][] line3, double threshold) {
 
 		double leftx = 0;
 		double lefty = 0;
@@ -2430,9 +2543,9 @@ public class ACRlocalizer {
 		boolean valido = false;
 
 		for (int i1 = 0; i1 < z1.length; i1++) {
-			if (Double.compare(z1[i1], halfmax / 4) < 0)
+			if (Double.compare(z1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(z1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(z1[i1], threshold) >= 0) {
 				leftx = x1[i1 - 1];
 				lefty = y1[i1 - 1];
 				leftz = z1[i1 - 1];
@@ -2442,9 +2555,9 @@ public class ACRlocalizer {
 		}
 		valido = false;
 		for (int i1 = z1.length - 1; i1 >= 0; i1--) {
-			if (Double.compare(z1[i1], halfmax / 4) < 0)
+			if (Double.compare(z1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(z1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(z1[i1], threshold) >= 0) {
 				rightx = x1[i1 + 1];
 				righty = y1[i1 + 1];
 				rightz = z1[i1 + 1];
@@ -2468,10 +2581,10 @@ public class ACRlocalizer {
 	/**
 	 * 
 	 * @param line3
-	 * @param halfmax
+	 * @param threshold
 	 * @return
 	 */
-	public static double[][] findPointsottoAYV(double[][] line3, double halfmax) {
+	public static double[][] findPointsottoAYV(double[][] line3, double threshold) {
 
 		double leftx = 0;
 		double lefty = 0;
@@ -2500,9 +2613,9 @@ public class ACRlocalizer {
 		}
 		boolean valido = false;
 		for (int i1 = 0; i1 < z1.length; i1++) {
-			if (Double.compare(z1[i1], halfmax / 4) < 0)
+			if (Double.compare(z1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(z1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(z1[i1], threshold) >= 0) {
 				leftx = x1[i1 - 1];
 				lefty = y1[i1 - 1];
 				leftz = z1[i1 - 1];
@@ -2512,9 +2625,9 @@ public class ACRlocalizer {
 		}
 		valido = false;
 		for (int i1 = z1.length - 1; i1 >= 0; i1--) {
-			if (Double.compare(z1[i1], halfmax / 4) < 0)
+			if (Double.compare(z1[i1], threshold) < 0)
 				valido = true;
-			if (valido && Double.compare(z1[i1], halfmax) >= 0) {
+			if (valido && Double.compare(z1[i1], threshold) >= 0) {
 				rightx = x1[i1 + 1];
 				righty = y1[i1 + 1];
 				rightz = z1[i1 + 1];

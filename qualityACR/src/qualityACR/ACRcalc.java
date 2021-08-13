@@ -9,6 +9,21 @@ import ij.IJ;
 
 public class ACRcalc {
 
+	
+	/**
+	 * Calcola il max di un vettore
+	 * 
+	 * @param in1
+	 * @return
+	 */
+	public static double[] vetSmooth3x3(double[] in1) {
+		double[] out1=new double[in1.length];
+		for (int i1 = 1; i1 < in1.length-1; i1++) {
+			out1[i1]= (in1[i1-1]+in1[i1]+in1[i1+1])/3;	
+		}
+		return out1;
+	}
+	
 	/**
 	 * Calcola il max di un vettore
 	 * 

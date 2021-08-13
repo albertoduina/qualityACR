@@ -118,7 +118,7 @@ public class Ghosting_ implements PlugIn {
 
 //			}
 		// Ricerca delle coordinate e diametro del fantoccio su slice 5
-		int[] out2 = ACRlocalizer.positionSearch2(imp1, maxFitError, step, fast, verbose, timeout);
+		int[] out2 = ACRlocalizer.positionSearch2(imp1, maxFitError, step, verbose, timeout);
 		int xphantom = (int) out2[0];
 		int yphantom = (int) out2[1];
 		int dphantom = (int) out2[2];

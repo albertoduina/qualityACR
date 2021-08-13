@@ -43,7 +43,8 @@ public class ACRlog {
 			gd1.showDialog();
 			if (gd1.wasOKed()) {
 				// f1.delete();
-				ACRinputOutput.purgeDirectory(f1);
+				IJ.log("stiamo per cancellare " + path);
+				ACRinputOutput.deleteFile(f1);
 			}
 			if (gd1.wasCanceled())
 				return false;
@@ -52,7 +53,6 @@ public class ACRlog {
 
 		return true;
 	}
-
 
 	public static void appendLog(String completePath, String linea) {
 

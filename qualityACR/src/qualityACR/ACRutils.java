@@ -791,8 +791,8 @@ public class ACRutils {
 		// cy cordinata y del punto da trovare
 
 		double cx = bx - ((bx - ax) * (by - cy) / (by - ay));
-		// IJ.log("xinterpolato cx= " + cx + " ax= " + ax + " ay=" + ay + " bx= " + bx +
-		// " by= " + by + " cy=" + cy);
+		 IJ.log("xinterpolato cx= " + cx + "|| ax= " + ax + " ay=" + ay + "|| bx= " + bx +
+		 " by= " + by + "|| cy=" + cy);
 		// coordinata x su immagine calcolata
 		return cx;
 	}

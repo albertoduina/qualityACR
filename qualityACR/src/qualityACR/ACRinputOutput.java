@@ -19,6 +19,15 @@ import ij.process.ImageProcessor;
 
 public class ACRinputOutput {
 
+	public static boolean deleteFile(File file) {
+		boolean ok = false;
+		if (file.exists()) {
+			ok = file.delete();
+		} else
+			ok = true;
+		return ok;
+	}
+
 	/**
 	 * Deletes all files and subdirectories under dir. Returns true if all deletions
 	 * were successful. If a deletion fails, the method stops attempting to delete
@@ -46,7 +55,7 @@ public class ACRinputOutput {
 		// The directory is now empty so delete it
 		boolean ok = dir.delete();
 		if (!ok)
-		 IJ.log("errore cancellazione dir da java= "+dir);
+			IJ.log("errore cancellazione dir da java= " + dir);
 		return ok;
 	}
 

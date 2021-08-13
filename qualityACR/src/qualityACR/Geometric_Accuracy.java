@@ -11,18 +11,12 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.gui.ImageWindow;
 import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.gui.Plot;
-import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.gui.RotatedRectRoi;
-import ij.measure.CurveFitter;
 import ij.plugin.PlugIn;
-import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
-import ij.text.TextWindow;
 import ij.util.Tools;
 
 public class Geometric_Accuracy implements PlugIn {
@@ -122,7 +116,7 @@ public class Geometric_Accuracy implements PlugIn {
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
-		String pathReport = vetPath[4] + "\\ReportGeometrico.txt";
+		String pathReport1 = vetPath[4] + "\\ReportGeometrico.txt";
 
 		String[] listLocalizer = ACRinputOutput.readStackPathToSortedList(vetPath[0], "T1");
 		if (listLocalizer != null)
@@ -140,22 +134,24 @@ public class Geometric_Accuracy implements PlugIn {
 
 		// elaborazione file selezionati dall'operatore
 		if (geomLocalizer) {
-			mainLocalizer(pathLocalizer, pathReport, step, verbose, timeout);
+			mainLocalizer(pathLocalizer, pathReport1, step, verbose, timeout);
 
 		}
 
+		String pathReport2 = vetPath[4] + "\\ReportGeometricoT1.txt";
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
-				mainSliceDiameter(sortedListT1[i1], pathReport, i1, step, fast, verbose, timeout);
+				mainSliceDiameter(sortedListT1[i1], pathReport2, i1, step, verbose, timeout);
 			}
 		}
 
+		String pathReport3 = vetPath[4] + "\\ReportGeometricoT2.txt";
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
 				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
-				mainSliceDiameter(sortedListT2[i1], pathReport, i1, step, fast, verbose, timeout);
+				mainSliceDiameter(sortedListT2[i1], pathReport3, i1, step, verbose, timeout);
 			}
 		}
 		ACRlog.waitHere("GEOMETRIC_ACCURACY TERMINATA", debug, timeout);
@@ -207,7 +203,7 @@ public class Geometric_Accuracy implements PlugIn {
 
 		String[] info1 = ACRutils.imageInformation(imp1);
 		for (int i1 = 0; i1 < info1.length; i1++) {
-			ACRlog.appendLog(pathReport, "#" + String.format("%03d", i1) + "#  " + info1[i1]);
+			ACRlog.appendLog(pathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
 		}
 		String imageName = "localizer001.png";
 		String path10 = pathReport.substring(0, pathReport.lastIndexOf("\\"));
@@ -221,7 +217,7 @@ public class Geometric_Accuracy implements PlugIn {
 		ACRlog.appendLog(pathReport, ACRlog.qui() + "length1 p/f: #104#" + "Pass");
 		ACRlog.appendLog(pathReport, ACRlog.qui() + "length2 p/f: #105#" + "Fail");
 		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle: #106#" + IJ.d2s(vetout1[2], 4));
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle limits: #107#"+"+-1");
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle limits: #107#" + "+-1");
 		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle p/f: #108#" + "Fail");
 
 		imp2.changes = false;
@@ -681,8 +677,8 @@ public class Geometric_Accuracy implements PlugIn {
 	 * @param verbose
 	 * @param timeout
 	 */
-	public void mainSliceDiameter(String path1, String pathReport, int slice, boolean step, boolean fast,
-			boolean verbose, int timeout) {
+	public void mainSliceDiameter(String path1, String pathReport, int slice, boolean step, boolean verbose,
+			int timeout) {
 		double maxFitError = +20;
 //		double maxBubbleGapLimit = 2;
 
@@ -691,34 +687,16 @@ public class Geometric_Accuracy implements PlugIn {
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		if (imp1 == null)
 			ACRlog.waitHere("imp1==null");
-		double dimPixel = ACRutils
-				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp1, ACRconst.DICOM_PIXEL_SPACING), 1));
-
-		// IW2AYV sposto con il fantoccio, in modo da testare la corretta acquisizione,
-		// indipendente dal centro immagine!
-
-//		imp1.show();
-//		imp1.setRoi(22, 21, 153, 148);
-//		imp1.copy();
-//		imp1.setRoi(19, 21, 153, 148);
-//		imp1.cut();
-//		imp1.setRoi(18, 4, 153, 148);
-//		imp1.paste();
-
 		ImagePlus imp2 = imp1.duplicate();
+		imp2.show();
+		ACRutils.zoom(imp2);
+		double dimPixel = ACRutils
+				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp2, ACRconst.DICOM_PIXEL_SPACING), 1));
 		ImagePlus imp3 = imp1.duplicate();
-//		int[] dummy1 = new int[0];
-
-		boolean step1 = false;
-		boolean fast1 = false;
-		boolean verbose1 = false;
-
-		int[] out1 = ACRlocalizer.positionSearch2(imp2, maxFitError, step1, fast1, verbose1, timeout);
-
+		int[] out1 = ACRlocalizer.positionSearch2(imp2, maxFitError, step, verbose, timeout);
 		int xphantom = (int) out1[0];
 		int yphantom = (int) out1[1];
 		int dphantom = (int) out1[2];
-
 		int[] phantomCircle = new int[3];
 		phantomCircle[0] = xphantom;
 		phantomCircle[1] = yphantom;
@@ -726,17 +704,31 @@ public class Geometric_Accuracy implements PlugIn {
 
 		if (step)
 			ACRlog.waitHere("FIT DEL CERCHIO ESEGUITO, FANTOCCIO LOCALIZZATO", debug, timeout);
-		boolean step2 = step;
-		boolean fast2 = fast;
-		boolean verbose2 = verbose;
 
-		double[] out3 = ACRlocalizer.positionSearch3(imp3, phantomCircle, step2, fast2, verbose2, timeout);
+		double[] out3 = ACRlocalizer.positionSearch3(imp3, phantomCircle, step, verbose, timeout);
+		
+		String[] info1 = ACRutils.imageInformation(imp3);
+		for (int i1 = 0; i1 < info1.length; i1++) {
+			ACRlog.appendLog(pathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
+		}
+			
 		double[] out4 = new double[out3.length];
 		for (int i1 = 0; i1 < out3.length; i1++) {
 			out4[i1] = out3[i1] * dimPixel;
-			ACRlog.appendLog(pathReport, "diametro " + i1 + " slice " + slice + "= " + IJ.d2s(out4[i1], 3) + " mm");
-			IJ.log(ACRlog.qui() + "END> diametro " + i1 + " slice " + slice + "= " + IJ.d2s(out4[i1], 3) + " mm");
+			ACRlog.appendLog(pathReport, ACRlog.qui() +"diametro " + i1 + " slice " + slice + "= #10"+(i1+1)+"#" + IJ.d2s(out4[i1], 4) + " mm");
+			IJ.log(ACRlog.qui() + "END> diametro " + i1 + " slice " + slice + "= " + IJ.d2s(out4[i1], 4) + " mm");
 		}
+		
+		String imageName = "image001.png";
+		String path10 = pathReport.substring(0, pathReport.lastIndexOf("\\"));
+		String pathImage = path10 + "\\" + imageName;
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName: #100#" + pathImage);
+		IJ.saveAs(imp3, "PNG", pathImage);
+
+
+		imp2.changes = false;
+		imp2.close();
+	
 	}
 
 	/**
