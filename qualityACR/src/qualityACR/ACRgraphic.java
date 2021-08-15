@@ -22,6 +22,102 @@ import ij.util.Tools;
 
 public class ACRgraphic {
 
+	/**
+	 * Calcolo dell'angolo di una linea di cui conosciamo due punti. Non utilizza
+	 * Line di ImageJ, poiche'quest'ultimo passa attraverso gli integer
+	 * 
+	 * @param ax
+	 * @param ay
+	 * @param bx
+	 * @param by
+	 * @return
+	 */
+	public static double getAngle(double ax, double ay, double bx, double by) {
+
+		return -Math.toDegrees(Math.atan2(ay - by, ax - bx));
+	}
+
+	/**
+	 * calcoli per rototraslazione delle coordinate rispetto ad un segmento di
+	 * riferimento
+	 * 
+	 * @param ax     coord x inizio segmento di riferimento
+	 * @param ay     coord y inizio segmento di riferimento
+	 * @param bx     coord x fine segmento di riferimento
+	 * @param by     coord y fine segmento di riferimento
+	 * @param cx     coordinata x da rototraslare
+	 * @param cy     coordinata y da rototraslare
+	 * @param debug1 true per debug
+	 * @return msd[0] coordinata x rototraslata, msd[1] coordinata y rototraslata
+	 */
+	public static double[] coord2D(double ax, double ay, double bx, double by, double cx, double cy, boolean debug1) {
+		double x1;
+		double y1;
+		double msd[];
+
+		double angle1 = Math.atan((ay - by) / (ax - bx));
+		if (debug1) {
+			IJ.log("-------- coord2D --------");
+
+			IJ.log("angolo= " + Math.toDegrees(angle1) + "  sin= " + Math.sin(angle1));
+			IJ.log("angolo= " + Math.toDegrees(angle1) + "  cos= " + Math.cos(angle1));
+		}
+		if (Math.sin(angle1) < 0) {
+			// piu30
+			x1 = -cx * Math.sin(angle1) - cy * Math.cos(angle1) + ax;
+			y1 = cx * Math.cos(angle1) - cy * Math.sin(angle1) + ay;
+		} else {
+			// meno30
+			x1 = cx * Math.sin(angle1) + cy * Math.cos(angle1) + ax;
+			y1 = -cx * Math.cos(angle1) + cy * Math.sin(angle1) + ay;
+		}
+		msd = new double[2];
+		msd[0] = x1;
+		msd[1] = y1;
+		if (debug1) {
+			IJ.log("coord2D output cx= " + cx + "  x1= " + x1 + "  cy= " + cy + "  y1= " + y1);
+			IJ.log("--------------------------");
+
+		}
+		return msd;
+	} // coord2D
+
+	public static double[] coord2D2(double[] vetReference, double cx, double cy, boolean debug1) {
+		double x1;
+		double y1;
+		double msd[];
+
+		double angle1 = Math.atan((vetReference[1] - vetReference[3]) / (vetReference[0] - vetReference[2]));
+		// double decimalAngle = Math.toDegrees(angle1);
+		// IJ.log("decimalAngle= "+IJ.d2s(decimalAngle,3));
+
+		if (debug1) {
+			IJ.log("-------- coord2D2 --------");
+
+			IJ.log("angolo= " + Math.toDegrees(angle1) + "  sin= " + Math.sin(angle1));
+			IJ.log("angolo= " + Math.toDegrees(angle1) + "  cos= " + Math.cos(angle1));
+		}
+
+		if (Math.sin(angle1) < 0) {
+			// piu30
+			x1 = -cx * Math.sin(angle1) - cy * Math.cos(angle1) + vetReference[0];
+			y1 = cx * Math.cos(angle1) - cy * Math.sin(angle1) + vetReference[1];
+		} else {
+			// meno30
+			x1 = cx * Math.sin(angle1) + cy * Math.cos(angle1) + vetReference[0];
+			y1 = -cx * Math.cos(angle1) + cy * Math.sin(angle1) + vetReference[1];
+		}
+		msd = new double[2];
+		msd[0] = x1;
+		msd[1] = y1;
+		if (debug1) {
+			IJ.log("coord2D output cx= " + cx + "  x1= " + x1 + "  cy= " + cy + "  y1= " + y1);
+			IJ.log("--------------------------");
+		}
+
+		return msd;
+	} // coord2D
+
 	/***
 	 * Liang-Barsky function by Daniel White
 	 * http://www.skytopia.com/project/articles/compsci/clipping.html .This function

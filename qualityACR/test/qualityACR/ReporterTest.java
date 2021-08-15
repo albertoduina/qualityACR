@@ -26,8 +26,22 @@ public class ReporterTest {
 	@Test
 	public final void testReporter() {
 
-		Reporter.mainReporter();
+		Reporter reporter = new Reporter();
+		reporter.mainReporter();
 		// assertTrue(UtilAyv.compareVectors(expected, result, ""));
 	}
 
+	@Test
+	public final void testReporterEngine() {
+
+		String htmlfile2[] = {"ReportSlice1_T3.html"};
+		String resultfile2[] = {"ReportThick.txt"};		
+		
+		Reporter reporter = new Reporter();
+		reporter.reporterEngine(htmlfile2, resultfile2);
+		// assertTrue(UtilAyv.compareVectors(expected, result, ""));
+	}
+
+	
+	
 }

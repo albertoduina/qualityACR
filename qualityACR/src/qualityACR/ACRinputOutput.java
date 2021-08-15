@@ -7,6 +7,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +23,27 @@ import ij.process.ImageProcessor;
 
 public class ACRinputOutput {
 
+	public static boolean isPathValid(String path) {
+
+		try {
+
+			Paths.get(path);
+
+		} catch (InvalidPathException ex) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public static boolean isDirOK(String strpath) {
+		
+		Path path = Paths.get(strpath);
+		return Files.exists(path);
+	}
+
 	public static boolean deleteFile(File file) {
+
 		boolean ok = false;
 		if (file.exists()) {
 			ok = file.delete();

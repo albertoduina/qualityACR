@@ -2,7 +2,12 @@ package qualityACR;
 
 import java.awt.Color;
 import java.awt.Frame;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -116,7 +121,10 @@ public class Geometric_Accuracy implements PlugIn {
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
-		String pathReport1 = vetPath[4] + "\\ReportGeometrico.txt";
+		String pathReport1 = vetPath[4];
+
+		if (!ACRinputOutput.isPathValid(pathReport1))
+			ACRlog.waitHere("Path non valido= " + pathReport1);
 
 		String[] listLocalizer = ACRinputOutput.readStackPathToSortedList(vetPath[0], "T1");
 		if (listLocalizer != null)
@@ -128,17 +136,15 @@ public class Geometric_Accuracy implements PlugIn {
 		if (sortedListT2 == null)
 			IJ.log(ACRlog.qui() + "sortedListT2 ==null");
 
-		// DEVO creare un nuovo report, senno' che controllo faccio?
-		if (!ACRlog.initLog(vetPath[4]))
-			return;
-
 		// elaborazione file selezionati dall'operatore
 		if (geomLocalizer) {
+			if (!ACRinputOutput.isDirOK(pathReport1))
+				ACRlog.waitHere("Directory svampata= " + pathReport1);
 			mainLocalizer(pathLocalizer, pathReport1, step, verbose, timeout);
 
 		}
 
-		String pathReport2 = vetPath[4] + "\\ReportGeometricoT1.txt";
+		String pathReport2 = vetPath[4];
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
@@ -146,7 +152,7 @@ public class Geometric_Accuracy implements PlugIn {
 			}
 		}
 
-		String pathReport3 = vetPath[4] + "\\ReportGeometricoT2.txt";
+		String pathReport3 = vetPath[4];
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
@@ -164,12 +170,24 @@ public class Geometric_Accuracy implements PlugIn {
 	 */
 	public void mainLocalizer(String path1, String pathReport, boolean step, boolean verbose, int timeout) {
 
+		IJ.log(ACRlog.qui() + "START>");
 		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
 		// apertura immagine, display, zoom
 		// chiamata prima subroutine passando l'immagine pronta
 		// eccetraz ecceteraz
+		String namepathReport = pathReport + "\\ReportLocalizer.txt";
+		String imageName = "localizer001.png";
+		String namepathImage = pathReport + "\\" + imageName;
 
-		IJ.log(ACRlog.qui() + "START>");
+		// ----- cancellazione cacchine precedenti -----
+		boolean ok1 = ACRinputOutput.deleteFile(new File(namepathReport));
+		boolean ok2 = ACRinputOutput.deleteFile(new File(namepathImage));
+		if (!(ok1 && ok2))
+			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
+		// ----- inizializzazione report----------------
+		ACRlog.appendLog(namepathReport, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		// ---------------------------------------------
+
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
@@ -188,37 +206,33 @@ public class Geometric_Accuracy implements PlugIn {
 		//
 		// ===============================================
 		//
-
 		double[] vetout1 = localizerImageLength(imp2, step, verbose, timeout);
 		double dim1 = vetout1[0];
 		double dim2 = vetout1[1];
 		double angle = vetout1[2];
-
 		if (step)
 			ACRlog.waitHere(" Profilo analizzato", debug, timeout);
 
 		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 1= " + IJ.d2s(dim1, 4) + " mm");
 		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 2= " + IJ.d2s(dim2, 4) + " mm");
 		IJ.log(ACRlog.qui() + "END>  angoloFantoccio= " + IJ.d2s(angle, 4) + " mm");
-
 		String[] info1 = ACRutils.imageInformation(imp1);
 		for (int i1 = 0; i1 < info1.length; i1++) {
-			ACRlog.appendLog(pathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
+			ACRlog.appendLog(namepathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
 		}
-		String imageName = "localizer001.png";
-		String path10 = pathReport.substring(0, pathReport.lastIndexOf("\\"));
-		String pathImage = path10 + "\\" + imageName;
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName: #100#" + pathImage);
-		IJ.saveAs(imp2, "PNG", pathImage);
 
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "length1: #101#" + IJ.d2s(vetout1[0], 4));
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "length2: #102#" + IJ.d2s(vetout1[1], 4));
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "length limits: #103#" + "98 - 102");
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "length1 p/f: #104#" + "Pass");
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "length2 p/f: #105#" + "Fail");
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle: #106#" + IJ.d2s(vetout1[2], 4));
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle limits: #107#" + "+-1");
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "angle p/f: #108#" + "Fail");
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #900#" + namepathImage);
+		IJ.saveAs(imp2, "PNG", namepathImage);
+
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "length1: #101#" + IJ.d2s(vetout1[0], 4));
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "length2: #102#" + IJ.d2s(vetout1[1], 4));
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "length limits: #103#" + "98 - 102");
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "length1 p/f: #104#" + "Pass");
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "length2 p/f: #105#" + "Fail");
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "angle: #106#" + IJ.d2s(vetout1[2], 4));
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "angle limits: #107#" + "+-1");
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "angle p/f: #108#" + "Fail");
+		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
 
 		imp2.changes = false;
 		imp2.close();
@@ -446,7 +460,8 @@ public class Geometric_Accuracy implements PlugIn {
 		phantomVertices[0][3] = DX;
 		phantomVertices[1][3] = DY;
 		double angle = ACRlocalizer.phantomRotation(phantomVertices, step, verbose, timeout);
-		ACRlog.waitHere("angle= " + angle, debug, timeout);
+		if (verbose || step)
+			ACRlog.waitHere("angle= " + angle, debug, timeout);
 
 		double MX = Math.round((double) (CX + DX) / (double) 2);
 		double MY = Math.round((double) (CY + DY) / (double) 2);
@@ -683,16 +698,50 @@ public class Geometric_Accuracy implements PlugIn {
 //		double maxBubbleGapLimit = 2;
 
 		IJ.log(ACRlog.qui() + "START>");
+		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
+		// apertura immagine, display, zoom
+		// chiamata prima subroutine passando l'immagine pronta
+		// eccetraz ecceteraz
+		String namepathReport = pathReport + "\\ReportGeometrico.txt";
+		String imageName1 = "image001.jpg";
+		String namepathImage1 = pathReport + "\\" + imageName1;
+		String imageName2 = "diameter001.jpg";
+		String namepathImage2 = pathReport + "\\" + imageName2;
+
+		// ----- cancellazione cacchine precedenti -----
+		boolean ok1 = ACRinputOutput.deleteFile(new File(namepathReport));
+		IJ.log(ACRlog.qui());
+
+		boolean ok2 = ACRinputOutput.deleteFile(new File(namepathImage1));
+		IJ.log(ACRlog.qui());
+		boolean ok3 = ACRinputOutput.deleteFile(new File(namepathImage2));
+		IJ.log(ACRlog.qui());
+
+		if (!(ok1 && ok2 && ok3))
+			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
+		// ----- inizializzazione report----------------
+		ACRlog.appendLog(namepathReport, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		// ---------------------------------------------
+		IJ.log(ACRlog.qui());
 
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		if (imp1 == null)
 			ACRlog.waitHere("imp1==null");
+		IJ.log(ACRlog.qui());
+		imp1.show();
+		ACRutils.zoom(imp1);
+		imp1.updateAndDraw();
+		ACRlog.waitHere();
+
+		
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
 		ACRutils.zoom(imp2);
+		IJ.saveAs(imp2, "jpg", namepathImage1);
+		IJ.log(ACRlog.qui());
+
 		double dimPixel = ACRutils
 				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp2, ACRconst.DICOM_PIXEL_SPACING), 1));
-		ImagePlus imp3 = imp1.duplicate();
 		int[] out1 = ACRlocalizer.positionSearch2(imp2, maxFitError, step, verbose, timeout);
 		int xphantom = (int) out1[0];
 		int yphantom = (int) out1[1];
@@ -702,33 +751,36 @@ public class Geometric_Accuracy implements PlugIn {
 		phantomCircle[1] = yphantom;
 		phantomCircle[2] = dphantom;
 
+		imp2.changes = false;
+		imp2.close();
+
 		if (step)
 			ACRlog.waitHere("FIT DEL CERCHIO ESEGUITO, FANTOCCIO LOCALIZZATO", debug, timeout);
 
-		double[] out3 = ACRlocalizer.positionSearch3(imp3, phantomCircle, step, verbose, timeout);
-		
-		String[] info1 = ACRutils.imageInformation(imp3);
+		double[] out3 = ACRlocalizer.positionSearch3(imp1, phantomCircle, step, verbose, timeout);
+
+		String[] info1 = ACRutils.imageInformation(imp1);
 		for (int i1 = 0; i1 < info1.length; i1++) {
-			ACRlog.appendLog(pathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
+			ACRlog.appendLog(namepathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
 		}
-			
+
 		double[] out4 = new double[out3.length];
 		for (int i1 = 0; i1 < out3.length; i1++) {
 			out4[i1] = out3[i1] * dimPixel;
-			ACRlog.appendLog(pathReport, ACRlog.qui() +"diametro " + i1 + " slice " + slice + "= #10"+(i1+1)+"#" + IJ.d2s(out4[i1], 4) + " mm");
+			ACRlog.appendLog(namepathReport, ACRlog.qui() + "diametro " + i1 + " slice " + slice + "= #10" + (i1 + 1)
+					+ "#" + IJ.d2s(out4[i1], 4) + " mm");
 			IJ.log(ACRlog.qui() + "END> diametro " + i1 + " slice " + slice + "= " + IJ.d2s(out4[i1], 4) + " mm");
 		}
-		
-		String imageName = "image001.png";
-		String path10 = pathReport.substring(0, pathReport.lastIndexOf("\\"));
-		String pathImage = path10 + "\\" + imageName;
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName: #100#" + pathImage);
-		IJ.saveAs(imp3, "PNG", pathImage);
 
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #905#" + namepathImage1);
 
-		imp2.changes = false;
-		imp2.close();
-	
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #906#" + namepathImage2);
+		IJ.saveAs(imp1, "jpg", namepathImage2);
+		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+
+		imp1.changes = false;
+		imp1.close();
+
 	}
 
 	/**

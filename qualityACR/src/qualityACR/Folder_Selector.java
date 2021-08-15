@@ -58,12 +58,9 @@ public class Folder_Selector implements PlugIn {
 			String root1 = startingDir1.substring(0, startingDir1.lastIndexOf("\\"));
 			String root = root1.substring(0, root1.lastIndexOf("\\"));
 			int aux1 = startingDir1.lastIndexOf("\\");
-			ACRlog.waitHere("start= " + startingDir1 + "\nroot= " + root + "\naux1= " + aux1);
 			File fil1 = new File(root + "\\REPORT");
 			boolean ok1 = ACRinputOutput.deleteDir(fil1);
-			ACRlog.waitHere("root= " + root + " ok1= " + ok1);
 			boolean ok2 = ACRinputOutput.createDir(fil1);
-			ACRlog.waitHere("root= " + root + " ok2= " + ok2);
 			outDir = fil1.getPath();
 		} else
 			return;

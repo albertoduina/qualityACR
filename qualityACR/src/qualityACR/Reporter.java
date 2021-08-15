@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ij.IJ;
+import ij.ImagePlus;
 import ij.plugin.PlugIn;
 
 /**
@@ -39,55 +40,100 @@ public class Reporter implements PlugIn {
 		mainReporter();
 	}
 
-	public static void mainReporter() {
+	/**
+	 * Per ogni diversa pagina html, si occupa di reperire il template e caricarlo
+	 * in memoria, far girare reporterEngine per ogni foglio di report, inserire la
+	 * immagine dummy in tutte le posizioni rimaste non occupate ed infine salvare
+	 * la pagnia html su disco. passa poi alla pagina successiva.
+	 */
+	public void mainReporter() {
 
-		String htmlfile = "ReportLocalizer.html";
-		String htmlpath = "templates/";
-//		String result1 = "D:\\Dati\\ACR_TEST\\Study_1_20210527\\REPORTS\\ReportGeometrico.txt";
-//		String path1 = "D:\\Dati\\ACR_TEST\\Study_1_20210527\\REPORTS\\";
-		String result2="ReportGeometrico.txt";
-		String tmpfile="ACRlist.tmp";
+		String reportpath = getReportPath("ACRlist.tmp");
+		IJ.log("reportpath= " + reportpath);
 
-		String tmpFolderPath = IJ.getDirectory("temp");
-//		ACRlog.waitHere(tmpFolderPath);
-//		String completePath = tmpFolderPath + "ACRlist.tmp";
-//		File cmpath = new File(completePath);
+		String[] localizhtml0 = getTemplateFromJAR("templates/", "ReportLocalizer.html");
+		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1B.html");
+
+		String[] thickness = getMeasureReport(reportpath, "ReportThick.txt");
+		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico.txt");
+		String[] localizer = getMeasureReport(reportpath, "ReportLocalizer.txt");
+		String[] posizione = getMeasureReport(reportpath, "ReportPosition.txt");
+
+		// ----- cancellazione cacchine precedenti -----
+		boolean ok1 = ACRinputOutput.deleteFile(new File(reportpath + "\\ReportLocalizer.html"));
+		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\ReportSlice1_T1B.html"));
+		if (!(ok1 && ok2))
+			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
+		// ----------------------------------------------
+
+		String[] localizhtml2 = reporterEngine(localizhtml0, localizer);
+		writeTextFile(localizhtml2, "ReportLocalizer.html", reportpath);
+
+		String[] slice1html1= reporterEngine(slice1html0, geometrico);
+		String[] slice1html2 =reporterEngine(slice1html1, posizione);
+		String[] slice1html3 = reporterEngine(slice1html2, thickness);
+		writeTextFile(slice1html3, "ReportSlice1_T1B.html", reportpath);
+
+		String defimage = dummyImage("ReportSlice1_T1B.html");
+
+	}
+
+	/**
+	 * legge il path della cartella REPORT dal file temporaneo ACRlist.tmp
+	 * 
+	 * @param tmpfile
+	 * @return
+	 */
+	public String getReportPath(String tmpfile) {
+		String tmppath = IJ.getDirectory("temp");
 		String[] mytemp = null;
+
 		try {
-			mytemp = new Reporter().readTextFile(tmpfile, tmpFolderPath);
+			mytemp = new Reporter().readTextFile(tmpfile, tmppath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		String uno = mytemp[4];
-		String root = uno.substring(uno.lastIndexOf("#") + 1, uno.length())+"\\";
+		String riga5 = mytemp[4];
+		String resultpath = riga5.substring(riga5.lastIndexOf("#") + 1, riga5.length()) + "\\";
+		return resultpath;
+	}
 
-		ACRlog.waitHere("root= " + root);
-		// path1=root;
+	/**
+	 * legge dal file jar il template della pagina HTML
+	 */
+	public String[] getTemplateFromJAR(String htmlpath, String htmlfile) {
 
-		int count = 0;
 		String[] myhtml = null;
 		try {
 			myhtml = new Reporter().getText3(htmlfile, htmlpath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		for (String str : myhtml) {
-			IJ.log("" + (count++) + "::" + str);
-		}
+		return myhtml;
+	}
+
+	/**
+	 * legge il file report coi risultati, in formato txt
+	 */
+	public String[] getMeasureReport(String reportpath, String measurefiletxt) {
 
 		String[] myresult = null;
 		try {
-			myresult = new Reporter().readTextFile(result2, root);
+			myresult = new Reporter().readTextFile(measurefiletxt, reportpath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return myresult;
+	}
 
-		for (String str : myresult)
-			IJ.log(str);
+	/**
+	 * Effettua le sostituzioni dei tag formato "#001#"
+	 */
+	public String[] reporterEngine(String[] myhtml, String[] myresult) {
 
 		String[] out1 = changeTemplate(myhtml, myresult);
 
-		writeTextFile(out1, "ReportLocalizer.html", root);
+		return out1;
 	}
 
 	/**
@@ -202,7 +248,10 @@ public class Reporter implements PlugIn {
 	}
 
 	/**
-	 * Modifica del template, includendo i dati al posto dei tag
+	 * Modifica del template, includendo i dati al posto dei tag per le immagini
+	 * (riconoscibili per il tag che appartiene al centinaio 900), se non viene
+	 * trovata una sostituzione, viene inserita di defautl l'immagine di default,
+	 * che ha il tag 999
 	 * 
 	 * @param myhtml
 	 * @param myresult
@@ -212,6 +261,7 @@ public class Reporter implements PlugIn {
 
 		String[] out1 = new String[myhtml.length];
 		String str3 = null;
+		boolean def1 = false;
 		// String line = "This order was placed #001# for QT3000! OK?";
 		// String pattern = "(.*)(\\d+)(.*)";
 		String pattern = "(#)(\\d+)(#)";
@@ -227,21 +277,21 @@ public class Reporter implements PlugIn {
 		String part2 = "";
 		String part3 = "";
 		for (String str1 : myhtml) {
-			// IJ.log(str);
 			Matcher m1 = r.matcher(str1);
-
 			if (m1.find()) {
 				prima1 = m1.start();
 				dopo1 = m1.end();
 				part1 = str1.substring(0, prima1);
 				part3 = str1.substring(dopo1);
-				// IJ.log("Found value1: " + m1.group(0));
+//				IJ.log("Found value1: " + m1.group(0));
 				for (String str2 : myresult) {
 					Matcher m2 = r.matcher(str2);
 					if (m2.find()) {
+//						IJ.log("Found value2: " + m2.group(0));
 						prima2 = m2.start();
 						dopo2 = m2.end();
 						if (m1.group(0).compareTo(m2.group(0)) == 0) {
+							IJ.log("sostituisco: " + m1.group(0) + " con " + m2.group(0));
 							part2 = str2.substring(dopo2);
 							str3 = part1 + part2 + part3;
 						}
@@ -255,6 +305,7 @@ public class Reporter implements PlugIn {
 
 		}
 		return out1;
+
 	}
 
 	/**
@@ -272,6 +323,7 @@ public class Reporter implements PlugIn {
 			writer = new BufferedWriter(new FileWriter(pathname, true));
 			for (String str1 : content) {
 				writer.append(str1);
+				writer.newLine();
 			}
 			writer.close();
 		} catch (IOException e) {
@@ -279,4 +331,19 @@ public class Reporter implements PlugIn {
 		}
 	}
 
+	/**
+	 * crea una imagine fasulla da inserire dove non si avranno immagini disponibili
+	 */
+	public static String dummyImage(String path) {
+		IJ.newImage("dummy", "16-bit ramp", 192, 192, 1);
+		ImagePlus imp1 = IJ.getImage();
+		String name = "dummy.png";
+		String aux1 = path + name;
+		IJ.log(ACRlog.qui());
+		boolean ok = ACRinputOutput.deleteFile(new File(aux1));
+		IJ.log(ACRlog.qui() + "ok= " + ok);
+		IJ.saveAs(imp1, "PNG", aux1);
+		IJ.log(ACRlog.qui());
+		return (aux1);
+	}
 }

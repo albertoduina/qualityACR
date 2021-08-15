@@ -653,7 +653,7 @@ public class ACRlocalizer {
 	 * del centro del fantoccio (si conosce anche il diametro, ma vogliamo
 	 * calcolarlo come scritto nel manuale ACR
 	 * 
-	 * @param imp1    immagine da analizzare
+	 * @param imp3    immagine da analizzare
 	 * @param step    passo a passo
 	 * @param fast    animazione
 	 * @param timeout con fast preme automaticamente ok dopo timeout, si ha una
@@ -675,16 +675,16 @@ public class ACRlocalizer {
 		if (step)
 			ACRlog.waitHere(">>> 02 - MISURA PRECISA DIAMETRI FANTOCCIO <<<", ACRutils.debug, timeout);
 
-		ImagePlus imp2 = imp1.duplicate();
-		imp2.show();
-		ImageWindow iw2 = imp2.getWindow();
+//		ImagePlus imp1 = imp3.duplicate();
+//		imp1.show();
+//		ImageWindow iw2 = imp1.getWindow();
+//
+//		ACRutils.zoom(imp1);
 
-		ACRutils.zoom(imp2);
-
-		Overlay over2 = new Overlay();
-		imp2.setOverlay(over2);
-		int height = imp2.getHeight();
-		int width = imp2.getWidth();
+		Overlay over1 = new Overlay();
+		imp1.setOverlay(over1);
+		int height = imp1.getHeight();
+		int width = imp1.getWidth();
 		// estraggo i dati da phantomCircle
 		int xcenter = phantomCircle[0];
 		int ycenter = phantomCircle[1];
@@ -720,7 +720,7 @@ public class ACRlocalizer {
 		double[] clippings2 = ACRgraphic.liangBarsky(edgeLeft, edgeRight, edgeBottom, edgeTop, x0src, y0src, x1src,
 				y1src);
 		//
-		over2.clear();
+		over1.clear();
 		// effettuo in tutto 4 profili
 		int[] vetXstart = new int[4];
 		int[] vetYstart = new int[4];
@@ -768,12 +768,12 @@ public class ACRlocalizer {
 			ycoord[0] = vetYstart[i1];
 			xcoord[1] = vetXend[i1];
 			ycoord[1] = vetYend[i1];
-			imp2.setRoi(new Line(xcoord[0], ycoord[0], xcoord[1], ycoord[1]));
-			imp2.getRoi().setStrokeColor(Color.CYAN);
-			over2.addElement(imp2.getRoi());
+			imp1.setRoi(new Line(xcoord[0], ycoord[0], xcoord[1], ycoord[1]));
+			imp1.getRoi().setStrokeColor(Color.CYAN);
+			over1.addElement(imp1.getRoi());
 			int pseudomaxlen = 3;
 			//
-			double[][] decomposed3v = ACRutils.decomposer3v(imp2);
+			double[][] decomposed3v = ACRutils.decomposer3v(imp1);
 			double[][] zeropadded3v = ACRutils.zeropadProfile3v(decomposed3v);
 			double[][] vetout = ACRlocalizer.FWHManalyzer(zeropadded3v, pseudomaxlen, "PROFILO " + vetTitle[i1], step,
 					verbose);
@@ -793,17 +793,16 @@ public class ACRlocalizer {
 			if (verbose) {
 				IJ.log(ACRlog.qui() + "PUNZONA punto sinistro su immagine x= " + xpoint1 + " y= " + ypoint1);
 			}
-			ACRutils.plotPoints(imp2, over2, xpoint1, ypoint1, Color.YELLOW);
+			ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, Color.YELLOW);
 
 			int xpoint2 = (int) Math.round(vetout[0][1]);
 			int ypoint2 = (int) Math.round(vetout[1][1]);
 			if (verbose) {
 				IJ.log(ACRlog.qui() + "PUNZONA punto destro su immagine x= " + xpoint2 + " y= " + ypoint2);
 			}
-			ACRutils.plotPoints(imp2, over2, xpoint2, ypoint2, Color.CYAN);
+			ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, Color.CYAN);
 
-			imp2.updateAndDraw();
-			iw2.toFront();
+			imp1.updateAndDraw();
 
 			if (step)
 				ACRlog.waitHere("PROFILO " + vetTitle[i1] + " con punti trovati, riportati anche su immagine",
@@ -1471,7 +1470,7 @@ public class ACRlocalizer {
 	 * @param titolo
 	 * @return
 	 */
-	public static double FWHMcalc(double[] line1, int pseudomaxlen, String titolo) {
+	public static double FWHMcalc(double[] line1, int pseudomaxlen, String titolo, String pathname, String pathReport) {
 
 		double pmax = ACRutils.pseudomax(line1, pseudomaxlen);
 		double threshold = pmax / 2;
@@ -1492,7 +1491,7 @@ public class ACRlocalizer {
 		double[] duepuntiy = new double[2];
 		duepuntiy[0] = line1[quattropunti[0]];
 		duepuntiy[1] = line1[quattropunti[2]];
-		plot1.setLineWidth(6);
+		plot1.setLineWidth(7);
 		plot1.setColor(Color.RED);
 		plot1.addPoints(duepuntix, duepuntiy, Plot.DOT);
 		duepuntix[0] = (double) quattropunti[1];
@@ -1518,7 +1517,14 @@ public class ACRlocalizer {
 		double xc2 = ACRutils.xLinearInterpolation(xa2, ya2, xb2, yb2, yc2);
 
 		double fwhmpixel1 = quattropunti[3] - quattropunti[0]; // PIXEL
-		double fwhmpixel2 = xc2 - xc1; // PIXEL
+		double fwhmpixel2 = xc2 - xc1;
+
+		ImagePlus imp10 = plot1.getImagePlus();
+
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName2: #200#" + pathname);
+		IJ.saveAs(imp10, "PNG", pathname);
+
+		// PIXEL
 		// ho fatto delle prove ed ho visto che i quattro punti sono sempre in pixel
 		// adiacenti
 
@@ -3053,7 +3059,7 @@ public class ACRlocalizer {
 	 * @param timeout
 	 * @return
 	 */
-	static double phantomRotation(double[][] vertices, boolean step, boolean verbose, int timeout) {
+	static double phantomRotation2(double[][] vertices, boolean step, boolean verbose, int timeout) {
 
 		int CX = (int) Math.round(vertices[0][2]);
 		int CY = (int) Math.round(vertices[1][2]);
@@ -3068,6 +3074,22 @@ public class ACRlocalizer {
 
 		return angle;
 	}
+	
+	static double phantomRotation(double[][] vertices, boolean step, boolean verbose, int timeout) {
+
+		double CX = vertices[0][2];
+		double CY = vertices[1][2];
+		double DX = vertices[0][3];
+		double DY = vertices[1][3];
+		double angle = ACRgraphic.getAngle(CX, CY, DX, DY);
+		if (verbose) {
+			ACRlog.logMatrix(vertices, ACRlog.qui() + "vertices");
+			IJ.log(ACRlog.qui() + "angolo= " + angle + " gradi");
+		}
+
+		return angle;
+	}
+
 
 	/**
 	 * dati due punti di un segmento inclinato ed una distanza, traccia un segmento
@@ -3749,6 +3771,62 @@ public class ACRlocalizer {
 			matout[1][i1] = FY2;
 		}
 		imp2.close();
+		return matout;
+	}
+
+	/**
+	 * Effettua la rototraslazione di una matrice di punti
+	 * 
+	 * @param imp1
+	 * @param matin
+	 * @param phantomCircle
+	 * @param angle
+	 * @param step
+	 * @param fast
+	 * @param verbose
+	 * @param timeout
+	 * @return
+	 */
+	public static double[][] rototrasla(double[][] matin, double width, double height, double[] phantomCircle,
+			double angle, boolean step, boolean verbose, int timeout) {
+
+		double[][] matout = new double[matin.length][matin[0].length];
+
+		/// ATTENZIONE, DEVO CAMBIARE DI SEGNO L'ANGOLO, MA PECCCHHEEEEEEE???? SPIEGONE,
+		/// PLEASE !!!! (credo che basti scambiare tra loro inizie e fine della Line su
+		/// cui viene calcolato l'angolo)
+		angle = angle * (-1);
+		double xcenter = phantomCircle[0];
+		double ycenter = phantomCircle[1];
+		//
+		// il riferimento per la traslazione del centro fantoccio e' dato, nelle mie
+		// simulazioni, dal centro dell'immagine, quindi vado a fare la differenza
+		// rispetto a height/2 e width/2. Quanto ala rotazione facciamo riferimento a 0
+		// gradi
+		//
+		double xoffset = width / 2 - xcenter;
+		double yoffset = height / 2 - ycenter;
+		IJ.log(ACRlog.qui() + "xoffset= " + xoffset + " yoffset= " + yoffset + " angle= " + angle);
+		//
+		// ACRlog.waitHere("angolo ricevuto= " + angle + "°");
+		// and only for breaking browns chestnuts .... use radians ROMPICOJONI!
+		//
+		double radangle = Math.toRadians(angle);
+		double cos1 = Math.cos(radangle);
+		double sin1 = Math.sin(radangle);
+
+		IJ.log("radangle= " + radangle + " cos= " + cos1 + " sin= " + sin1);
+
+		for (int i1 = 0; i1 < matin[0].length; i1++) {
+			double FX = matin[0][i1] - width / 2;
+			double FY = matin[1][i1] - height / 2;
+			double FX1 = FX * cos1 - FY * sin1;
+			double FY1 = FX * sin1 + FY * cos1;
+			double FX2 = FX1 - xoffset + width / 2;
+			double FY2 = FY1 - yoffset + height / 2;
+			matout[0][i1] = FX2;
+			matout[1][i1] = FY2;
+		}
 		return matout;
 	}
 

@@ -9,6 +9,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.ImageWindow;
 import ij.gui.Line;
 import ij.gui.Overlay;
 import ij.gui.Plot;
@@ -150,7 +151,7 @@ public class SliceThickness_ implements PlugIn {
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
-				evalThickness(sortedListT1[i1], pathReport, i1, step, fast, verbose, timeout);
+				evalThickness(sortedListT1[i1], pathReport, i1, step, verbose, timeout);
 			}
 		}
 
@@ -158,13 +159,13 @@ public class SliceThickness_ implements PlugIn {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
 				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
-				evalThickness(sortedListT2[i1], pathReport, i1, step, fast, verbose, timeout);
+				evalThickness(sortedListT2[i1], pathReport, i1, step, verbose, timeout);
 			}
 		}
 		ACRlog.waitHere("SLICE THICKNESS TERMINATA");
 	}
 
-	public void evalThickness(String path1, String pathReport, int s1, boolean step, boolean fast, boolean verbose,
+	public void evalThickness(String path1, String pathReport, int s1, boolean step, boolean verbose,
 			int timeout) {
 
 		IJ.log(ACRlog.qui() + "<START>");
@@ -230,9 +231,9 @@ public class SliceThickness_ implements PlugIn {
 		int DX = (int) Math.round(phantomVertices[0][3]);
 		int DY = (int) Math.round(phantomVertices[1][3]);
 
-		int EX = DX + (int) Math.round(parallela1[0]);
+		int EX = DX + 4 + (int) Math.round(parallela1[0]);
 		int EY = DY + (int) Math.round(parallela1[1]);
-		int FX = CX + (int) Math.round(parallela1[0]);
+		int FX = CX - 4 + (int) Math.round(parallela1[0]);
 		int FY = CY + (int) Math.round(parallela1[1]);
 
 		if (verbose)
@@ -244,9 +245,9 @@ public class SliceThickness_ implements PlugIn {
 		double dist2 = -12;
 		double[] parallela2 = ACRlocalizer.parallela(phantomVertices, dist2);
 
-		int GX = DX + (int) Math.round(parallela2[0]);
+		int GX = DX + 4 + (int) Math.round(parallela2[0]);
 		int GY = DY + (int) Math.round(parallela2[1]);
-		int HX = CX + (int) Math.round(parallela2[0]);
+		int HX = CX - 4 + (int) Math.round(parallela2[0]);
 		int HY = CY + (int) Math.round(parallela2[1]);
 
 		if (verbose) {
@@ -260,24 +261,35 @@ public class SliceThickness_ implements PlugIn {
 		over3.clear();
 		Line.setWidth(5);
 		imp3.setRoi(new Line(EX, EY, FX, FY));
+		Roi roi3 = imp3.getRoi();
 		imp3.updateAndDraw();
-//		imp3.getRoi().setStrokeColor(Color.GREEN);
+		imp3.getRoi().setStrokeColor(Color.GREEN);
 		over3.addElement(imp3.getRoi());
 
-		Roi roi3 = imp3.getRoi();
 		double[] profi3 = ((Line) roi3).getPixels();
+		imp3.killRoi();
+
 		// linea calcolo segnale mediato
 		// boolean invert = false;
-		double fwhm1pixel = ACRlocalizer.FWHMcalc(profi3, 3, "primoProfilo");
+		String profilename1 = "greenprofile901.png";
+		String pathname1 = pathReport.substring(0, pathReport.lastIndexOf("\\")) + "\\" + profilename1;
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "profileName1: #902#" + pathname1);
+		double fwhm2pixel = ACRlocalizer.FWHMcalc(profi3, 3, "greenProfile", pathname1, pathReport);
 		if (step || verbose)
 			ACRlog.waitHere("PROFILO", true, timeout);
 		imp3.setRoi(new Line(GX, GY, HX, HY));
-//		imp3.getRoi().setStrokeColor(Color.GREEN);
+		Roi roi4 = imp3.getRoi();
+		imp3.getRoi().setStrokeColor(Color.YELLOW);
 		over3.addElement(imp3.getRoi());
 		imp3.updateAndDraw();
-		Roi roi4 = imp3.getRoi();
 		double[] profi4 = ((Line) roi4).getPixels();
-		double fwhm2pixel = ACRlocalizer.FWHMcalc(profi4, 3, "secondoProfilo");
+		imp3.killRoi();
+
+		String profilename2 = "yellowprofile902.png";
+		String pathname2 = pathReport.substring(0, pathReport.lastIndexOf("\\")) + "\\" + profilename2;
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "profileName2: #901#" + pathname2);
+
+		double fwhm1pixel = ACRlocalizer.FWHMcalc(profi4, 3, "yellowProfileo", pathname2, pathReport);
 		if (step || verbose)
 			ACRlog.waitHere("PROFILO", true, timeout);
 		// linea calcolo segnale mediato
@@ -286,15 +298,17 @@ public class SliceThickness_ implements PlugIn {
 //		Plot plot4 = ACRgraphic.basePlot(profi4, title, Color.RED);
 //		plot4.draw();
 //		plot4.show();
-		if (step||verbose) ACRlog.waitHere("fwhm1= " + fwhm1pixel + " fwhm2= " + fwhm2pixel, debug, timeout);
-		if ((Double.compare(fwhm1pixel, 0) == 0 || Double.compare(fwhm2pixel, 0) == 0))
+		if (step || verbose)
+			ACRlog.waitHere("fwhm2= " + fwhm2pixel + " fwhm2= " + fwhm1pixel, debug, timeout);
+		if ((Double.compare(fwhm2pixel, 0) == 0 || Double.compare(fwhm1pixel, 0) == 0))
 			ACRlog.waitHere("IMPOSSIBILE CALCOLARE LA THICKNESS,\nPROBLEMA IMMAGINE???");
 
-		double thickpixel = 0.2 * (fwhm1pixel * fwhm1pixel) / (fwhm1pixel + fwhm1pixel);
+		double thickpixel = 0.2 * (fwhm2pixel * fwhm2pixel) / (fwhm2pixel + fwhm2pixel);
 
 		double thickmm = thickpixel * dimPixel;
-		if (step||verbose) ACRlog.waitHere("thickmm= " + thickmm);
-		
+		if (step || verbose)
+			ACRlog.waitHere("thick_mm= " + thickmm);
+
 		String[] info1 = ACRutils.imageInformation(imp1);
 		for (int i1 = 0; i1 < info1.length; i1++) {
 			ACRlog.appendLog(pathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
@@ -304,8 +318,16 @@ public class SliceThickness_ implements PlugIn {
 		String pathImage = path10 + "\\" + imageName;
 		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName: #100#" + pathImage);
 		IJ.saveAs(imp3, "PNG", pathImage);
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "thick: #101#" + IJ.d2s(thickmm, 4));
-		
+
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "fwhm1_pixel: #101#" + IJ.d2s(fwhm1pixel, 4)); // verificato colore,
+																									// profilo e
+																									// direzione
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "fwhm2_pixel: #102#" + IJ.d2s(fwhm2pixel, 4));
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "thick_mm: #103#" + IJ.d2s(thickmm, 4));
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "thickLimits_mm: #104#4.0 - 6.0");
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "thickPass: #105#Pass (fasullo)");
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "phantomAngleDegrees: #106#" + IJ.d2s(angle, 4));
+
 		return;
 	}
 

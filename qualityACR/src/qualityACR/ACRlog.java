@@ -35,21 +35,25 @@ public class ACRlog {
 
 	public static boolean initLog(String path) {
 		File f1 = new File(path);
+		ACRlog.waitHere("path= "+path);
 		if (f1.exists()) {
 			GenericDialog gd1 = new GenericDialog("REPORT");
-			gd1.addMessage("Per proseguire devo cancellare il report precedente, procedo?");
-			gd1.enableYesNoCancel("Continua", "No");
+			gd1.addMessage("OVVIAMENTE per proseguire devo cancellare il report precedente, PROCEDO ?");
+			gd1.enableYesNoCancel("YES", "NO");
 			gd1.hideCancelButton();
 			gd1.showDialog();
 			if (gd1.wasOKed()) {
 				// f1.delete();
 				IJ.log("stiamo per cancellare " + path);
-				ACRinputOutput.deleteFile(f1);
+				ACRinputOutput.purgeDirectory(f1);
 			}
 			if (gd1.wasCanceled())
 				return false;
 		}
+		
+		ACRlog.waitHere("DELETE 002");
 		appendLog(path, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		ACRlog.waitHere("DELETE 003");
 
 		return true;
 	}
