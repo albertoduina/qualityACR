@@ -470,7 +470,7 @@ public class ACRlocalizer {
 	/**
 	 * Ricerca posizione e diametro fantoccio, senza precedenti elaborazioni
 	 * 
-	 * @param imp1        immagine da analizzare
+	 * @param imp2        immagine da analizzare
 	 * @param maxFitError limite errore sul fit
 	 * @param step        esegue passo passo
 	 * @param fast        preme automaticamente ok ai messaggi, dopo timeout
@@ -479,7 +479,7 @@ public class ACRlocalizer {
 	 * @param timeout     millisecondi per OK
 	 * @return vettore contenente i dati del fantoccio circolare localizzato
 	 */
-	public static int[] positionSearch2(ImagePlus imp1, double maxFitError, boolean step, boolean verbose,
+	public static int[] positionSearch2(ImagePlus imp2, double maxFitError, boolean step, boolean verbose,
 			int timeout) {
 
 		if (verbose)
@@ -489,11 +489,6 @@ public class ACRlocalizer {
 			ACRlog.waitHere(">>> 01 - RICERCA POSIZIONE E DIAMETRO FANTOCCIO <<<", ACRutils.debug, timeout);
 
 		// ricerca posizione e diametro fantoccio
-		ImagePlus imp2 = imp1.duplicate();
-		imp2.show();
-		ImageWindow iw2 = imp2.getWindow();
-
-		ACRutils.zoom(imp2);
 
 		Overlay over2 = new Overlay();
 		imp2.setOverlay(over2);
@@ -610,7 +605,6 @@ public class ACRlocalizer {
 						+ xpoint1 + "," + ypoint1 + "   " + xpoint2 + "," + ypoint2, Geometric_Accuracy.debug, timeout);
 			}
 			imp2.updateAndDraw();
-			iw2.toFront();
 			// iw2ayv
 
 		}
@@ -769,7 +763,7 @@ public class ACRlocalizer {
 			xcoord[1] = vetXend[i1];
 			ycoord[1] = vetYend[i1];
 			imp1.setRoi(new Line(xcoord[0], ycoord[0], xcoord[1], ycoord[1]));
-			imp1.getRoi().setStrokeColor(Color.CYAN);
+			imp1.getRoi().setStrokeColor(Color.RED);
 			over1.addElement(imp1.getRoi());
 			int pseudomaxlen = 3;
 			//
@@ -793,14 +787,14 @@ public class ACRlocalizer {
 			if (verbose) {
 				IJ.log(ACRlog.qui() + "PUNZONA punto sinistro su immagine x= " + xpoint1 + " y= " + ypoint1);
 			}
-			ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, Color.YELLOW);
+			ACRutils.plotPoints(imp1, over1, xpoint1, ypoint1, Color.RED, 2, 2);
 
 			int xpoint2 = (int) Math.round(vetout[0][1]);
 			int ypoint2 = (int) Math.round(vetout[1][1]);
 			if (verbose) {
 				IJ.log(ACRlog.qui() + "PUNZONA punto destro su immagine x= " + xpoint2 + " y= " + ypoint2);
 			}
-			ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, Color.CYAN);
+			ACRutils.plotPoints(imp1, over1, xpoint2, ypoint2, Color.RED, 2, 2);
 
 			imp1.updateAndDraw();
 
@@ -1470,7 +1464,8 @@ public class ACRlocalizer {
 	 * @param titolo
 	 * @return
 	 */
-	public static double FWHMcalc(double[] line1, int pseudomaxlen, String titolo, String pathname, String pathReport) {
+	public static double FWHMcalc(double[] line1, int pseudomaxlen, String titolo, String pathname, String pathReport,
+			String codice) {
 
 		double pmax = ACRutils.pseudomax(line1, pseudomaxlen);
 		double threshold = pmax / 2;
@@ -1521,8 +1516,8 @@ public class ACRlocalizer {
 
 		ImagePlus imp10 = plot1.getImagePlus();
 
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName2: #200#" + pathname);
-		IJ.saveAs(imp10, "PNG", pathname);
+		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName2: " + codice + pathname);
+		IJ.saveAs(imp10, "jpg", pathname);
 
 		// PIXEL
 		// ho fatto delle prove ed ho visto che i quattro punti sono sempre in pixel
@@ -3074,7 +3069,7 @@ public class ACRlocalizer {
 
 		return angle;
 	}
-	
+
 	static double phantomRotation(double[][] vertices, boolean step, boolean verbose, int timeout) {
 
 		double CX = vertices[0][2];
@@ -3089,7 +3084,6 @@ public class ACRlocalizer {
 
 		return angle;
 	}
-
 
 	/**
 	 * dati due punti di un segmento inclinato ed una distanza, traccia un segmento

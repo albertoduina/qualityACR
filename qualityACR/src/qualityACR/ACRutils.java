@@ -43,6 +43,7 @@ public class ACRutils {
 		// 0008,0080 Institution Name: Neuroradiologia Spedali Civili di Brescia
 		// 0008,0070  Manufacturer: SIEMENS 		// 0008,1010 Station Name: AWP46040
 		// 0008,0023 Image Date: 20210527
+		// 0008,0018 SOP instance UID: 1.3.76.......
 		// 0018,0087 Magnetic Field Strength: 3
 		// 0018,1030 Protocol Name: LOCALIZER
 		// 0018,0050 Slice Thickness: 20
@@ -50,18 +51,19 @@ public class ACRutils {
 		// 0018,0081 Echo Time: 20
 		// 0018,0080 Repetition Time: 200
 		//
-		String[] info = new String[10];
+		String[] info = new String[11];
 
 		info[0] = ACRutils.readDicomString(imp1, "0008,0080");
 		info[1] = ACRutils.readDicomString(imp1, "0008,0070");
 		info[2] = ACRutils.readDicomString(imp1, "0008,1010");
 		info[3] = ACRutils.readDicomString(imp1, "0008,0023");
-		info[4] = ACRutils.readDicomString(imp1, "0018,0087");
-		info[5] = ACRutils.readDicomString(imp1, "0018,1030");
-		info[6] = ACRutils.readDicomString(imp1, "0018,0050");
-		info[7] = ACRutils.readDicomString(imp1, "0020,1041");
-		info[8] = ACRutils.readDicomString(imp1, "0018,0081");
-		info[9] = ACRutils.readDicomString(imp1, "0018,0080");
+		info[4] = ACRutils.readDicomString(imp1, "0008,0018");
+		info[5] = ACRutils.readDicomString(imp1, "0018,0087");
+		info[6] = ACRutils.readDicomString(imp1, "0018,1030");
+		info[7] = ACRutils.readDicomString(imp1, "0018,0050");
+		info[8] = ACRutils.readDicomString(imp1, "0020,1041");
+		info[9] = ACRutils.readDicomString(imp1, "0018,0081");
+		info[10] = ACRutils.readDicomString(imp1, "0018,0080");
 
 		return info;
 	}

@@ -2,7 +2,10 @@ package qualityACR;
 
 import java.awt.Color;
 import java.awt.Frame;
+import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Properties;
 
 import ij.IJ;
@@ -115,7 +118,7 @@ public class SlicePosition_ implements PlugIn {
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
-		String pathReport = vetPath[4] + "\\ReportPosition.txt";
+		String pathReport = vetPath[4];
 		IJ.log(vetPath[0]);
 		IJ.log(vetPath[1]);
 		IJ.log(vetPath[2]);
@@ -129,10 +132,6 @@ public class SlicePosition_ implements PlugIn {
 		String[] sortedListT2 = ACRinputOutput.readStackPathToSortedList(vetPath[2], "T2");
 		if (sortedListT2 == null)
 			IJ.log(ACRlog.qui() + "sortedListT2 ==null");
-
-		// DEVO creare un nuovo report, senno' che controllo faccio?
-		if (!ACRlog.initLog(pathReport))
-			return;
 
 		// ora in base alle selezioni effettuate nelle checkbox del dialogo, dobbiamo
 		// elaborare solo i file selezionati
@@ -155,7 +154,38 @@ public class SlicePosition_ implements PlugIn {
 
 	public void evalPosition(String path1, String pathReport, int s1, boolean step, boolean verbose, int timeout) {
 
-		IJ.log(ACRlog.qui() + "<START>");
+		IJ.log(ACRlog.qui() + "START>");
+		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
+		// apertura immagine, display, zoom
+		// chiamata prima subroutine passando l'immagine pronta
+		// eccetraz ecceteraz
+		String namepathReport = pathReport + "\\ReportPosition.txt";
+		String imageName1 = "position920.jpg";
+		String namepathImage1 = pathReport + "\\" + imageName1;
+		String profileName1 = "greenprofile921.jpg";
+		String namepathProfile1 = pathReport + "\\" + profileName1;
+
+		String profileName2 = "yellowprofile922.jpg";
+		String namepathProfile2 = pathReport + "\\" + profileName2;
+
+		// ----- cancellazione cacchine precedenti -----
+		boolean ok1 = ACRinputOutput.deleteFile(new File(namepathReport));
+		IJ.log(ACRlog.qui());
+
+		boolean ok2 = ACRinputOutput.deleteFile(new File(namepathImage1));
+		IJ.log(ACRlog.qui());
+		boolean ok3 = ACRinputOutput.deleteFile(new File(namepathProfile1));
+		IJ.log(ACRlog.qui());
+		boolean ok4 = ACRinputOutput.deleteFile(new File(namepathProfile2));
+		IJ.log(ACRlog.qui());
+
+		if (!(ok1 && ok2 && ok3 && ok4))
+			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
+		// ----- inizializzazione report----------------
+		ACRlog.appendLog(namepathReport, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		// ---------------------------------------------
+		IJ.log(ACRlog.qui());
+
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
 		//
 		// ========== AZZERAMENTO IMMAGINE =============
@@ -164,12 +194,12 @@ public class SlicePosition_ implements PlugIn {
 		// IJ.run(imp1, "Translate...", "x=-0.29 y=1.0 interpolation=Bilinear");
 		//
 		// ========== INTROIAMENTO IMMAGINE =============
-		IJ.run(imp1, "Rotate... ", "angle=40 grid=1 interpolation=Bilinear");
+		// IJ.run(imp1, "Rotate... ", "angle=40 grid=1 interpolation=Bilinear");
 		// ATTENZIONE SE L'ANGOLO DI ROTAZIONE SUPERA I +-45° LA ROUTINE DI
 		// SELEZIONE DEI VERTICI CAMBIA BRUSCAMENTE L?ORDINE DEI VERTICI ED IL PROGRAMMA
 		// FALLISCE (CI HO PERSO DUE GIORNI PORCAPALETTA)
 		//
-		IJ.run(imp1, "Translate...", "x=-20 y=20 interpolation=Bilinear");
+		// IJ.run(imp1, "Translate...", "x=-20 y=20 interpolation=Bilinear");
 		//
 		// MI RESTA DA SPIEGARE PERCHE' RUOTANDO L'IMMAGINE
 		// CAMBIA IL RISULTATO!!!!!
@@ -217,7 +247,7 @@ public class SlicePosition_ implements PlugIn {
 		// livellato, sono le seguenti:
 		// A1= 93,18 A2= 93,48
 		// B1= 99,18 B2= 99,48
-		// 
+		//
 		double[][] matin1 = new double[2][4];
 		matin1[0][0] = 93;
 		matin1[1][0] = 18;
@@ -246,68 +276,70 @@ public class SlicePosition_ implements PlugIn {
 		if (verbose)
 			IJ.log("E= " + EX + " , " + EY + " F= " + FX + " , " + FY);
 
-		ACRutils.plotPoints(imp1, over1, EX, EY, Color.GREEN, 1, 3);
-		ACRutils.plotPoints(imp1, over1, FX, FY, Color.GREEN, 1, 3);
+//		ACRutils.plotPoints(imp1, over1, EX, EY, Color.GREEN, 1, 3);
+//		ACRutils.plotPoints(imp1, over1, FX, FY, Color.GREEN, 1, 3);
 
-		Line.setWidth(3);
+		Line.setWidth(4);
 		imp1.setRoi(new Line(EX, EY, FX, FY));
 		Roi roi3 = imp1.getRoi();
 		imp1.updateAndDraw();
-		imp1.getRoi().setStrokeColor(Color.GREEN);
+		imp1.getRoi().setStrokeColor(Color.RED);
 		over1.addElement(imp1.getRoi());
 
 		double[] profi3 = ((Line) roi3).getPixels();
 		imp1.killRoi();
-		
+
 		String[] info1 = ACRutils.imageInformation(imp1);
 		for (int i1 = 0; i1 < info1.length; i1++) {
-			ACRlog.appendLog(pathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
+			ACRlog.appendLog(namepathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
 		}
-		String imageName = "position01.png";
-		String path10 = pathReport.substring(0, pathReport.lastIndexOf("\\"));
-		String pathImage = path10 + "\\" + imageName;
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName: #100#" + pathImage);
-		IJ.saveAs(imp1, "PNG", pathImage);
-	
-		String profilename1 = "greenprofile901.png";
-		String pathname1 = pathReport.substring(0, pathReport.lastIndexOf("\\")) + "\\" + profilename1;
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "profileName1: #901#" + pathname1);
-		double fwhm1pixel = ACRlocalizer.FWHMcalc(profi3, 3, "greenProfile", pathname1, pathReport);
+
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "profileName1: #921#" + namepathProfile1);
+		double fwhm1pixel = ACRlocalizer.FWHMcalc(profi3, 3, "redProfile", namepathProfile1, pathReport, " #921#");
 		if (step || verbose)
 			ACRlog.waitHere("PROFILO1", true, timeout);
 
 		if (verbose)
 			IJ.log("G= " + GX + " , " + GY + " H= " + HX + " , " + HY);
 
-		ACRutils.plotPoints(imp1, over1, GX, GY, Color.YELLOW, 1, 3);
-		ACRutils.plotPoints(imp1, over1, HX, HY, Color.YELLOW, 1, 3);
+//		ACRutils.plotPoints(imp1, over1, GX, GY, Color.YELLOW, 1, 3);
+//		ACRutils.plotPoints(imp1, over1, HX, HY, Color.YELLOW, 1, 3);
 
-		Line.setWidth(3);
+		Line.setWidth(4);
 		imp1.setRoi(new Line(GX, GY, HX, HY));
 		Roi roi4 = imp1.getRoi();
 		imp1.updateAndDraw();
-		imp1.getRoi().setStrokeColor(Color.YELLOW);
+		imp1.getRoi().setStrokeColor(Color.BLUE);
 		over1.addElement(imp1.getRoi());
 
 		double[] profi4 = ((Line) roi4).getPixels();
 		imp1.killRoi();
-		String profilename2 = "yellowprofile902.png";
-		String pathname2 = pathReport.substring(0, pathReport.lastIndexOf("\\")) + "\\" + profilename2;
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "profileName2: #902#" + pathname2);
-		double fwhm2pixel = ACRlocalizer.FWHMcalc(profi4, 3, "yellowProfile", pathname2, pathReport);
-		double fwhm1mm=fwhm1pixel*dimPixel;
-		double fwhm2mm=fwhm2pixel*dimPixel;
-		
-		
-		
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "profileName2: #922#" + namepathProfile2);
+		double fwhm2pixel = ACRlocalizer.FWHMcalc(profi4, 3, "blueProfile", namepathProfile2, pathReport, "#922#");
+		double fwhm1mm = fwhm1pixel * dimPixel;
+		double fwhm2mm = fwhm2pixel * dimPixel;
+		double differencemm = fwhm1mm - fwhm2mm;
+		double difflimitmm = 5;
+		String passfail = "";
+		if (Double.compare(differencemm, difflimitmm) > 0)
+			passfail = "FAIL";
+		else
+			passfail = "PASS";
+
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #920#" + namepathImage1);
+		IJ.saveAs(imp1, "jpg", namepathImage1);
+
 		if (step || verbose)
 			ACRlog.waitHere("PROFILO1", true, timeout);
-		
-		
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "fwhm1_mm: #101#" + IJ.d2s(fwhm1mm, 4));
-		ACRlog.appendLog(pathReport, ACRlog.qui() + "fwhm2_mm: #102#" + IJ.d2s(fwhm2mm, 4));
+
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "fwhm1_mm: #301#" + IJ.d2s(fwhm1mm, 4));
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "fwhm2_mm: #302#" + IJ.d2s(fwhm2mm, 4));
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "difference_mm: #303#" + IJ.d2s(differencemm, 4));
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "difference_mm: #304#" + IJ.d2s(difflimitmm, 4));
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "passafail: #305#" + passfail);
 
 		ACRlog.waitHere("fwhm1pixel= " + fwhm1pixel + " fwhm2pixel= " + fwhm2pixel);
+		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
 
 		return;
 	}

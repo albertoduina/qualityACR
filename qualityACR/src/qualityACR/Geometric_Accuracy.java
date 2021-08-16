@@ -148,7 +148,7 @@ public class Geometric_Accuracy implements PlugIn {
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
-				mainSliceDiameter(sortedListT1[i1], pathReport2, i1, step, verbose, timeout);
+				mainSliceDiameter(sortedListT1[i1], pathReport2, "T1", i1 + 1, step, verbose, timeout);
 			}
 		}
 
@@ -157,7 +157,7 @@ public class Geometric_Accuracy implements PlugIn {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
 				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
-				mainSliceDiameter(sortedListT2[i1], pathReport3, i1, step, verbose, timeout);
+				mainSliceDiameter(sortedListT2[i1], pathReport3, "T2", i1 + 1, step, verbose, timeout);
 			}
 		}
 		ACRlog.waitHere("GEOMETRIC_ACCURACY TERMINATA", debug, timeout);
@@ -215,7 +215,7 @@ public class Geometric_Accuracy implements PlugIn {
 
 		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 1= " + IJ.d2s(dim1, 4) + " mm");
 		IJ.log(ACRlog.qui() + "END>  lunghezzaFantoccio 2= " + IJ.d2s(dim2, 4) + " mm");
-		IJ.log(ACRlog.qui() + "END>  angoloFantoccio= " + IJ.d2s(angle, 4) + " mm");
+		IJ.log(ACRlog.qui() + "END>  angoloFantoccio= " + IJ.d2s(angle, 4) + " °");
 		String[] info1 = ACRutils.imageInformation(imp1);
 		for (int i1 = 0; i1 < info1.length; i1++) {
 			ACRlog.appendLog(namepathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
@@ -692,20 +692,22 @@ public class Geometric_Accuracy implements PlugIn {
 	 * @param verbose
 	 * @param timeout
 	 */
-	public void mainSliceDiameter(String path1, String pathReport, int slice, boolean step, boolean verbose,
-			int timeout) {
-		double maxFitError = +20;
-//		double maxBubbleGapLimit = 2;
+	public void mainSliceDiameter(String path1, String pathReport, String group, int slice, boolean step,
+			boolean verbose, int timeout) {
 
-		IJ.log(ACRlog.qui() + "START>");
 		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
 		// apertura immagine, display, zoom
 		// chiamata prima subroutine passando l'immagine pronta
 		// eccetraz ecceteraz
-		String namepathReport = pathReport + "\\ReportGeometrico.txt";
-		String imageName1 = "image001.jpg";
+		// ------------- inizio comune ----------------
+		IJ.log(ACRlog.qui() + "START>");
+		double mintolerance = 98;
+		double maxtolerance = 102;
+		String aux1 = "_" + group + "S" + slice;
+		String namepathReport = pathReport + "\\ReportGeometrico" + aux1 + ".txt";
+		String imageName1 = "image905" + aux1 + ".jpg";
 		String namepathImage1 = pathReport + "\\" + imageName1;
-		String imageName2 = "diameter001.jpg";
+		String imageName2 = "diameter906" + aux1 + ".jpg";
 		String namepathImage2 = pathReport + "\\" + imageName2;
 
 		// ----- cancellazione cacchine precedenti -----
@@ -731,17 +733,16 @@ public class Geometric_Accuracy implements PlugIn {
 		imp1.show();
 		ACRutils.zoom(imp1);
 		imp1.updateAndDraw();
-		ACRlog.waitHere();
-
-		
+		IJ.saveAs(imp1, "jpg", namepathImage1);
+		IJ.log(ACRlog.qui());
 		ImagePlus imp2 = imp1.duplicate();
 		imp2.show();
 		ACRutils.zoom(imp2);
-		IJ.saveAs(imp2, "jpg", namepathImage1);
-		IJ.log(ACRlog.qui());
 
 		double dimPixel = ACRutils
 				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp2, ACRconst.DICOM_PIXEL_SPACING), 1));
+
+		double maxFitError = +20;
 		int[] out1 = ACRlocalizer.positionSearch2(imp2, maxFitError, step, verbose, timeout);
 		int xphantom = (int) out1[0];
 		int yphantom = (int) out1[1];
@@ -763,14 +764,32 @@ public class Geometric_Accuracy implements PlugIn {
 		for (int i1 = 0; i1 < info1.length; i1++) {
 			ACRlog.appendLog(namepathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
 		}
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "mintolerance:" + mintolerance);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "maxtolerance:" + maxtolerance);
 
 		double[] out4 = new double[out3.length];
+		boolean failmin = false;
+		boolean failmax = false;
 		for (int i1 = 0; i1 < out3.length; i1++) {
 			out4[i1] = out3[i1] * dimPixel;
+			failmin = (Double.compare(out4[i1], mintolerance) < 0);
+			failmax = (Double.compare(out4[i1], maxtolerance) > 0);
+			String response = "";
+			if (failmin || failmax) {
+				response = "FAIL";
+			} else {
+				response = "PASS";
+			}
 			ACRlog.appendLog(namepathReport, ACRlog.qui() + "diametro " + i1 + " slice " + slice + "= #10" + (i1 + 1)
-					+ "#" + IJ.d2s(out4[i1], 4) + " mm");
-			IJ.log(ACRlog.qui() + "END> diametro " + i1 + " slice " + slice + "= " + IJ.d2s(out4[i1], 4) + " mm");
+					+ "#" + IJ.d2s(out4[i1], 4));
+
+			ACRlog.appendLog(namepathReport,
+					ACRlog.qui() + "giudizio " + i1 + " slice " + slice + "= #10" + (i1 + 6) + "#" + response);
+
+			IJ.log(ACRlog.qui() + "END> diametro " + i1 + " slice " + slice + "= " + IJ.d2s(out4[i1], 4));
 		}
+		ACRlog.appendLog(namepathReport,
+				ACRlog.qui() + "#105#" + IJ.d2s(mintolerance, 1) + " - " + IJ.d2s(maxtolerance, 1));
 
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #905#" + namepathImage1);
 

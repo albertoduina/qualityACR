@@ -38,7 +38,7 @@ public class ReporterTest {
 		String resultfile2[] = {"ReportThick.txt"};		
 		
 		Reporter reporter = new Reporter();
-		reporter.reporterEngine(htmlfile2, resultfile2);
+		reporter.reporterEngine(htmlfile2, resultfile2, true);
 		// assertTrue(UtilAyv.compareVectors(expected, result, ""));
 	}
 

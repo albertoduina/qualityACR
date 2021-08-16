@@ -37,7 +37,8 @@ public class Reporter implements PlugIn {
 	public void run(String arg) {
 		// ============================================================================================
 
-		mainReporter();
+		mainReporter1();
+		mainReporter2());
 	}
 
 	/**
@@ -46,15 +47,15 @@ public class Reporter implements PlugIn {
 	 * immagine dummy in tutte le posizioni rimaste non occupate ed infine salvare
 	 * la pagnia html su disco. passa poi alla pagina successiva.
 	 */
-	public void mainReporter() {
+	public void mainReporter1(String group) {
 
 		String reportpath = getReportPath("ACRlist.tmp");
 		IJ.log("reportpath= " + reportpath);
 
 		String[] localizhtml0 = getTemplateFromJAR("templates/", "ReportLocalizer.html");
-		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1B.html");
+		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1A.html");
 
-		String[] thickness = getMeasureReport(reportpath, "ReportThick.txt");
+		String[] thickness = getMeasureReport(reportpath, "ReportThickness.txt");
 		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico.txt");
 		String[] localizer = getMeasureReport(reportpath, "ReportLocalizer.txt");
 		String[] posizione = getMeasureReport(reportpath, "ReportPosition.txt");
@@ -66,15 +67,73 @@ public class Reporter implements PlugIn {
 			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
 		// ----------------------------------------------
 
-		String[] localizhtml2 = reporterEngine(localizhtml0, localizer);
+		String[] localizhtml2 = reporterEngine(localizhtml0, localizer, false);
 		writeTextFile(localizhtml2, "ReportLocalizer.html", reportpath);
 
-		String[] slice1html1= reporterEngine(slice1html0, geometrico);
-		String[] slice1html2 =reporterEngine(slice1html1, posizione);
-		String[] slice1html3 = reporterEngine(slice1html2, thickness);
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("============ HTML memoria ================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		for (String str : slice1html0)
+//			IJ.log(str);
+//
+//		ACRlog.waitHere();
+//
+//		IJ.log("=== geometrico ===");
+
+		String[] slice1html1 = reporterEngine(slice1html0, geometrico, true);
+
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("====== HTML memoria DOPO GEOMETRICO ======");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		for (String str : slice1html1)
+//			IJ.log(str);
+//		ACRlog.waitHere();
+//
+////		for (String str:posizione)
+////			IJ.log(str);
+////		ACRlog.waitHere("posizione");
+//
+//		IJ.log("=== posizione ===");
+		String[] slice1html2 = reporterEngine(slice1html1, posizione, true);
+
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("====== HTML memoria DOPO POSIZIONE =======");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		for (String str : slice1html2)
+//			IJ.log(str);
+//		ACRlog.waitHere();
+//
+////		for (String str:slice1html2)
+////			IJ.log(str);
+
+		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
+
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("====== HTML memoria DOPO THICKNESS =======");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		IJ.log("==========================================");
+//		for (String str : slice1html3)
+//			IJ.log(str);
+//		ACRlog.waitHere();
+
 		writeTextFile(slice1html3, "ReportSlice1_T1B.html", reportpath);
 
-		String defimage = dummyImage("ReportSlice1_T1B.html");
+		String defimage = dummyImage(reportpath);
 
 	}
 
@@ -124,16 +183,6 @@ public class Reporter implements PlugIn {
 			e.printStackTrace();
 		}
 		return myresult;
-	}
-
-	/**
-	 * Effettua le sostituzioni dei tag formato "#001#"
-	 */
-	public String[] reporterEngine(String[] myhtml, String[] myresult) {
-
-		String[] out1 = changeTemplate(myhtml, myresult);
-
-		return out1;
 	}
 
 	/**
@@ -230,15 +279,19 @@ public class Reporter implements PlugIn {
 		ArrayList<String> list1 = new ArrayList<String>();
 		File myfile = new File(path + sourcefile);
 		Scanner myscanner;
+		int count = 0;
 		try {
 			myscanner = new Scanner(myfile);
 			while (myscanner.hasNextLine()) {
 				String line = myscanner.nextLine();
 				list1.add(line);
 			}
+			IJ.log(ACRlog.qui() + "READ_OK " + sourcefile);
 			myscanner.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+			IJ.log(ACRlog.qui() + "FILE_NOT_FOUND_EXCEPTION " + sourcefile);
+			ACRlog.waitHere("FILE NOT FOUND EXCEPTION " + sourcefile);
 		}
 		String[] out1 = new String[list1.size()];
 		for (int i1 = 0; i1 < list1.size(); i1++) {
@@ -257,11 +310,12 @@ public class Reporter implements PlugIn {
 	 * @param myresult
 	 * @return
 	 */
-	public static String[] changeTemplate(String[] myhtml, String[] myresult) {
+	public static String[] reporterEngine(String[] myhtml, String[] myresult, boolean test) {
 
 		String[] out1 = new String[myhtml.length];
 		String str3 = null;
 		boolean def1 = false;
+		boolean trovato = false;
 		// String line = "This order was placed #001# for QT3000! OK?";
 		// String pattern = "(.*)(\\d+)(.*)";
 		String pattern = "(#)(\\d+)(#)";
@@ -276,36 +330,45 @@ public class Reporter implements PlugIn {
 		String part1 = "";
 		String part2 = "";
 		String part3 = "";
+		if (test)
+			IJ.log(ACRlog.qui() + "reporterEngine");
 		for (String str1 : myhtml) {
 			Matcher m1 = r.matcher(str1);
 			if (m1.find()) {
+				trovato = false;
 				prima1 = m1.start();
 				dopo1 = m1.end();
 				part1 = str1.substring(0, prima1);
 				part3 = str1.substring(dopo1);
-//				IJ.log("Found value1: " + m1.group(0));
 				for (String str2 : myresult) {
 					Matcher m2 = r.matcher(str2);
 					if (m2.find()) {
-//						IJ.log("Found value2: " + m2.group(0));
+						trovato = true;
 						prima2 = m2.start();
 						dopo2 = m2.end();
 						if (m1.group(0).compareTo(m2.group(0)) == 0) {
-							IJ.log("sostituisco: " + m1.group(0) + " con " + m2.group(0));
+							if (test) {
+								IJ.log(ACRlog.qui() + "sostituisco: " + m1.group(0) + " con " + m2.group(0));
+							}
 							part2 = str2.substring(dopo2);
 							str3 = part1 + part2 + part3;
 						}
 					}
+					if (!trovato) {
+						str3 = str1;
+					}
+
 				}
+//				IJ.log("BBB " + m1.group(0));
+//				str3 = str1;
 			} else {
 				str3 = str1;
 			}
 			// IJ.log("" + (count++) + "::" + str3);
 			out1[count++] = str3;
-
 		}
-		return out1;
 
+		return out1;
 	}
 
 	/**
