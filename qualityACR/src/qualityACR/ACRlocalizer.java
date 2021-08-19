@@ -1518,7 +1518,7 @@ public class ACRlocalizer {
 
 		ACRlog.appendLog(pathReport, ACRlog.qui() + "imageName2: " + codice + pathname);
 		IJ.saveAs(imp10, "jpg", pathname);
-
+		imp10.close();
 		// PIXEL
 		// ho fatto delle prove ed ho visto che i quattro punti sono sempre in pixel
 		// adiacenti
@@ -3036,8 +3036,7 @@ public class ACRlocalizer {
 		if (verbose) {
 			ACRlog.logMatrix(matout, ACRlog.qui() + "matout");
 		}
-		if (!step && !verbose)
-			imp4.close();
+		imp4.close();
 		imp2.close();
 		if (verbose || step)
 			IJ.log(ACRlog.qui() + "END");
@@ -4154,5 +4153,70 @@ public class ACRlocalizer {
 
 		return punti;
 	}
+	/**
+	 * SOSTITUITO DA PHANTOM GRID LOCALIZER ADVANCED
+	 * 
+	 * @param path1
+	 * @param slice
+	 * @param step
+	 * @param fast
+	 * @param verbose
+	 * @param timeout
+	 * @return
+	 * 
+	 * @Deprecated usare phantomGridLocalizerAdvanced
+	 */
+	@Deprecated
+	public double[] phantomPositionSearch(String path1, int slice, boolean step, boolean verbose, int timeout) {
+
+		double maxFitError = +20;
+		double maxBubbleGapLimit = 2;
+
+		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
+//		if (fast) {
+
+//			}
+		// Ricerca delle coordinate e diametro del fantoccio su slice 5
+		double[] out2 = ACRlocalizer.positionSearch1(imp1, maxFitError, maxBubbleGapLimit, step, verbose, timeout);
+		//
+		// per rendere le cose piu' interessanti durante il debug disegno un buco nel
+		// fantoccio riempiendolo con segnale a 1.0.n ed un altro buco con segnale 3000.
+		// RICORDARSI DI COMMENTARE PRIMA DELL' IMPIEGO EFFETIVO
+		//
+//		IJ.run(imp1, "Specify...", "width=20 height=20 x=96 y=96 oval");
+//		IJ.run(imp1, "Set...", "value=1");
+//		IJ.run(imp1, "Specify...", "width=20 height=20 x=96 y=50 oval");
+//		IJ.run(imp1, "Set...", "value=3000");
+//		imp1.updateAndDraw();
+
+		double dimPixel = ACRutils
+				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp1, ACRconst.DICOM_PIXEL_SPACING), 1));
+
+		int xphantom = (int) out2[0];
+		int yphantom = (int) out2[1];
+		int dphantom = (int) out2[2];
+// =========================================
+		Overlay over1 = new Overlay(); // con questo definisco un overlay trasparente per i disegni
+		imp1.setOverlay(over1);
+// -----------------------------------------------------------------
+// Visualizzo sull'immagine il posizionamento, ricevuto da  positionSearch1, che verra' utilizzato: 
+// cerchio esterno fantoccio in rosso
+// -----------------------------------------------------------------
+
+		if (true) {
+			if (!imp1.isVisible())
+				imp1.show();
+			// zoom(imp1);
+			imp1.setRoi(new OvalRoi(xphantom - dphantom / 2, yphantom - dphantom / 2, dphantom, dphantom));
+			imp1.getRoi().setStrokeColor(Color.RED);
+			over1.addElement(imp1.getRoi());
+			imp1.killRoi();
+			ACRlog.waitHere("MainUnifor> cerchio esterno rosso, fantoccio rilevato da positionSearch1", true, timeout);
+		}
+
+		return out2;
+
+	}
+
 
 }

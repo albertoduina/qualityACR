@@ -4,10 +4,8 @@ import java.awt.Color;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -24,6 +22,12 @@ import ij.gui.RotatedRectRoi;
 import ij.plugin.PlugIn;
 import ij.util.Tools;
 
+/**
+ * Misure geometriche 
+ * 
+ * @author Alberto
+ *
+ */
 public class Geometric_Accuracy implements PlugIn {
 
 	public static final boolean debug = true;
@@ -155,7 +159,6 @@ public class Geometric_Accuracy implements PlugIn {
 		String pathReport3 = vetPath[4];
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
-				IJ.log(ACRlog.qui() + "==================");
 				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
 				mainSliceDiameter(sortedListT2[i1], pathReport3, "T2", i1 + 1, step, verbose, timeout);
 			}

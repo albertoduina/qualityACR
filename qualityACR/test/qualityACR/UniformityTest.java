@@ -187,7 +187,7 @@ public class UniformityTest {
 		int sublato = 19;
 
 		double[] vetSubmatrix = Uniformity_.extractSubmatrix(vetDoublePixels, imawidth, imaheight, subxcenter,
-				subycenter, sublato, 200, false, true, false);
+				subycenter, sublato, 200, false, true);
 		ACRlog.vetPrint(vetSubmatrix, "vetSubmatrix");
 
 		ACRlog.waitHere();

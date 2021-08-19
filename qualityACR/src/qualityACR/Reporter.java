@@ -38,7 +38,7 @@ public class Reporter implements PlugIn {
 		// ============================================================================================
 
 		mainReporter1();
-		mainReporter2());
+		mainReporter2();
 	}
 
 	/**
@@ -47,7 +47,7 @@ public class Reporter implements PlugIn {
 	 * immagine dummy in tutte le posizioni rimaste non occupate ed infine salvare
 	 * la pagnia html su disco. passa poi alla pagina successiva.
 	 */
-	public void mainReporter1(String group) {
+	public void mainReporter1() {
 
 		String reportpath = getReportPath("ACRlist.tmp");
 		IJ.log("reportpath= " + reportpath);
@@ -55,86 +55,48 @@ public class Reporter implements PlugIn {
 		String[] localizhtml0 = getTemplateFromJAR("templates/", "ReportLocalizer.html");
 		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1A.html");
 
-		String[] thickness = getMeasureReport(reportpath, "ReportThickness.txt");
-		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico.txt");
 		String[] localizer = getMeasureReport(reportpath, "ReportLocalizer.txt");
-		String[] posizione = getMeasureReport(reportpath, "ReportPosition.txt");
+		String[] thickness = getMeasureReport(reportpath, "ReportThickness_T1S1.txt");
+		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico_T1S1.txt");
+		String[] posizione = getMeasureReport(reportpath, "ReportPosition_T1S1.txt");
 
 		// ----- cancellazione cacchine precedenti -----
 		boolean ok1 = ACRinputOutput.deleteFile(new File(reportpath + "\\ReportLocalizer.html"));
-		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\ReportSlice1_T1B.html"));
+		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T1S1.html"));
 		if (!(ok1 && ok2))
 			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
 		// ----------------------------------------------
 
 		String[] localizhtml2 = reporterEngine(localizhtml0, localizer, false);
 		writeTextFile(localizhtml2, "ReportLocalizer.html", reportpath);
+		String[] slice1html1 = reporterEngine(slice1html0, geometrico, true);
+		String[] slice1html2 = reporterEngine(slice1html1, posizione, true);
+		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
+		writeTextFile(slice1html3, "Report_T1S1.html", reportpath);
+		String defimage = dummyImage(reportpath);
+	}
+	
+	public void mainReporter2() {
 
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("============ HTML memoria ================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		for (String str : slice1html0)
-//			IJ.log(str);
-//
-//		ACRlog.waitHere();
-//
-//		IJ.log("=== geometrico ===");
+		String reportpath = getReportPath("ACRlist.tmp");
+		IJ.log("reportpath= " + reportpath);
+
+		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1A.html");
+
+		String[] thickness = getMeasureReport(reportpath, "ReportThickness_T2S1.txt");
+		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico_T2S1.txt");
+		String[] posizione = getMeasureReport(reportpath, "ReportPosition_T2S1.txt");
+
+		// ----- cancellazione cacchine precedenti -----
+		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S1.html"));
+		if (!( ok2))
+			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
+		// ----------------------------------------------
 
 		String[] slice1html1 = reporterEngine(slice1html0, geometrico, true);
-
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("====== HTML memoria DOPO GEOMETRICO ======");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		for (String str : slice1html1)
-//			IJ.log(str);
-//		ACRlog.waitHere();
-//
-////		for (String str:posizione)
-////			IJ.log(str);
-////		ACRlog.waitHere("posizione");
-//
-//		IJ.log("=== posizione ===");
 		String[] slice1html2 = reporterEngine(slice1html1, posizione, true);
-
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("====== HTML memoria DOPO POSIZIONE =======");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		for (String str : slice1html2)
-//			IJ.log(str);
-//		ACRlog.waitHere();
-//
-////		for (String str:slice1html2)
-////			IJ.log(str);
-
 		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
-
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("====== HTML memoria DOPO THICKNESS =======");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		IJ.log("==========================================");
-//		for (String str : slice1html3)
-//			IJ.log(str);
-//		ACRlog.waitHere();
-
-		writeTextFile(slice1html3, "ReportSlice1_T1B.html", reportpath);
-
-		String defimage = dummyImage(reportpath);
-
+		writeTextFile(slice1html3, "Report_T2S1.html", reportpath);
 	}
 
 	/**

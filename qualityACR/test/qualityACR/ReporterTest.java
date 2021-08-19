@@ -27,7 +27,7 @@ public class ReporterTest {
 	public final void testReporter() {
 
 		Reporter reporter = new Reporter();
-		reporter.mainReporter();
+//		reporter.mainReporter();
 		// assertTrue(UtilAyv.compareVectors(expected, result, ""));
 	}
 

@@ -3,7 +3,10 @@ package qualityACR;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Properties;
 
@@ -17,6 +20,7 @@ import ij.gui.Plot;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
+import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -24,12 +28,17 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 
 /**
- * Classe per misura Uniformita' e ghosts
+ * Classe per misura Uniformita' e ghosts, fa riferimento all'articolo:
+ * jimaging-06-00111-v2.pdf An Automated Method for Quality Control in MRI
+ * Systems: Methods and Considerations Pubblicato su jimaging 18 October 2020
+ * Commento: non ci si capisce un kaiser!
+ * 
  * 
  * @author Alberto
  *
  */
 public class Uniformity_ implements PlugIn {
+
 	private static final boolean debug = true;
 
 	public void run(String arg) {
@@ -108,7 +117,6 @@ public class Uniformity_ implements PlugIn {
 		try {
 			ACRutils.writeConfigACR(prop);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		String uno = "";
@@ -122,6 +130,8 @@ public class Uniformity_ implements PlugIn {
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
+		String pathReport1 = vetPath[4];
+
 		String[] sortedListT1 = ACRinputOutput.readStackPathToSortedList(vetPath[1], "T1");
 		if (sortedListT1 == null)
 			IJ.log("sortedListT1 ==null");
@@ -135,98 +145,56 @@ public class Uniformity_ implements PlugIn {
 
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
-				IJ.log("==================");
 				IJ.log("elaborazione slice T1 numero " + i1);
-				IJ.log(ACRlog.qui() + "<START>");
-				ImagePlus imp1 = ACRgraphic.openImageNoDisplay(sortedListT1[i1], false);
-				ImagePlus imp2 = imp1.duplicate();
-				imp2.show();
-				ACRutils.zoom(imp2);
-				double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
-				phantomCalculations(imp2, phantomCircle, i1, step, fast, verbose, timeout);
+				phantomCalculations(sortedListT1[i1], pathReport1, "T1", i1 + 1, step, verbose, timeout);
 			}
 		}
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
-				IJ.log("==================");
 				IJ.log("elaborazione slice T2 numero " + i1);
-				ImagePlus imp1 = ACRgraphic.openImageNoDisplay(sortedListT2[i1], false);
-				ImagePlus imp2 = imp1.duplicate();
-				imp2.show();
-				ACRutils.zoom(imp2);
-				double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
-				phantomCalculations(imp2, phantomCircle, i1, step, fast, verbose, timeout);
+				phantomCalculations(sortedListT1[i1], pathReport1, "T2", i1 + 1, step, verbose, timeout);
 			}
 		}
-		
+
 	}
 
-	/**
-	 * SOSTITUITO DA PHANTOM GRID LOCALIZER ADVANCED
-	 * 
-	 * @param path1
-	 * @param slice
-	 * @param step
-	 * @param fast
-	 * @param verbose
-	 * @param timeout
-	 * @return
-	 */
-	public double[] phantomPositionSearch(String path1, int slice, boolean step, boolean fast, boolean verbose,
-			int timeout) {
+	public void phantomCalculations(String path1, String pathReport, String group, int slice, boolean step,
+			boolean verbose, int timeout) {
 
-		double maxFitError = +20;
-		double maxBubbleGapLimit = 2;
+		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
+		// apertura immagine, display, zoom
+		// chiamata prima subroutine passando l'immagine pronta
+		// eccetraz ecceteraz
+		// ------------- inizio comune ----------------
+		IJ.log(ACRlog.qui() + "START>");
+		double mintolerance = 98;
+		double maxtolerance = 102;
+		String aux1 = "_" + group + "S" + slice;
+		String namepathReport = pathReport + "\\ReportGeometrico" + aux1 + ".txt";
+		String imageName1 = "image905" + aux1 + ".jpg";
+		String namepathImage1 = pathReport + "\\" + imageName1;
+		String imageName2 = "diameter906" + aux1 + ".jpg";
+		String namepathImage2 = pathReport + "\\" + imageName2;
 
+		// ----- cancellazione cacchine precedenti -----
+		boolean ok1 = ACRinputOutput.deleteFile(new File(namepathReport));
+		IJ.log(ACRlog.qui());
+
+		boolean ok2 = ACRinputOutput.deleteFile(new File(namepathImage1));
+		IJ.log(ACRlog.qui());
+		boolean ok3 = ACRinputOutput.deleteFile(new File(namepathImage2));
+		IJ.log(ACRlog.qui());
+
+		if (!(ok1 && ok2 && ok3))
+			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
+		// ----- inizializzazione report----------------
+		ACRlog.appendLog(namepathReport, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		// ---------------------------------------------
+		IJ.log(ACRlog.qui());
 		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
-//		if (fast) {
-
-//			}
-		// Ricerca delle coordinate e diametro del fantoccio su slice 5
-		double[] out2 = ACRlocalizer.positionSearch1(imp1, maxFitError, maxBubbleGapLimit, step, verbose,
-				timeout);
-		//
-		// per rendere le cose piu' interessanti durante il debug disegno un buco nel
-		// fantoccio riempiendolo con segnale a 1.0.n ed un altro buco con segnale 3000.
-		// RICORDARSI DI COMMENTARE PRIMA DELL' IMPIEGO EFFETIVO
-		//
-//		IJ.run(imp1, "Specify...", "width=20 height=20 x=96 y=96 oval");
-//		IJ.run(imp1, "Set...", "value=1");
-//		IJ.run(imp1, "Specify...", "width=20 height=20 x=96 y=50 oval");
-//		IJ.run(imp1, "Set...", "value=3000");
-//		imp1.updateAndDraw();
-
-		double dimPixel = ACRutils
-				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp1, ACRconst.DICOM_PIXEL_SPACING), 1));
-
-		int xphantom = (int) out2[0];
-		int yphantom = (int) out2[1];
-		int dphantom = (int) out2[2];
-// =========================================
-		Overlay over1 = new Overlay(); // con questo definisco un overlay trasparente per i disegni
-		imp1.setOverlay(over1);
-// -----------------------------------------------------------------
-// Visualizzo sull'immagine il posizionamento, ricevuto da  positionSearch1, che verra' utilizzato: 
-// cerchio esterno fantoccio in rosso
-// -----------------------------------------------------------------
-
-		if (true) {
-			if (!imp1.isVisible())
-				imp1.show();
-			// zoom(imp1);
-			imp1.setRoi(new OvalRoi(xphantom - dphantom / 2, yphantom - dphantom / 2, dphantom, dphantom));
-			imp1.getRoi().setStrokeColor(Color.RED);
-			over1.addElement(imp1.getRoi());
-			imp1.killRoi();
-			ACRlog.waitHere("MainUnifor> cerchio esterno rosso, fantoccio rilevato da positionSearch1", debug, timeout);
-		}
-
-		return out2;
-
-	}
-
-	public void phantomCalculations(ImagePlus imp1, double[] phantomposition, int slice, boolean step, boolean fast,
-			boolean verbose, int timeout1) {
+		ImagePlus imp2 = imp1.duplicate();
+		imp2.show();
+		ACRutils.zoom(imp2);
 
 // -----------------------------------------------------------------
 // PIU - Percentage Image Uniformity	
@@ -251,66 +219,48 @@ public class Uniformity_ implements PlugIn {
 // da 0. Il risultato sostituira'il valore del pixel corrispondente al centro 
 // della media mobile. 
 
-		ImagePlus imp2 = imp1.duplicate();
-		imp2.show();
-		ACRutils.zoom(imp2);
-		ACRlog.waitHere(
-				"ATTENZIONE: IL DIAMETRO DEL FANTOCCIO DOPO LE ELABORAZIONI \nDELL'ARTICOLO E'NOTEVOLMENTE DIVERSO DAL DIAMETRO REALE !!!!!!!");
+		double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
 
 		double dimPixel = ACRutils
 				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp2, ACRconst.DICOM_PIXEL_SPACING), 1));
-		// calcolo che diametro deve avere una Roi di 100 mmq
-		double pixeldia100 = 2 * Math.sqrt(100. / Math.PI) / dimPixel;
-		// arrotondo all'int superiore (come dice l'articolo)
-		int pixint100 = (int) Math.ceil(pixeldia100);
-		// faccio il calcolo per verifica
-		// double mmarea100 = Math.PI * ((double) pixint100 / 2.) * ((double) pixint100
-		// / 2.) * dimPixel * dimPixel;
-		// INOLTRE, per chiarezza nella programmazione mi assicuro che pixint100 sia
-		// dispari, in questo modo ho un pixel centrale, in cui viene scritta la media
-		// che calcoleremo
-		if (pixint100 % 2 == 0)
-			pixint100 += 1;
 
-		// estraggo i dati del phantomCircle
-		int xphantom = (int) phantomposition[0];
-		int yphantom = (int) phantomposition[1];
-		int dphantom = (int) phantomposition[2];
-		// ---------------------------------------------------------------------------
-		// L'area del cerchio della MROI e'esplicitamente suggerita in "ACR small
+		// -------------------------------- MROI ------------------------------
+		// L'area del cerchio della MROI e'esplicitamente stabilita in "ACR small
 		// phantom guidance" a pag 24 " Place a large, circular ROI on the image as
 		// shown in Figure 17. This ROI must have an area of between 54 cm2 and 56 cm2
 		// (5,400 to 5,600 mm2)
 		// -----------------------------------------------------------------------------
 
-		double area = 5600; // 5600 mm2 sono stabiliti dal protocollo
-		double diam = 2 * Math.sqrt(area / Math.PI); // stabilito dalla geometria
+		double areammq = 5600; // 5600 mm2 sono stabiliti dal protocollo
+		double diam = 2 * Math.sqrt(areammq / Math.PI); // stabilito dalla geometria
 		double dmroi = diam / dimPixel; // trasformo in pixel
+		// ----------------------------------------------------------------------------
 
-		// Dovremo utilizzare una MROI che, secondo la Small Phantom Guidance, deve
-		// essere di 54-56 cmq ovvero da 5400 a 5600 mmq.
-		// Visualizzo sull'immagine il posizionamento che verra' utilizzato
-		// MROI in verde
-		// -----------------------------------------------------------------
-		// estraggo i dati della MROI
-//		int xmroi = (int) phantomposition[3];
-//		int ymroi = (int) phantomposition[4];
-//		int dmroi = (int) phantomposition[5];
+		// --------------------- 100 mmq ROI -----------------------------------------
+		// calcolo che diametro deve avere una Roi di 100 mmq
+		double pixeldia100 = 2 * Math.sqrt(100. / Math.PI) / dimPixel;
+		// arrotondo all'int superiore (come dice l'articolo)
+		int pixint100 = (int) Math.ceil(pixeldia100);
+		// ----------------------------------------------------------------------------
+
+		// estraggo i dati del phantomCircle
+		int xphantom = (int) phantomCircle[0];
+		int yphantom = (int) phantomCircle[1];
+		int dphantom = (int) phantomCircle[2];
+
+		// ------- overlay trasparente per disegni ------------------
+		Overlay over2 = new Overlay();
+		imp2.setOverlay(over2);
 
 		imp2.setRoi(new OvalRoi(xphantom - dmroi / 2, yphantom - dmroi / 2, dmroi, dmroi));
-		// siccome ho impostato la MROI posso calcolare il valore medio di essa, si
-		// utilizza nel calcolo dei ghosts
-		ImageStatistics stat1 = imp2.getStatistics();
-		double MROImean = stat1.mean;
-
-		Overlay over1 = new Overlay(); // con questo definisco un overlay trasparente per i disegni
-		imp2.setOverlay(over1);
-
 		imp2.getRoi().setStrokeColor(Color.GREEN);
-		over1.addElement(imp2.getRoi());
+		over2.addElement(imp2.getRoi());
 		imp2.killRoi();
 		if (verbose || step)
-			ACRlog.waitHere("MainUnifor> cerchio interno verde MROI", debug, timeout1);
+			ACRlog.waitHere("MainUnifor> cerchio interno verde MROI", debug, timeout);
+		over2.setStrokeWidth(2.0);
+
+		ACRlog.waitHere("vedere MROI verde");
 
 		int[] phantomcircle = new int[4];
 		phantomcircle[0] = xphantom;
@@ -332,10 +282,54 @@ public class Uniformity_ implements PlugIn {
 //			outAlberto = minmaxAlberto(imp2, phantomcircle, MROIcircle, pixint100, step, fast, verbose, timeout1);
 
 //			if (comandi[1])
-		outArticolo = minmaxArticolo(imp2, phantomcircle, MROIcircle, pixint100, step, fast, verbose, timeout1);
 
+//		int scandiameter = 11;
+		int[] vetout1 = searchMinMaxCircleMean(imp2, MROIcircle, (int) Math.round(pixeldia100));
+		ACRlog.waitHere("VERIFICARE");
+		int[] vetout3 = searchMinMaxPixelsInteger(imp2, MROIcircle);
+		ACRlog.waitHere("VERIFICARE");
+		ACRlog.logVector(vetout1, ACRlog.qui() + "vetout1");
+		ACRlog.logVector(vetout3, ACRlog.qui() + "vetout3");
+		IJ.log("pixeldia100= " + pixeldia100);
+
+		imp2.setRoi(new OvalRoi(vetout1[2] - pixeldia100 / 2, vetout1[3] - pixeldia100 / 2, pixeldia100, pixeldia100));
+		imp2.getRoi().setStrokeColor(Color.RED);
+		over2.addElement(imp2.getRoi());
+		ACRlog.waitHere("VERIFICARE");
+		imp2.setRoi(new OvalRoi(vetout1[4] - pixeldia100 / 2, vetout1[5] - pixeldia100 / 2, pixeldia100, pixeldia100));
+		imp2.getRoi().setStrokeColor(Color.BLUE);
+		over2.addElement(imp2.getRoi());
+		ACRlog.waitHere("VERIFICARE");
+		ACRutils.plotPoints(imp2, over2, vetout3[2], vetout3[3], Color.RED, 4, 4);
+		ACRutils.plotPoints(imp2, over2, vetout3[4], vetout3[5], Color.BLUE, 4, 4);
+		imp2.killRoi();
+		imp2.updateAndDraw();
+		ACRlog.waitHere("VERIFICARE SUBITO");
+		
+		
+		
+		int[] vetout2 = minmaxAYV(imp1, phantomCircle, step, verbose, timeout);
+
+		double xmax = vetout2[2];
+		double ymax = vetout2[3];
+		double xmin = vetout2[4];
+		double ymin = vetout2[5];
+
+		imp2.setRoi(new OvalRoi(xmax - pixeldia100 / 2, ymax - pixeldia100 / 2, pixeldia100, pixeldia100));
+		imp2.getRoi().setStrokeColor(Color.RED);
+		over2.addElement(imp2.getRoi());
+		imp2.killRoi();
+		imp2.setRoi(new OvalRoi(xmin - pixeldia100 / 2, ymin - pixeldia100 / 2, pixeldia100, pixeldia100));
+		imp2.getRoi().setStrokeColor(Color.BLUE);
+		over2.addElement(imp2.getRoi());
+		imp2.killRoi();
+		imp2.updateAndDraw();
+
+		ACRlog.waitHere("FERMA");
+		/// outArticolo = minmaxArticolo(imp2, phantomcircle, MROIcircle, pixint100,
+		/// step, verbose, timeout);
 //		if (comandi[2])
-		outUnifor = uniforACR(imp2, phantomcircle, MROIcircle, outArticolo, pixint100, step, fast, verbose, timeout1);
+		outUnifor = uniforACR(imp2, phantomcircle, MROIcircle, outArticolo, pixint100, step, verbose, timeout);
 		//
 		// Il metodo seguito pare funzionare, pero' tutto il giro di fare delle mask e
 		// metterle in AND appare complicato e farragginoso, adesso provo la routine
@@ -351,8 +345,78 @@ public class Uniformity_ implements PlugIn {
 //
 //		IJ.log("Valore 96,96 su imp12= " + ip12.getPixelValue(96, 96));
 //		IJ.log("Valore 96,96 su imp777= " + ip777.getPixelValue(96, 96));
-		ACRlog.waitHere("FINE ELABORAZIONE SLICE " + slice, debug, timeout1);
+		ACRlog.waitHere("FINE ELABORAZIONE SLICE " + slice, debug, timeout);
 
+	}
+
+	/**
+	 * Ricerca di minimo e massimo utilizzando la media su una ROI circolare di 100
+	 * mmq che effettua una scansione interna a MROI
+	 * 
+	 * @param imp2
+	 * @param mroiCircle
+	 * @param scandiameter
+	 * @return
+	 */
+	public static int[] searchMinMaxCircleMean(ImagePlus imp1, int[] mroiCircle, int scandiameter) {
+
+		ImagePlus imp2 = imp1.duplicate();
+		double xmroi = mroiCircle[0];
+		double ymroi = mroiCircle[1];
+		double dmroi = mroiCircle[2];
+		int width = imp2.getWidth();
+		int height = imp2.getHeight();
+		int scanrad = scandiameter / 2;
+		imp2.show();
+		ACRutils.zoom(imp2);
+		Overlay over1 = new Overlay(); // con questo definisco un overlay trasparente per i disegni
+		imp2.setOverlay(over1);
+		imp2.setRoi(new OvalRoi(xmroi - dmroi / 2, ymroi - dmroi / 2, dmroi, dmroi));
+		imp2.getRoi().setStrokeColor(Color.BLUE);
+		over1.addElement(imp2.getRoi());
+		double min = Double.MAX_VALUE;
+		double max = Double.MIN_VALUE;
+		int xmax = 0;
+		int ymax = 0;
+		int xmin = 0;
+		int ymin = 0;
+		double distance = 0;
+		int xcenter = 0;
+		int ycenter = 0;
+		for (int x1 = 0; x1 < width - scandiameter; x1++) {
+			for (int y1 = 0; y1 < height - scandiameter; y1++) {
+				xcenter = x1 + scandiameter / 2;
+				ycenter = y1 + scandiameter / 2;
+				distance = Math.sqrt(Math.pow(xmroi - xcenter, 2) + Math.pow(ymroi - ycenter, 2));
+				if ((dmroi / 2 - scandiameter / 2) < distance) {
+					continue;
+				}
+				imp2.setRoi(new OvalRoi(x1, y1, scandiameter, scandiameter));
+				imp2.getRoi().setStrokeColor(Color.GREEN);
+				over1.addElement(imp2.getRoi());
+				ImageStatistics stat1 = imp2.getStatistics();
+				double mean = stat1.mean;
+				if (Double.compare(mean, max) > 0) {
+					max = mean;
+					xmax = xcenter;
+					ymax = ycenter;
+				}
+				if (Double.compare(mean, min) < 0) {
+					min = mean;
+					xmin = xcenter;
+					ymin = ycenter;
+				}
+			}
+		}
+		int[] vetout = new int[6];
+		vetout[0] = (int) Math.round(max);
+		vetout[1] = (int) Math.round(min);
+		vetout[2] = xmax;
+		vetout[3] = ymax;
+		vetout[4] = xmin;
+		vetout[5] = ymin;
+
+		return vetout;
 	}
 
 	/**
@@ -405,37 +469,6 @@ public class Uniformity_ implements PlugIn {
 	}
 
 	/**
-	 * Restituisce una immagine 8 bit con a 255 i valori all'interno della eventuale
-	 * Roi circolare definita in imp1
-	 * 
-	 * @param imp1
-	 * @return
-	 */
-	public static ImagePlus ImageToBinaryMatrix(ImagePlus imp1) {
-
-		Roi roi1 = imp1.getRoi();
-		if (roi1 == null) {
-			ACRlog.waitHere("niente ROI che stai a fa?");
-			return (null);
-		}
-		ImagePlus impMask = NewImage.createByteImage("Matrice", imp1.getWidth(), imp1.getHeight(), 1,
-				NewImage.FILL_BLACK);
-//		vado a leggere i dati di roi1 e li riporto sulla immagine Mask
-		Rectangle rec1 = imp1.getProcessor().getRoi();
-		int diamRoi1 = (int) (rec1.width);
-		int xRoi1 = rec1.x + ((rec1.width - diamRoi1) / 2);
-		int yRoi1 = rec1.y + ((rec1.height - diamRoi1) / 2);
-		ImageProcessor ipMask = impMask.getProcessor();
-		ipMask.setColor(Color.WHITE);
-		Roi roi2 = new OvalRoi(xRoi1, yRoi1, diamRoi1, diamRoi1);
-		ipMask.setMask(roi2.getMask());
-		ipMask.setRoi(roi2.getBounds());
-		ipMask.fill(ipMask.getMask());
-		impMask.updateAndDraw();
-		return (impMask);
-	}
-
-	/**
 	 * Questo sarebbe il kernel circolare
 	 * 
 	 * @param dia1 diametro della roi a 255 da creare
@@ -485,7 +518,7 @@ public class Uniformity_ implements PlugIn {
 	 * @return
 	 */
 	public static byte[] byteVetMaskBuilder(ImagePlus imp1, int xcenter, int ycenter, int dia1, int timeout,
-			boolean over, boolean fast) {
+			boolean over) {
 
 		int width = imp1.getWidth();
 		int height = imp1.getHeight();
@@ -583,7 +616,7 @@ public class Uniformity_ implements PlugIn {
 	 * @return byte[] pixels com la mask messa a 255
 	 */
 
-	public static ImagePlus kernelBuilder(int dia1, int timeout, boolean over, boolean fast) {
+	public static ImagePlus kernelBuilder(int dia1, int timeout, boolean over) {
 
 		ImagePlus impKernel = NewImage.createByteImage("KERNEL", dia1, dia1, 1, NewImage.FILL_BLACK);
 		ImageProcessor ipKernel = impKernel.getProcessor();
@@ -752,7 +785,7 @@ public class Uniformity_ implements PlugIn {
 	 * @return
 	 */
 	public static byte[] extractSubmatrix(byte[] vetByteMatrix, int bigwidth, int bigheight, int subcenterx,
-			int subcentery, int sublato, int timeout, boolean trigger, boolean over, boolean fast) {
+			int subcentery, int sublato, int timeout, boolean trigger, boolean over) {
 		int upperleftx = subcenterx - sublato / 2;
 		int upperlefty = subcentery - sublato / 2;
 		int lowerrightx = subcenterx + sublato / 2;
@@ -779,7 +812,7 @@ public class Uniformity_ implements PlugIn {
 				vetByteSubmatrix[count2++] = vetByteMatrix[index1];
 			}
 		}
-		if (trigger && fast == false) {
+		if (trigger) {
 			ACRlog.vetPrint(vetIndex1, "vetIndex1");
 		}
 		Overlay over1 = new Overlay(); // con questo definisco un overlay indipendente dal valore dei pixels
@@ -824,7 +857,7 @@ public class Uniformity_ implements PlugIn {
 	 * @return
 	 */
 	public static double[] extractSubmatrix(double[] vetDoubleMatrix, int bigwidth, int bigheight, int subcenterx,
-			int subcentery, int sublato, int timeout, boolean trigger, boolean over, boolean fast) {
+			int subcentery, int sublato, int timeout, boolean trigger, boolean over) {
 		int upperleftx = subcenterx - sublato / 2;
 		int upperlefty = subcentery - sublato / 2;
 		int lowerrightx = subcenterx + sublato / 2;
@@ -852,7 +885,7 @@ public class Uniformity_ implements PlugIn {
 				vetDoubleSubmatrix[count2++] = vetDoubleMatrix[index1];
 			}
 		}
-		if (trigger && fast == false) {
+		if (trigger) {
 			ACRlog.vetPrint(vetIndex1, "vetIndex1");
 		}
 		Overlay over1 = new Overlay(); // con questo definisco un overlay indipendente dal valore dei pixels
@@ -889,8 +922,7 @@ public class Uniformity_ implements PlugIn {
 	 * @param trigger
 	 * @return
 	 */
-	public static byte[] kernelsAND(byte[] kernel1, byte[] kernel2, int timeout, boolean trigger, boolean over,
-			boolean fast) {
+	public static byte[] kernelsAND(byte[] kernel1, byte[] kernel2, int timeout, boolean trigger, boolean over) {
 		if (kernel1 == null || kernel1.length == 0) {
 			ACRlog.waitHere("kernel1 problems");
 			return null;
@@ -947,7 +979,7 @@ public class Uniformity_ implements PlugIn {
 	 * @param trigger
 	 * @return
 	 */
-	public static double calcPixel(double[] subImage, byte[] kernel, boolean trigger, boolean fast) {
+	public static double calcPixel(double[] subImage, byte[] kernel, boolean trigger) {
 		double sum = 0;
 		int count = 0;
 		for (int i1 = 0; i1 < subImage.length; i1++) {
@@ -960,7 +992,7 @@ public class Uniformity_ implements PlugIn {
 		if (count == 0)
 			count = 1;
 		out1 = sum / (double) count;
-		if (trigger && fast == false) {
+		if (trigger) {
 			IJ.log("sum= " + sum + " count= " + count + " out1= " + out1);
 			ACRlog.waitHere();
 		}
@@ -1253,7 +1285,7 @@ public class Uniformity_ implements PlugIn {
 	 * @return
 	 */
 	public static double[] minmaxArticolo(ImagePlus imp1, int[] phantomCircle, int[] MROIcircle, int pixint100,
-			boolean step, boolean fast, boolean verbose, int timeout1) {
+			boolean step, boolean verbose, int timeout1) {
 
 		// ---------------------------------------------------------------------------------------------
 		// siccome il manuale ACR e'orientato all'elaborazione manuale delle immagini,
@@ -1289,7 +1321,7 @@ public class Uniformity_ implements PlugIn {
 		double[] imageResultDoublePixels = new double[imageVetDoublePixels.length];
 		// ora creo una mask in formato byte, in cui i pixel interni alla MROI valgono
 		// 255 ed il fondo vale 0
-		byte[] imageVetMask = byteVetMaskBuilder(imp2, xmroi, ymroi, dmroi, timeout1, verbose, fast);
+		byte[] imageVetMask = byteVetMaskBuilder(imp2, xmroi, ymroi, dmroi, timeout1, verbose);
 
 		int width = imp2.getWidth();
 		int height = imp2.getHeight();
@@ -1304,12 +1336,12 @@ public class Uniformity_ implements PlugIn {
 		// Genero un kernel costituito da una immagine 8 bit di lato pixint100. Nella
 		// immagine viene generata una Roi circolare con centro sul pixel centrale del
 		// kernel e diametro pixint100. I pixel di questa ROI sono a 255 ed il fondo a 0
-		ImagePlus impKernel = kernelBuilder(pixint100, timeout1, verbose, fast);
+		ImagePlus impKernel = kernelBuilder(pixint100, timeout1, verbose);
 		// estraggo il vettore contenente i pixel del kernel
 		byte[] kernelVetMask = byteVetKernelExtractor(impKernel);
 		// byte[] kernelTarocco = byteVetKernelExtractor(impKernelTarocco) // veniva
 		// usato nei primi test;
-		if (verbose && fast == false)
+		if (verbose == false)
 			ACRlog.vetPrint(kernelVetMask, "#### kernelVetMask KERNEL CIRCOLARE");
 		// vetPrint(kernelTarocco, impKernel.getWidth(), impKernel.getHeight(),
 		// "kernelTarocco") // veniva usato nei primi test;
@@ -1331,11 +1363,11 @@ public class Uniformity_ implements PlugIn {
 				// quindi delle stesse dimensioni del kernel, centrata su x1,y1 (e quindi scorre
 				// gradualmente sull'intera immagine (subImage)
 				double[] subImage = extractSubmatrix(imageVetDoublePixels, width, height, x1, y1, sublato, timeout1,
-						trigger2, trigger2, fast);
+						trigger2, trigger2);
 				if (subImage == null) {
 					continue;
 				}
-				if (trigger2 && fast == false) {
+				if (trigger2) {
 					IJ.log("*************************");
 					ACRlog.vetPrint(subImage, "**** subImage IMMAGINETTA");
 					IJ.log("ATTENZIONE: va bene che vi siano zeri, se siamo sull'orlo del fantoccio, "
@@ -1348,18 +1380,18 @@ public class Uniformity_ implements PlugIn {
 				// Analogamente a subImage, estraggo anche una subMask, delle stesse dimensioni
 				// del kernel, centrata su x1,y1
 				byte[] subMask = extractSubmatrix(imageVetMask, width, height, x1, y1, sublato, timeout1, trigger2,
-						trigger2, fast);
+						trigger2);
 				if (subMask == null) {
 					continue;
 				}
-				if (trigger2 && fast == false) {
+				if (trigger2) {
 					ACRlog.vetPrint(subMask, "**** subMask MASCHERETTA");
 				}
 				// Infine effettuo un AND tra la subMask ed il kernel circolare. Il risultato
 				// contiene 255 solo quando i corrispondenti pixels sono ambedua a 255,
 				// altrimenti 0. kernelVero
-				byte[] kernelVero = kernelsAND(subMask, kernelVetMask, timeout1, trigger2, trigger2, fast);
-				if (trigger2 && fast == false) {
+				byte[] kernelVero = kernelsAND(subMask, kernelVetMask, timeout1, trigger2, trigger2);
+				if (trigger2) {
 					ACRlog.vetPrint(kernelVero, "**** AND_KERNELS KERNEL");
 				}
 				trigger1 = false;
@@ -1380,9 +1412,9 @@ public class Uniformity_ implements PlugIn {
 				// imageResultDoublePixels e non influisce sul calcolo dei pixel adiacenti
 				// (alternativa=2)
 				// ============================================================================
-				double result1 = calcPixel(subImage, kernelVero, trigger1, fast);
+				double result1 = calcPixel(subImage, kernelVero, trigger1);
 				imageResultDoublePixels[offset1 + x1] = result1;
-				if (trigger2 && fast == false) {
+				if (trigger2) {
 					IJ.log("RISULTATO SCRITTO=  " + imageVetDoublePixels[offset1 + x1]);
 				}
 
@@ -1390,7 +1422,7 @@ public class Uniformity_ implements PlugIn {
 			}
 		}
 		// ==============================================
-		if (verbose && (fast == false)) {
+		if (verbose) {
 			IJ.log("***************************************************");
 			ACRlog.vetPrint(imageResultDoublePixels, "imageResultDoublePixels_ELABORATA");
 			IJ.log("***************************************************");
@@ -1426,7 +1458,7 @@ public class Uniformity_ implements PlugIn {
 		float[] pixelsroi12 = extractRoiPixelsFloatLocale(ip12);
 		float amax = ACRcalc.vetMax(pixelsroi12);
 		float amin = ACRcalc.vetMin(pixelsroi12);
-		if (verbose && (fast == false))
+		if (verbose == false)
 			ACRlog.waitHere("max= " + amax + " min= " + amin);
 		ArrayList<Integer> vetXmaxpos = new ArrayList<Integer>();
 		ArrayList<Integer> vetYmaxpos = new ArrayList<Integer>();
@@ -1504,7 +1536,7 @@ public class Uniformity_ implements PlugIn {
 	 * @return
 	 */
 	public static double uniforACR(ImagePlus imp1, int[] phantomCircle, int[] MROIcircle, double[] minmaxValues,
-			int pixint100, boolean step, boolean fast, boolean verbose, int timeout) {
+			int pixint100, boolean step, boolean verbose, int timeout) {
 
 		imp1.killRoi();
 		ImagePlus imp2 = imp1.duplicate();
@@ -1530,6 +1562,252 @@ public class Uniformity_ implements PlugIn {
 		IJ.log("uniforACR> calcolo uniformita': UNIFORhigh= " + String.format("%.4f", UNIFORhigh) + " UNIFORlow= "
 				+ String.format("%.4f", UNIFORlow) + " PIU_UNIFOR= " + String.format("%.4f", PIU_UNIFOR));
 		return PIU_UNIFOR;
+	}
+
+	/**
+	 * Si basa su una tesi di Atiba Fitzpatrick, che spiega molto nei particolari un
+	 * suo/loro programma in Matlab. La differenza rispetto a tutti i programmi in
+	 * Matlab disponibili in rete e'che qui vengono chiaramente spiegati algoritmi e
+	 * metodi. Pertanto non occorre tentare un reverse engineering del sorgente (che
+	 * non ho trovato), poiche'la spiegazione pare sufficiente. VEDIAMO La procedura
+	 * proposta per trovare gli spot massimo e minimo: 1. The slice is blurred in
+	 * order to lessen the effect of noise. A Gaussian kernel with standard
+	 * deviation 2 and size 6 squared is used.
+	 * 
+	 * @param imp1          immagine di input
+	 * @param phantomCircle cerchio esterno fantoccio
+	 * @param MROIcircle    cerchio MROI
+	 * @param minmaxValues  vettore coordinate minmax
+	 * @param pixint100     dimensioni roi di calcolo (dispari) >100 mmq
+	 * @param timeout
+	 * @param verbose
+	 * @param fast
+	 * @return
+	 */
+	public static double uniforAYV(ImagePlus imp1, int[] phantomCircle, int[] MROIcircle, double[] minmaxValues,
+			int pixint100, boolean step, boolean verbose, int timeout) {
+
+		imp1.killRoi();
+		ImagePlus imp2 = imp1.duplicate();
+
+		// =====================================================================
+		// ================ ELABORAZIONE PRINCIPALE PER UNIFOR SU MROI =========
+		// =====================================================================
+		int xposmin = (int) minmaxValues[0];
+		int yposmin = (int) minmaxValues[1];
+		double amin = minmaxValues[2];
+//		int xposmax = (int) minmaxValues[3];
+//		int yposmax = (int) minmaxValues[4];
+		double amax = minmaxValues[5];
+		imp2.setRoi(new OvalRoi(xposmin - pixint100 / 2, yposmin - pixint100 / 2, pixint100, pixint100));
+
+		// non so se mi basti utilizzare il valore del pixel, calcolato come
+		// dal'articolo, oppure se devo ricalcolare la media in maniera tradizionale (se
+		// siamo sul bordo otterremo risultati totalmente diversi CHIEDERE
+		//
+		double UNIFORlow = amin;
+		double UNIFORhigh = amax;
+		double PIU_UNIFOR = 100 * (1.0 - ((UNIFORhigh - UNIFORlow) / (UNIFORhigh + UNIFORlow)));
+		IJ.log("uniforACR> calcolo uniformita': UNIFORhigh= " + String.format("%.4f", UNIFORhigh) + " UNIFORlow= "
+				+ String.format("%.4f", UNIFORlow) + " PIU_UNIFOR= " + String.format("%.4f", PIU_UNIFOR));
+		return PIU_UNIFOR;
+	}
+
+	/**
+	 * 1. The slice is blurred in order to lessen the effect of noise. A Gaussian
+	 * kernel with standard deviation 2 and size 6 squared is used.
+	 * 
+	 * @param imp1
+	 * @param phantomCircle
+	 * @param MROIcircle
+	 * @param minmaxValues
+	 * @param pixint100
+	 * @param step
+	 * @param verbose
+	 * @param timeout
+	 * @return
+	 */
+	public static int[] minmaxAYV(ImagePlus imp1, double[] phantomCircle, boolean step, boolean verbose, int timeout) {
+
+		IJ.log(ACRlog.qui() + "START");
+		double sigma = 2.0;
+		double accuracy = 0.0002;
+		FloatProcessor fp1 = gaussian_blur(imp1, sigma, accuracy);
+		ImagePlus imp3 = new ImagePlus("filtrataGauss", fp1);
+		imp3.show();
+		ACRutils.zoom(imp3);
+		IJ.log(ACRlog.qui());
+
+		// estraggo i dati del phantomCircle
+		double xphantom = phantomCircle[0];
+		double yphantom = phantomCircle[1];
+		double dphantom = phantomCircle[2];
+		// ---------------------------------------------------------------------------
+		// L'area del cerchio della MROI e'esplicitamente suggerita in "ACR small
+		// phantom guidance" a pag 24 " Place a large, circular ROI on the image as
+		// shown in Figure 17. This ROI must have an area of between 54 cm2 and 56 cm2
+		// (5,400 to 5,600 mm2)
+		// -----------------------------------------------------------------------------
+
+		double dimPixel = ACRutils
+				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp1, ACRconst.DICOM_PIXEL_SPACING), 1));
+		// calcolo che diametro deve avere una Roi di 100 mmq
+		double pixeldia100 = 2 * Math.sqrt(100. / Math.PI) / dimPixel; // geometria
+		int pixint100 = (int) Math.ceil(pixeldia100); // arrotondo all'int superiore (come dice l'articolo)
+		double areammq = 5600; // 5600 mm2 sono stabiliti dal protocollo
+		double dmroi = 2 * Math.sqrt(areammq / Math.PI) / dimPixel; // geometria
+		imp3.setRoi(new OvalRoi(xphantom - dmroi / 2, yphantom - dmroi / 2, dmroi, dmroi));
+
+		Overlay over3 = new Overlay(); // con questo definisco un overlay trasparente per i disegni
+		imp3.setOverlay(over3);
+		imp3.getRoi().setStrokeColor(Color.GREEN);
+		over3.addElement(imp3.getRoi());
+		over3.setStrokeWidth(1.5);
+		imp3.updateAndDraw();
+		ACRlog.waitHere("FERMA 001");
+
+		int[] MROIcircle = new int[3];
+		MROIcircle[0] = (int) Math.round(xphantom);
+		MROIcircle[1] = (int) Math.round(yphantom);
+		MROIcircle[2] = (int) Math.round(dmroi);
+
+		int[] vetout = searchMinMaxPixelsFloat(imp3, MROIcircle);
+		ACRlog.logVector(vetout, ACRlog.qui() + "vetout");
+
+		// applico due distinte strategie: cerco minmax e loro posizione e vi metto
+		// attorno una ROI, oppure faccio muovere una ROI all'interno della MROI e cerco
+		// il meanmin e il meanmax
+
+		return vetout;
+	}
+
+	public static FloatProcessor gaussian_blur(ImagePlus imp1, double sigma, double accuracy) {
+
+		ImagePlus imp2 = imp1.duplicate();
+		ImageProcessor ip2 = imp2.getProcessor();
+		FloatProcessor fp2 = ip2.convertToFloatProcessor();
+		(new GaussianBlur()).blurFloat(fp2, sigma, sigma, accuracy);
+		return fp2;
+	}
+
+	/**
+	 * genera una mask circolare
+	 * 
+	 * @param imp1
+	 * @return
+	 */
+	public static ImagePlus generateBinaryMask(int[] MROIcircle, int width, int height) {
+
+		int xmroi = MROIcircle[0];
+		int ymroi = MROIcircle[1];
+		int dmroi = MROIcircle[2];
+
+		IJ.log(ACRlog.qui() + "START");
+
+		ImagePlus impMask = NewImage.createByteImage("MASK", width, height, 1, NewImage.FILL_BLACK);
+		ImageProcessor ipMask = impMask.getProcessor();
+		ipMask.setColor(Color.WHITE);
+		Roi roi2 = new OvalRoi(xmroi - dmroi / 2, ymroi - dmroi / 2, dmroi, dmroi);
+		ipMask.setMask(roi2.getMask());
+		ipMask.setRoi(roi2.getBounds());
+		ipMask.fill(ipMask.getMask());
+		impMask.updateAndDraw();
+		IJ.log(ACRlog.qui() + "END");
+		return (impMask);
+	}
+
+	public static int[] searchMinMaxPixelsFloat(ImagePlus imp1, int[] MROIcircle) {
+
+		IJ.log(ACRlog.qui() + "START");
+		ImageProcessor ip1 = imp1.getProcessor();
+		float[] pixels1 = (float[]) ip1.getPixels();
+		int width = imp1.getWidth();
+		int height = imp1.getHeight();
+		ImagePlus mask = generateBinaryMask(MROIcircle, width, height);
+		ImageProcessor ipmask = mask.getProcessor();
+		byte[] masks1 = (byte[]) ipmask.getPixels();
+		float min = Float.MAX_VALUE;
+		float max = Float.MIN_VALUE;
+		int xmax = 0;
+		int ymax = 0;
+		int xmin = 0;
+		int ymin = 0;
+		for (int y1 = 0; y1 < height; y1++) {
+			int offset1 = y1 * width;
+			for (int x1 = 0; x1 < height; x1++) {
+				int index1 = offset1 + x1;
+				if (masks1[index1] != 0) {
+					float val = pixels1[index1];
+					if (val > max) {
+						max = val;
+						xmax = x1;
+						ymax = y1;
+					}
+					if (val < min) {
+						min = val;
+						xmin = x1;
+						ymin = y1;
+					}
+				}
+			}
+		}
+		int[] vetout = new int[6];
+		vetout[0] = Math.round(max);
+		vetout[1] = Math.round(min);
+		vetout[2] = xmax;
+		vetout[3] = ymax;
+		vetout[4] = xmin;
+		vetout[5] = ymin;
+		IJ.log(ACRlog.qui() + "END");
+
+		return vetout;
+	}
+
+	public static int[] searchMinMaxPixelsInteger(ImagePlus imp1, int[] MROIcircle) {
+
+		IJ.log(ACRlog.qui() + "START");
+		ImageProcessor ip1 = imp1.getProcessor();
+		short[] pixels1 = (short[]) ip1.getPixels();
+		int width = imp1.getWidth();
+		int height = imp1.getHeight();
+		ImagePlus mask = generateBinaryMask(MROIcircle, width, height);
+		ImageProcessor ipmask = mask.getProcessor();
+		byte[] masks1 = (byte[]) ipmask.getPixels();
+		int min = Integer.MAX_VALUE;
+		int max = Integer.MIN_VALUE;
+		int xmax = 0;
+		int ymax = 0;
+		int xmin = 0;
+		int ymin = 0;
+		for (int y1 = 0; y1 < height; y1++) {
+			int offset1 = y1 * width;
+			for (int x1 = 0; x1 < height; x1++) {
+				int index1 = offset1 + x1;
+				if (masks1[index1] != 0) {
+					short val = pixels1[index1];
+					if (val > max) {
+						max = val;
+						xmax = x1;
+						ymax = y1;
+					}
+					if (val < min) {
+						min = val;
+						xmin = x1;
+						ymin = y1;
+					}
+				}
+			}
+		}
+		int[] vetout = new int[6];
+		vetout[0] = max;
+		vetout[1] = min;
+		vetout[2] = xmax;
+		vetout[3] = ymax;
+		vetout[4] = xmin;
+		vetout[5] = ymin;
+		IJ.log(ACRlog.qui() + "END");
+
+		return vetout;
 	}
 
 }

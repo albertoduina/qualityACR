@@ -138,7 +138,7 @@ public class SlicePosition_ implements PlugIn {
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
-				evalPosition(sortedListT1[i1], pathReport, i1, step, verbose, timeout);
+				evalPosition(sortedListT1[i1], pathReport,"T1", i1+1, step, verbose, timeout);
 			}
 		}
 
@@ -146,26 +146,27 @@ public class SlicePosition_ implements PlugIn {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
 				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
-				evalPosition(sortedListT2[i1], pathReport, i1, step, verbose, timeout);
+				evalPosition(sortedListT2[i1], pathReport, "T2", i1+1, step, verbose, timeout);
 			}
 		}
 		ACRlog.waitHere("SLICE Position TERMINATA");
 	}
 
-	public void evalPosition(String path1, String pathReport, int s1, boolean step, boolean verbose, int timeout) {
+	public void evalPosition(String path1, String pathReport, String group, int slice, boolean step, boolean verbose, int timeout) {
 
 		IJ.log(ACRlog.qui() + "START>");
 		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
 		// apertura immagine, display, zoom
 		// chiamata prima subroutine passando l'immagine pronta
 		// eccetraz ecceteraz
-		String namepathReport = pathReport + "\\ReportPosition.txt";
-		String imageName1 = "position920.jpg";
+		String aux1 = "_" + group + "S" + slice;
+		String namepathReport = pathReport + "\\ReportPosition"+aux1+".txt";
+		String imageName1 = "position920"+aux1+".jpg";
 		String namepathImage1 = pathReport + "\\" + imageName1;
-		String profileName1 = "greenprofile921.jpg";
+		String profileName1 = "greenprofile921"+aux1+".jpg";
 		String namepathProfile1 = pathReport + "\\" + profileName1;
 
-		String profileName2 = "yellowprofile922.jpg";
+		String profileName2 = "yellowprofile922"+aux1+".jpg";
 		String namepathProfile2 = pathReport + "\\" + profileName2;
 
 		// ----- cancellazione cacchine precedenti -----
@@ -338,8 +339,12 @@ public class SlicePosition_ implements PlugIn {
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "difference_mm: #304#" + IJ.d2s(difflimitmm, 4));
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "passafail: #305#" + passfail);
 
-		ACRlog.waitHere("fwhm1pixel= " + fwhm1pixel + " fwhm2pixel= " + fwhm2pixel);
+	//	ACRlog.waitHere("fwhm1pixel= " + fwhm1pixel + " fwhm2pixel= " + fwhm2pixel);
 		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		imp2.changes = false;
+		imp2.close();
+		imp1.changes = false;
+		imp1.close();
 
 		return;
 	}

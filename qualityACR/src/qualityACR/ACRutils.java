@@ -56,9 +56,9 @@ public class ACRutils {
 		info[0] = ACRutils.readDicomString(imp1, "0008,0080");
 		info[1] = ACRutils.readDicomString(imp1, "0008,0070");
 		info[2] = ACRutils.readDicomString(imp1, "0008,1010");
-		info[3] = ACRutils.readDicomString(imp1, "0008,0023");
-		info[4] = ACRutils.readDicomString(imp1, "0008,0018");
-		info[5] = ACRutils.readDicomString(imp1, "0018,0087");
+		info[3] = ACRutils.readDicomString(imp1, "0018,0087");
+		info[4] = ACRutils.readDicomString(imp1, "0008,0023");
+		info[5] = ACRutils.readDicomString(imp1, "0008,0018");
 		info[6] = ACRutils.readDicomString(imp1, "0018,1030");
 		info[7] = ACRutils.readDicomString(imp1, "0018,0050");
 		info[8] = ACRutils.readDicomString(imp1, "0020,1041");

@@ -149,22 +149,22 @@ public class SliceThickness_ implements PlugIn {
 		// elaborare solo i file selezionati
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
-				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
-				evalThickness(sortedListT1[i1], pathReport, i1, step, verbose, timeout);
+				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + (i1+1));
+				evalThickness(sortedListT1[i1], pathReport, "T1", i1+1, step, verbose, timeout);
 			}
 		}
 
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
-				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
-				evalThickness(sortedListT2[i1], pathReport, i1, step, verbose, timeout);
+				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + (i1+1));
+				evalThickness(sortedListT2[i1], pathReport, "T2", i1+1, step, verbose, timeout);
 			}
 		}
 		ACRlog.waitHere("SLICE THICKNESS TERMINATA");
 	}
 
-	public void evalThickness(String path1, String pathReport, int s1, boolean step, boolean verbose, int timeout) {
+	public void evalThickness(String path1, String pathReport, String group,  int slice, boolean step, boolean verbose, int timeout) {
 
 		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
 		// apertura immagine, display, zoom
@@ -174,13 +174,14 @@ public class SliceThickness_ implements PlugIn {
 		IJ.log(ACRlog.qui() + "START>");
 		double mintolerance = 4.3;
 		double maxtolerance = 5.7;
-		String namepathReport = pathReport + "\\ReportThickness.txt";
-		String imageName1 = "thickness910.jpg";
+		String aux1 = "_" + group + "S" + slice;
+		String namepathReport = pathReport + "\\ReportThickness"+aux1+".txt";
+		String imageName1 = "thickness910"+aux1+".jpg";
 		String namepathImage1 = pathReport + "\\" + imageName1;
-		String profileName1 = "greenprofile911.jpg";
+		String profileName1 = "greenprofile912"+aux1+".jpg";
 		String namepathProfile1 = pathReport + "\\" + profileName1;
 
-		String profileName2 = "yellowprofile912.jpg";
+		String profileName2 = "yellowprofile911"+aux1+".jpg";
 		String namepathProfile2 = pathReport + "\\" + profileName2;
 
 		// ----- cancellazione cacchine precedenti -----
@@ -308,14 +309,14 @@ public class SliceThickness_ implements PlugIn {
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "mintolerance:" + mintolerance);
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "maxtolerance:" + maxtolerance);
 
-		String imageName = "thickness910.jpg";
-		String pathImage = pathReport + "\\" + imageName;
+//		String imageName = "thickness910.jpg";
+		String pathImage = pathReport + "\\" + imageName1;
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #910#" + pathImage);
 
 		// linea calcolo segnale mediato
 		// boolean invert = false;
-		String profilename1 = "greenprofile912.jpg";
-		String pathname1 = pathReport + "\\" + profilename1;
+//		String profilename1 = "greenprofile912.jpg";
+		String pathname1 = pathReport + "\\" + profileName1;
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "profileName1: #912#" + pathname1);
 		double fwhm2mm = ACRlocalizer.FWHMcalc(profi3, 3, "greenProfile", pathname1, pathReport, "#912#") * dimPixel;
 		if (step || verbose)
@@ -328,8 +329,8 @@ public class SliceThickness_ implements PlugIn {
 		double[] profi4 = ((Line) roi4).getPixels();
 		imp3.killRoi();
 
-		String profilename2 = "yellowprofile911.jpg";
-		String pathname2 = pathReport + "\\" + profilename2;
+//		String profilename2 = "yellowprofile911.jpg";
+		String pathname2 = pathReport + "\\" + profileName2;
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "profileName2: #911#" + pathname2);
 
 		double fwhm1mm = ACRlocalizer.FWHMcalc(profi4, 3, "yellowProfile", pathname2, pathReport, "#911#") * dimPixel;
@@ -370,6 +371,20 @@ public class SliceThickness_ implements PlugIn {
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "thickPass: #205#" + response);
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "phantomAngleDegrees: #206#" + IJ.d2s(angle, 4));
 		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		
+		
+		
+		
+		imp2.changes = false;
+		imp2.close();
+		imp3.changes = false;
+		imp3.close();
+		
+		
+		
+		
+		
+		
 
 		return;
 	}
