@@ -54,49 +54,67 @@ public class Reporter implements PlugIn {
 
 		String[] localizhtml0 = getTemplateFromJAR("templates/", "ReportLocalizer.html");
 		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1A.html");
+		String[] slice5html0 = getTemplateFromJAR("templates/", "ReportSlice5_T1B.html");
 
 		String[] localizer = getMeasureReport(reportpath, "ReportLocalizer.txt");
 		String[] thickness = getMeasureReport(reportpath, "ReportThickness_T1S1.txt");
 		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico_T1S1.txt");
 		String[] posizione = getMeasureReport(reportpath, "ReportPosition_T1S1.txt");
+		String[] uniformity = getMeasureReport(reportpath, "ReportUniformity_T1S5.txt");
+		ACRlog.logVector(uniformity, "Uniformity");
 
 		// ----- cancellazione cacchine precedenti -----
 		boolean ok1 = ACRinputOutput.deleteFile(new File(reportpath + "\\ReportLocalizer.html"));
 		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T1S1.html"));
-		if (!(ok1 && ok2))
+		boolean ok3 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T1S5.html"));
+		if (!(ok1 && ok2&&ok3))
 			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
 		// ----------------------------------------------
 
 		String[] localizhtml2 = reporterEngine(localizhtml0, localizer, false);
 		writeTextFile(localizhtml2, "ReportLocalizer.html", reportpath);
-		String[] slice1html1 = reporterEngine(slice1html0, geometrico, true);
-		String[] slice1html2 = reporterEngine(slice1html1, posizione, true);
+		String[] slice1html1 = reporterEngine(slice1html0, geometrico, false);
+		String[] slice1html2 = reporterEngine(slice1html1, posizione, false);
 		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
 		writeTextFile(slice1html3, "Report_T1S1.html", reportpath);
+		String[] slice5html1 = reporterEngine(slice5html0, uniformity, true);
+		ACRlog.logVector(slice5html1, "slice5html1");
+		ACRlog.waitHere("VERIFICARE T1");
+
+		writeTextFile(slice5html1, "Report_T1S5.html", reportpath);
+
 		String defimage = dummyImage(reportpath);
 	}
-	
+
 	public void mainReporter2() {
 
 		String reportpath = getReportPath("ACRlist.tmp");
 		IJ.log("reportpath= " + reportpath);
 
 		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1A.html");
+		String[] slice5html0 = getTemplateFromJAR("templates/", "ReportSlice5_T1B.html");
 
 		String[] thickness = getMeasureReport(reportpath, "ReportThickness_T2S1.txt");
 		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico_T2S1.txt");
 		String[] posizione = getMeasureReport(reportpath, "ReportPosition_T2S1.txt");
+		String[] uniformity = getMeasureReport(reportpath, "ReportUniformity_T2S5.txt");
+		ACRlog.logVector(uniformity, "Uniformity");
 
 		// ----- cancellazione cacchine precedenti -----
 		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S1.html"));
-		if (!( ok2))
+		boolean ok3 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S5.html"));
+		if (!(ok2))
 			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
 		// ----------------------------------------------
 
-		String[] slice1html1 = reporterEngine(slice1html0, geometrico, true);
-		String[] slice1html2 = reporterEngine(slice1html1, posizione, true);
+		String[] slice1html1 = reporterEngine(slice1html0, geometrico, false);
+		String[] slice1html2 = reporterEngine(slice1html1, posizione, false);
 		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
 		writeTextFile(slice1html3, "Report_T2S1.html", reportpath);
+		String[] slice5html1 = reporterEngine(slice5html0, uniformity, false);
+		writeTextFile(slice5html1, "Report_T2S5.html", reportpath);
+		ACRlog.logVector(slice5html1, "slice5html1");
+		ACRlog.waitHere("VERIFICARE T1");
 	}
 
 	/**
@@ -314,6 +332,9 @@ public class Reporter implements PlugIn {
 							}
 							part2 = str2.substring(dopo2);
 							str3 = part1 + part2 + part3;
+							if (test) {
+								IJ.log("str3= " + str3);
+							}
 						}
 					}
 					if (!trovato) {
@@ -326,7 +347,9 @@ public class Reporter implements PlugIn {
 			} else {
 				str3 = str1;
 			}
-			// IJ.log("" + (count++) + "::" + str3);
+			if (test) {
+				IJ.log("" + (count) + "::" + str3);
+			}
 			out1[count++] = str3;
 		}
 

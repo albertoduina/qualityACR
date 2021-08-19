@@ -40,7 +40,7 @@ public class UniformityTest {
 		// ******************************************
 		int imawidth = imp1.getWidth();
 		int imaheight = imp1.getHeight();
-		double[] vetPixels = Uniformity_.doubleVetPixelsExtractor(imp1);
+//		double[] vetPixels = Uniformity_.doubleVetPixelsExtractor(imp1);
 
 		String riga = "";
 		for (int y1 = 0; y1 < imaheight; y1++) {
@@ -48,7 +48,7 @@ public class UniformityTest {
 			riga = "riga " + String.format("%03d", y1) + " | ";
 			for (int x1 = 0; x1 < imawidth; x1++) {
 				// per facilitare la leggibilita' stampo tutto con formato fisso a 4 cifre
-				riga = riga + String.format("%04.0f", vetPixels[offset + x1]) + ",";
+//				riga = riga + String.format("%04.0f", vetPixels[offset + x1]) + ",";
 			}
 			IJ.log(riga);
 		}
@@ -76,7 +76,7 @@ public class UniformityTest {
 		int imawidth = 50;
 		int imaheight = 50;
 		int[] vetIntMatrix = new int[imawidth * imaheight];
-		Uniformity_.fillIntMatrix(vetIntMatrix, imawidth, imaheight);
+//		Uniformity_.fillIntMatrix(vetIntMatrix, imawidth, imaheight);
 		String riga = "";
 		for (int y1 = 0; y1 < imaheight; y1++) {
 			int offset = y1 * imawidth;
@@ -94,25 +94,25 @@ public class UniformityTest {
 		int subycenter = 0;
 		int sublato = 7;
 
-		int[] vetSubmatrix = Uniformity_.extractSubmatrix(vetIntMatrix, imawidth, imaheight, subxcenter, subycenter,
-				sublato, 200, true, false, false);
-		if (vetSubmatrix != null) {
+//		int[] vetSubmatrix = Uniformity_.extractSubmatrix(vetIntMatrix, imawidth, imaheight, subxcenter, subycenter,
+//				sublato, 200, true, false, false);
+//		if (vetSubmatrix != null) {
 			String riga1 = "";
 			for (int y1 = 0; y1 < sublato; y1++) {
 				int offset = y1 * sublato;
 				riga1 = "riga1 " + String.format("%03d", y1) + " | ";
 				for (int x1 = 0; x1 < sublato; x1++) {
 					// per facilitare la leggibilita' stampo tutto con formato fisso a 4 cifre
-					riga1 = riga1 + String.format("%04d", vetSubmatrix[offset + x1]) + " , ";
+//					riga1 = riga1 + String.format("%04d", vetSubmatrix[offset + x1]) + " , ";
 				}
 				IJ.log(riga1);
 			}
 		}
 
-		ACRlog.waitHere("ora pare funzionare !!!");
+//		ACRlog.waitHere("ora pare funzionare !!!");
 
 //		assertTrue(UtilAyv.compareVectors(expected, result, ""));
-	}
+//	}
 
 	@Test
 	public final void testExtractSubMatrix() {
@@ -132,7 +132,7 @@ public class UniformityTest {
 		int imawidth = 50;
 		int imaheight = 50;
 		int[] vetIntMatrix = new int[imawidth * imaheight];
-		Uniformity_.fillIntMatrix(vetIntMatrix, imawidth, imaheight);
+//		Uniformity_.fillIntMatrix(vetIntMatrix, imawidth, imaheight);
 		String riga = "";
 		for (int y1 = 0; y1 < imaheight; y1++) {
 			int offset = y1 * imawidth;
@@ -150,15 +150,15 @@ public class UniformityTest {
 		int subycenter = 9;
 		int sublato = 7;
 
-		int[] vetSubmatrix = Uniformity_.extractSubmatrix(vetIntMatrix, imawidth, imaheight, subxcenter, subycenter,
-				sublato, 200, true, false, false);
+//		int[] vetSubmatrix = Uniformity_.extractSubmatrix(vetIntMatrix, imawidth, imaheight, subxcenter, subycenter,
+//				sublato, 200, true, false, false);
 		String riga1 = "";
 		for (int y1 = 0; y1 < sublato; y1++) {
 			int offset = y1 * sublato;
 			riga1 = "riga1 " + String.format("%03d", y1) + " | ";
 			for (int x1 = 0; x1 < sublato; x1++) {
 				// per facilitare la leggibilita' stampo tutto con formato fisso a 4 cifre
-				riga1 = riga1 + String.format("%04d", vetSubmatrix[offset + x1]) + " , ";
+//				riga1 = riga1 + String.format("%04d", vetSubmatrix[offset + x1]) + " , ";
 			}
 			IJ.log(riga1);
 		}
@@ -177,7 +177,7 @@ public class UniformityTest {
 		int imawidth = 192;
 		int imaheight = 192;
 		double[] vetDoublePixels = new double[imawidth * imaheight];
-		Uniformity_.fillDoubleMatrix(vetDoublePixels, imawidth, imaheight);
+//		Uniformity_.fillDoubleMatrix(vetDoublePixels, imawidth, imaheight);
 		ACRlog.vetPrint(vetDoublePixels, "vetDoublePixels");
 		// ******************************************
 		// test estrazione
@@ -186,9 +186,9 @@ public class UniformityTest {
 		int subycenter = 95;
 		int sublato = 19;
 
-		double[] vetSubmatrix = Uniformity_.extractSubmatrix(vetDoublePixels, imawidth, imaheight, subxcenter,
-				subycenter, sublato, 200, false, true);
-		ACRlog.vetPrint(vetSubmatrix, "vetSubmatrix");
+//		double[] vetSubmatrix = Uniformity_.extractSubmatrix(vetDoublePixels, imawidth, imaheight, subxcenter,
+//				subycenter, sublato, 200, false, true);
+//		ACRlog.vetPrint(vetSubmatrix, "vetSubmatrix");
 
 		ACRlog.waitHere();
 

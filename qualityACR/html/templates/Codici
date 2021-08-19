@@ -1,3 +1,5 @@
+ReportSlice1_T1B.html
+CONTROLLI GEOMETRICI
 
 #905# image image905.jpg
 
@@ -37,6 +39,66 @@ Table 3 Slice Thickness
 #204# Slice Thickness Limits [mm]
 #205# Slice Thickness Pass/Fail
 #206# Phantom Angle Rotation [°]
+
+#920# image position920.jpg
+#921# profile profileyellow921.jpg
+#922# profile profilegreen922.jpg
+
+Table 4 Slice position difference
+#301# FWM yellow  [mm]
+#302# FWM green [mm]
+#303# Slice position difference [mm]
+#304# Difference Limits [mm]
+#305# Difference Pass/Fail
+
+#930# image resolution
+#999# dummy
+#999# dummy
+
+Table 5 Resolution
+#401# 0.9 mm UPPER LEFT
+#402# 0.9 mm LOWER RIGHT
+#403# 0.8 mm UPPER LEFT
+#404# 0.8 mm LOWER RIGHT
+#405# 0.7 mm UPPER LEFT
+#406# 0.7 mm LOWER RIGHT
+
+
+
+ReportSlice5_T1B.html
+UNIFORMITY
+
+#905# image image905.jpg
+
+Table 1 Imaging informations
+#000# image info riga 1
+#001# image info riga 2
+#002# image info riga 3
+#003# image info riga 4
+#004# image info riga 5
+#005# image info riga 6
+#006# image info riga 7
+#007# image info riga 8
+#008# image info riga 9
+#009# image info riga 10
+
+#906# image MROI906.jpg
+
+Table 2 Percent Integral Uniformity
+#101# Percent Integral Uniformity
+#102# Percent Integral Uniformity Minimum
+#103# PIU Pass/Fail
+
+
+Table 3 PIU Area Statistics
+#201# mean MROI
+#202# smallROIhigh mean
+#203# smallROIhigh xpos
+#204# smallROIhigh ypos
+#205# smallROIlow mean
+#206# smallROIlow xpos
+#207# smallROIlow ypos
+
 
 #920# image position920.jpg
 #921# profile profileyellow921.jpg
