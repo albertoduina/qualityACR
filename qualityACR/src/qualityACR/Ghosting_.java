@@ -1,6 +1,11 @@
 package qualityACR;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Properties;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -20,12 +25,33 @@ public class Ghosting_ implements PlugIn {
 
 	public void mainGhosting() {
 
-		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
+		Properties prop = ACRutils.readConfigACR();
+		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
+		boolean fastdefault = false;
+		boolean stepdefault = false;
+		boolean verbosedefault = false;
+		boolean[] T1 = new boolean[7];
+		boolean[] T2 = new boolean[7];
 
 		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
 		boolean[] defaults = { false, false, false, false, false, false, true, true, false, false, false, false, false,
 				false };
 		String[] headings = { "slices T1", "slices T2" };
+
+		if (prop != null) {
+			fastdefault = Boolean.parseBoolean(prop.getProperty("Ghosting.fast"));
+			stepdefault = Boolean.parseBoolean(prop.getProperty("Ghosting.step"));
+			verbosedefault = Boolean.parseBoolean(prop.getProperty("Ghosting.verbose"));
+			for (int i1 = 0; i1 < 7; i1++) {
+				T1[i1] = Boolean.parseBoolean(prop.getProperty("Ghosting.SliceT1[" + i1 + "]"));
+				T2[i1] = Boolean.parseBoolean(prop.getProperty("Ghosting.SliceT2[" + i1 + "]"));
+			}
+			int count = 0;
+			for (int i1 = 0; i1 < 7; i1++) {
+				defaults[count++] = T1[i1];
+				defaults[count++] = T2[i1];
+			}
+		}
 
 		String pathLocalizer0 = "";
 		String tmpFolderPath0 = IJ.getDirectory("temp");
@@ -33,26 +59,21 @@ public class Ghosting_ implements PlugIn {
 		String[] vetPath0 = ACRutils.readStringArrayFromFile(completePath0);
 		for (int i1 = 0; i1 < vetPath0.length; i1++) {
 			IJ.log("" + i1 + " " + vetPath0[i1]);
+
 		}
 
 		GenericDialog gd1 = new GenericDialog("GHOSTING0");
-		gd1.addCheckbox("ANIMAZIONE 2 sec", false);
-		gd1.addCheckbox("STEP", true);
-		gd1.addCheckbox("VERBOSE", true);
-//		gd1.addCheckbox("LOCALIZER", false);
+		gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
+		gd1.addCheckbox("STEP", stepdefault);
+		gd1.addCheckbox("VERBOSE", verbosedefault);
 		gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
 
-//		gd1.addCheckbox("SLICE1 DIAMETER", false);
-//		gd1.addCheckbox("SLICE5 DIAMETER", false);
-//		gd1.addCheckbox("slice6 geometry", false);
-//		gd1.addCheckbox("slice7 geometry", false);
 		gd1.showDialog();
 		if (gd1.wasCanceled()) {
 			ACRlog.waitHere("premuto cancel");
 			return;
 		}
 
-//		String str1 = gd1.getNextRadioButton();
 		boolean fast = gd1.getNextBoolean();
 		boolean step = gd1.getNextBoolean();
 		boolean verbose = gd1.getNextBoolean();
@@ -64,11 +85,46 @@ public class Ghosting_ implements PlugIn {
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
 
+		if (fast)
+			ACRlog.waitHere("perche'mette fast????");
+
+		// vado a scrivere i setup nel config file
+		if (prop == null) {
+			prop = new Properties();
+		}
+		prop.setProperty("Ghosting.fast", "" + fast);
+		prop.setProperty("Ghosting.step", "" + step);
+		prop.setProperty("Ghosting.verbose", "" + verbose);
+		for (int i1 = 0; i1 < 7; i1++) {
+			String aux1 = "Ghosting.SliceT1[" + i1 + "]";
+			String aux2 = "" + vetBoolSliceT1[i1];
+			prop.setProperty(aux1, aux2);
+		}
+		for (int i1 = 0; i1 < 7; i1++) {
+			String aux1 = "Ghosting.SliceT2[" + i1 + "]";
+			String aux2 = "" + vetBoolSliceT2[i1];
+			prop.setProperty(aux1, aux2);
+		}
+		try {
+			ACRutils.writeConfigACR(prop);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		String uno = "";
+		String due = "";
+
+		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
+			uno = uno + "," + i1 + " " + vetBoolSliceT1[i1];
+			due = due + "," + i1 + " " + vetBoolSliceT2[i1];
+		}
+
 		// leggo i nomi di tutti i 15 file presenti
 		String pathLocalizer = "";
 		String tmpFolderPath = IJ.getDirectory("temp");
 		String completePath = tmpFolderPath + "ACRlist.tmp";
 		String[] vetPath = ACRutils.readStringArrayFromFile(completePath);
+		String pathReport1 = vetPath[4];
+
 		String[] listLocalizer = ACRinputOutput.readStackPathToSortedList(vetPath[1], "T1");
 		if (listLocalizer != null)
 			pathLocalizer = listLocalizer[0];
@@ -84,13 +140,14 @@ public class Ghosting_ implements PlugIn {
 
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
-				IJ.log("mainGhosting001 >==================");
-				IJ.log("mainGhosting001 > elaborazione slice T1 numero " + i1);
-				ImagePlus imp1 = ACRgraphic.openImageNoDisplay(sortedListT1[i1], false);
-				double[] phantomCircle = ACRlocalizer.gridLocalizerOLD(imp1, step, fast, verbose, timeout);
-//
-//				int[] phantomCircle = phantomPositionSearch(sortedListT1[i1], i1, step, fast, verbose, timeout1);
-				roiGhost(imp1, ACRutils.toInt(phantomCircle), i1, step, fast, verbose);
+				IJ.log("elaborazione slice T1 numero " + i1);
+				roiGhost(sortedListT1[i1], pathReport1, "T1", i1+1, step, verbose, timeout);
+			}
+		}
+		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
+			if (vetBoolSliceT2[i1]) {
+				IJ.log("elaborazione slice T2 numero " + i1);
+				roiGhost(sortedListT2[i1], pathReport1, "T2", i1+1, step, verbose, timeout);
 			}
 		}
 
@@ -141,26 +198,61 @@ public class Ghosting_ implements PlugIn {
 		return out2;
 	}
 
-	public static void roiGhost(ImagePlus imp1, int[] phantomCircle, int slice, boolean step, boolean fast,
-			boolean verbose) {
-		double maxFitError = +20;
-		// eseguite
-		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
+	public static void roiGhost(String path1, String pathReport, String group, int slice, boolean step, boolean verbose,
+			int timeout) {
 
-//		double[] out2 = ACRlocalizer.positionSearch1(imp1, maxFitError, maxBubbleGapLimit, step, fast, verbose, timeout1);
+		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
+		// apertura immagine, display, zoom
+		// chiamata prima subroutine passando l'immagine pronta
+		// eccetraz ecceteraz
+		// ------------- inizio comune ----------------
+		IJ.log(ACRlog.qui() + "START>");
+		double maxtolerance = 3.0;
+		String aux1 = "_" + group + "S" + slice;
+		String namepathReport = pathReport + "\\ReportGhosting" + aux1 + ".txt";
+		String imageName1 = "image905" + aux1 + ".jpg";
+		String namepathImage1 = pathReport + "\\" + imageName1;
+//		String imageName2 = "positions906" + aux1 + ".jpg";
+//		String namepathImage2 = pathReport + "\\" + imageName2;
+		String imageName3 = "positions920" + aux1 + ".jpg";
+		String namepathImage3 = pathReport + "\\" + imageName3;
 
-//		nt[] positionSearch2(ImagePlus imp1, double maxFitError, boolean step, boolean fast, boolean verbose,
-//				int timeout)
+		// ----- cancellazione cacchine precedenti -----
+		boolean ok1 = ACRinputOutput.deleteFile(new File(namepathReport));
+		IJ.log(ACRlog.qui());
 
-//		int[] out2 = ACRlocalizer.positionSearch2(imp1, maxFitError, step, fast, verbose, timeout);
+		boolean ok2 = ACRinputOutput.deleteFile(new File(namepathImage1));
+		IJ.log(ACRlog.qui());
+		boolean ok3 = ACRinputOutput.deleteFile(new File(namepathImage3));
+		IJ.log(ACRlog.qui());
 
+		if (!(ok1 && ok2 ))
+			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
+		// ----- inizializzazione report----------------
+		ACRlog.appendLog(namepathReport, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		// ---------------------------------------------
+		IJ.log(ACRlog.qui());
+		ImagePlus imp1 = ACRgraphic.openImageNoDisplay(path1, false);
+
+		ImagePlus imp2 = imp1.duplicate();
+		imp2.show();
+		ACRutils.zoom(imp2);
+		Overlay over2 = new Overlay();
+		imp2.setOverlay(over2);
+
+		IJ.saveAs(imp2, "jpg", namepathImage1);
+
+		// ----------------------------------------------------
+
+		double[] phantomCircle = ACRlocalizer.phantomLocalizerAdvanced(imp2, step, verbose, timeout);
 		double dimPixel = ACRutils
-				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp1, ACRconst.DICOM_PIXEL_SPACING), 1));
+				.readDouble(ACRutils.readSubstring(ACRutils.readDicomParameter(imp2, ACRconst.DICOM_PIXEL_SPACING), 1));
 
-		int xphantom = phantomCircle[0];
-		int yphantom = phantomCircle[1];
+		// estraggo i dati del phantomCircle
+		int xphantom = (int) Math.round(phantomCircle[0]);
+		int yphantom = (int) Math.round(phantomCircle[1]);
+		int dphantom = (int) Math.round(phantomCircle[2]);
 
-		int dphantom = phantomCircle[2];
 		// in realta' il nostro fantoccio e'piu'grande di quanto abbiamo misurato,
 		// infatti la nostra misura e'falsata dal fatto che queste slices non sono
 		// completamente piene di liquido. Quindi potremmo utilizzare il diametro
@@ -168,26 +260,18 @@ public class Ghosting_ implements PlugIn {
 		// Questo raggio viene anche indicato nelle istruzioni come R0
 
 		int involucro = (int) Math.round(100 / dimPixel);
-// =========================================
-		Overlay over1 = imp1.getOverlay(); // con questo definisco un overlay trasparente per i disegni
-		over1.clear();
-// -----------------------------------------------------------------
+
+		// -----------------------------------------------------------------
 // Visualizzo sull'immagine il posizionamento, ricevuto da  positionSearch1, che verra' utilizzato: 
 // cerchio esterno fantoccio in rosso
 // -----------------------------------------------------------------
 
-		if (true) {
-			if (!imp1.isVisible()) {
-				imp1.show();
-				ACRutils.zoom(imp1);
-			}
-			imp1.setRoi(new OvalRoi(xphantom - involucro / 2, yphantom - involucro / 2, involucro, involucro));
-			imp1.getRoi().setStrokeColor(Color.RED);
-			over1.addElement(imp1.getRoi());
-			imp1.killRoi();
+		imp2.setRoi(new OvalRoi(xphantom - involucro / 2, yphantom - involucro / 2, involucro, involucro));
+		imp2.getRoi().setStrokeColor(Color.RED);
+		over2.addElement(imp2.getRoi());
+		imp2.killRoi();
 
-			ACRlog.waitHere(ACRlog.qui() + "cerchio esterno blu, involucro esterno fantoccio", step, timeout);
-		}
+		if (step) ACRlog.waitHere(ACRlog.qui() + "cerchio esterno blu, involucro esterno fantoccio", step, timeout);
 
 		// -----------------------------------------------------------------
 		// Visualizzo sull'immagine il posizionamento che verra' utilizzato
@@ -207,22 +291,26 @@ public class Ghosting_ implements PlugIn {
 		int ymroi = (int) phantomCircle[1];
 		int dmroi = (int) Math.round(diampix);
 
-		imp1.setRoi(new OvalRoi(xmroi - dmroi / 2, ymroi - dmroi / 2, dmroi, dmroi));
+		imp2.setRoi(new OvalRoi(xmroi - dmroi / 2, ymroi - dmroi / 2, dmroi, dmroi));
 		// siccome ho impostato la MROI posso calcolare il valore medio di essa, si
 		// utilizza nel calcolo dei ghosts
-		ImageStatistics stat1 = imp1.getStatistics();
-		double MROImean = stat1.mean;
+		ImageStatistics statMROI = imp2.getStatistics();
+		double MROImean = statMROI.mean;
 
-		imp1.getRoi().setStrokeColor(Color.GREEN);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
-		if (true)
+		imp2.getRoi().setStrokeColor(Color.GREEN);
+		over2.addElement(imp2.getRoi());
+		imp2.killRoi();
+		if (step)
 			ACRlog.waitHere(ACRlog.qui() + "cerchio interno verde MROI", step, timeout);
 
 		int[] MROIcircle = new int[4];
 		MROIcircle[0] = xmroi;
 		MROIcircle[1] = ymroi;
 		MROIcircle[2] = dmroi;
+		
+//		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #906#" + namepathImage2);
+//		IJ.saveAs(imp2, "jpg", namepathImage2);
+
 
 		// disegno 4 ROI rettangolari ai bordi dell'immagine, tale ROI deve avere un
 		// area di 3 cmq ed un rapporto lunghezza/larghezza 8:1
@@ -244,15 +332,15 @@ public class Ghosting_ implements PlugIn {
 		// le istruzioni parlano sempre di raggio, ma per il nostro uso viene comodo
 		// adottare sempre il diametro, in pratica non cambia nulla
 
-		int width = imp1.getWidth();
-		int height = imp1.getHeight();
+		int width = imp2.getWidth();
+		int height = imp2.getHeight();
 		double diamUFOV = 0.8 * involucro;
 		double gapFromOther = 0.1 * involucro;
 		double sxgap = xphantom - involucro / 2; // spazio tra fantoccio e lato immagine
 		double dxgap = width - xphantom - involucro / 2; // spazio tra fantoccio e lato immagine
 		double upgap = yphantom - involucro / 2; // spazio tra fantoccio e lato immagine
 		double logap = height - yphantom - involucro / 2; // spazio tra fantoccio e lato immagine
-		int guard = 3; // potrei mettere 2 o 3 pixel anzichè calcolarlo?)
+		int guard = 2; // metto un valore preciso)
 //		int guard = (int) dmroi/50;		// spazio di rispetto attorno alle ROI
 		double roimm = 300; // 300 mm2 sono stabiliti dal protocollo
 		int roipix = (int) Math.round((roimm / dimPixel) / dimPixel); // lavoriamo sempre in pixel
@@ -260,8 +348,8 @@ public class Ghosting_ implements PlugIn {
 
 		double sxroiwidth = sxgap - 2 * guard;
 		double sxroiheight = roipix / sxroiwidth;
-		double sxroiheightE = (roipix * Math.PI) / (sxroiwidth * 2); /// NON NE SONO POI TAAAANTO SICURO!!!!!
-		ACRlog.waitHere(ACRlog.qui() + "diametro maggiore ellisse" + sxroiheightE);
+//		double sxroiheightE = (roipix * Math.PI) / (sxroiwidth * 2); /// NON NE SONO POI TAAAANTO SICURO!!!!!
+//		ACRlog.waitHere(ACRlog.qui() + "diametro maggiore ellisse" + sxroiheightE);
 //		double dxroiwidth = dxgap - gapFromOther * 2;
 		double dxroiwidth = dxgap - 2 * guard;
 		double dxroiheight = roipix / dxroiwidth;
@@ -270,38 +358,98 @@ public class Ghosting_ implements PlugIn {
 		double uproiwidth = roipix / uproiheight;
 
 //		double loroiwidth = logap - gapFromOther * 2;
-		double loroiheight = logap - 2 * guard;
-		double loroiwidth = roipix / loroiheight;
+		double dwroiheight = logap - 2 * guard;
+		double dwroiwidth = roipix / dwroiheight;
 
-		double areaX = sxroiwidth * sxroiheightE / 4 * Math.PI * dimPixel * dimPixel;
+		double areaX = sxroiwidth * sxroiheight * dimPixel * dimPixel;
 		IJ.log("areaX= " + areaX);
 		double areaY = dxroiwidth * dxroiheight * dimPixel * dimPixel;
 		IJ.log("areaY= " + areaX);
 
 		// adesso cerco di disegnare la ROI
+		imp2.killRoi();
+		imp2.setRoi(guard, yphantom - (int) sxroiheight / 2, (int) sxroiwidth, (int) sxroiheight);
+		ImageStatistics statsxroi = imp2.getStatistics();
+		double sxroimean = statsxroi.mean;
+		imp2.getRoi().setStrokeColor(Color.GREEN);
+		over2.addElement(imp2.getRoi());
 
-		imp1.setRoi(new OvalRoi((int) guard, yphantom - (int) sxroiheightE / 2, (int) sxroiwidth, (int) sxroiheightE));
-		imp1.getRoi().setStrokeColor(Color.GREEN);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
-		imp1.setRoi(xphantom + involucro / 2 + guard, yphantom - (int) sxroiheight / 2, (int) dxroiwidth,
+		imp2.killRoi();
+		imp2.setRoi(xphantom + involucro / 2 + guard, yphantom - (int) dxroiheight / 2, (int) dxroiwidth,
 				(int) dxroiheight);
-		imp1.getRoi().setStrokeColor(Color.BLUE);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
+		ImageStatistics statdxroi = imp2.getStatistics();
+		double dxroimean = statdxroi.mean;
+		imp2.getRoi().setStrokeColor(Color.BLUE);
+		over2.addElement(imp2.getRoi());
 
-		imp1.setRoi(xphantom - (int) uproiwidth / 2, guard, (int) uproiwidth, (int) uproiheight);
-		imp1.getRoi().setStrokeColor(Color.BLUE);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
+		imp2.killRoi();
+		imp2.setRoi(xphantom - (int) uproiwidth / 2, guard, (int) uproiwidth, (int) uproiheight);
+		ImageStatistics statuproi = imp2.getStatistics();
+		double uproimean = statuproi.mean;
+		imp2.getRoi().setStrokeColor(Color.YELLOW);
+		over2.addElement(imp2.getRoi());
 
-		imp1.setRoi(xphantom - (int) loroiwidth / 2, yphantom + involucro / 2 + guard, (int) loroiwidth,
-				(int) loroiheight);
-		imp1.getRoi().setStrokeColor(Color.BLUE);
-		over1.addElement(imp1.getRoi());
-		imp1.killRoi();
+		imp2.killRoi();
+		imp2.setRoi(xphantom - (int) dwroiwidth / 2, yphantom + involucro / 2 + guard, (int) dwroiwidth,
+				(int) dwroiheight);
+		ImageStatistics statdwroi = imp2.getStatistics();
+		double dwroimean = statdwroi.mean;
+		imp2.getRoi().setStrokeColor(Color.RED);
+		over2.addElement(imp2.getRoi());
+		imp2.killRoi();
 
-		ACRlog.waitHere();
+		// =====================================================
+		// Misura ghosting ratio
+		// =====================================================
+
+		double ghostingratio = Math.abs((uproimean - dwroimean) - (sxroimean + dxroimean) / (2 * MROImean));
+
+		
+		String[] info1 = ACRutils.imageInformation(imp1);
+		for (int i1 = 0; i1 < info1.length; i1++) {
+			ACRlog.appendLog(namepathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
+		}
+		
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #920#" + namepathImage3);
+		IJ.saveAs(imp2, "jpg", namepathImage3);
+
+		
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "Ghosting Ratio: #301#" + IJ.d2s(ghostingratio, 4));
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "maxtolerance: #302#" + IJ.d2s(maxtolerance, 4));
+		boolean failmin = (Double.compare(ghostingratio, maxtolerance) >= 0);
+		String response = "";
+		if (failmin) {
+			response = "FAIL";
+		} else {
+			response = "PASS";
+		}
+
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "giudizio Ghosting Ratio: #303#" + response);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "TOP Area: #401#" + statuproi.area);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "TOP Mean: #402#" + statuproi.mean);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "TOP SD: #403#" + statuproi.stdDev);
+
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "BOT Area: #404#" + statdwroi.area);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "BOT Mean: #405#" + statdwroi.mean);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "BOT SD: #406#" + statdwroi.stdDev);
+		
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "LEFT Area: #407#" + statsxroi.area);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "LEFT Mean: #408#" + statsxroi.mean);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "LEFT SD: #409#" + statsxroi.stdDev);
+
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "RIGHT Area: #410#" + statdxroi.area);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "RIGHT Mean: #411#" + statdxroi.mean);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "RIGHT SD: #412#" + statdxroi.stdDev);
+
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "MROI Area: #413#" + statMROI.area);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "MROI Mean: #414#" + statMROI.mean);
+		ACRlog.appendLog(namepathReport, ACRlog.qui() + "MROI SD: #415#" + statMROI.stdDev);
+		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
+		
+		imp2.changes = false;
+		imp2.close();
+	
+		
 
 	}
 

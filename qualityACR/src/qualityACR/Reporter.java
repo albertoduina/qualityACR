@@ -61,6 +61,12 @@ public class Reporter implements PlugIn {
 		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico_T1S1.txt");
 		String[] posizione = getMeasureReport(reportpath, "ReportPosition_T1S1.txt");
 		String[] uniformity = getMeasureReport(reportpath, "ReportUniformity_T1S5.txt");
+		String[] ghosting = getMeasureReport(reportpath, "ReportGhosting_T1S5.txt");
+		
+		
+		
+		
+		
 		ACRlog.logVector(uniformity, "Uniformity");
 
 		// ----- cancellazione cacchine precedenti -----
@@ -78,12 +84,15 @@ public class Reporter implements PlugIn {
 		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
 		writeTextFile(slice1html3, "Report_T1S1.html", reportpath);
 		String[] slice5html1 = reporterEngine(slice5html0, uniformity, true);
-		ACRlog.logVector(slice5html1, "slice5html1");
+		String[] slice5html2 = reporterEngine(slice5html1, ghosting, true);
+
+		
+		ACRlog.logVector(slice5html2, "slice5html2");
 		ACRlog.waitHere("VERIFICARE T1");
 
-		writeTextFile(slice5html1, "Report_T1S5.html", reportpath);
+		writeTextFile(slice5html2, "Report_T1S5.html", reportpath);
 
-		String defimage = dummyImage(reportpath);
+//		String defimage = dummyImage(reportpath);
 	}
 
 	public void mainReporter2() {
@@ -98,12 +107,13 @@ public class Reporter implements PlugIn {
 		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico_T2S1.txt");
 		String[] posizione = getMeasureReport(reportpath, "ReportPosition_T2S1.txt");
 		String[] uniformity = getMeasureReport(reportpath, "ReportUniformity_T2S5.txt");
+		String[] ghosting = getMeasureReport(reportpath, "ReportGhosting_T2S5.txt");
 		ACRlog.logVector(uniformity, "Uniformity");
 
 		// ----- cancellazione cacchine precedenti -----
 		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S1.html"));
 		boolean ok3 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S5.html"));
-		if (!(ok2))
+		if (!(ok2&&ok3))
 			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
 		// ----------------------------------------------
 
@@ -112,7 +122,8 @@ public class Reporter implements PlugIn {
 		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
 		writeTextFile(slice1html3, "Report_T2S1.html", reportpath);
 		String[] slice5html1 = reporterEngine(slice5html0, uniformity, false);
-		writeTextFile(slice5html1, "Report_T2S5.html", reportpath);
+		String[] slice5html2 = reporterEngine(slice5html1, ghosting, false);
+		writeTextFile(slice5html2, "Report_T2S5.html", reportpath);
 		ACRlog.logVector(slice5html1, "slice5html1");
 		ACRlog.waitHere("VERIFICARE T1");
 	}

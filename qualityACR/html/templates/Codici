@@ -100,25 +100,28 @@ Table 3 PIU Area Statistics
 #207# smallROIlow ypos
 
 
-#920# image position920.jpg
-#921# profile profileyellow921.jpg
-#922# profile profilegreen922.jpg
+#920# image ghosting920.jpg
 
-Table 4 Slice position difference
-#301# FWM yellow  [mm]
-#302# FWM green [mm]
-#303# Slice position difference [mm]
-#304# Difference Limits [mm]
-#305# Difference Pass/Fail
+Table 4 Percent-Signal Ghosting
+#301# Percent-Signal Ghosting [%]
+#302# Ghosting Maximum Acceptance Limit [%]
+#303# Ghosting Pass/Fail
 
-#930# image resolution
-#999# dummy
-#999# dummy
 
-Table 5 Resolution
-#401# 0.9 mm UPPER LEFT
-#402# 0.9 mm LOWER RIGHT
-#403# 0.8 mm UPPER LEFT
-#404# 0.8 mm LOWER RIGHT
-#405# 0.7 mm UPPER LEFT
-#406# 0.7 mm LOWER RIGHT
+
+Table 5 Ghost Area Statistics
+#401# Top Area
+#402# Top Mean
+#403# Top SD
+#404# Bottom Area
+#405# Bottom Mean
+#406# Bottom SD
+#407# Left Area
+#408# Left Mean
+#409# Left SD
+#410# Right Area
+#411# Right Mean
+#412# Right SD
+#413# MROI Area
+#414# MROI Mean
+#415# MROI SD

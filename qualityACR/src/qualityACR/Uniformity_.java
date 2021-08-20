@@ -49,7 +49,7 @@ public class Uniformity_ implements PlugIn {
 	public void mainUnifor() {
 
 		Properties prop = ACRutils.readConfigACR();
-		int timeout = 2000; // preme automaticamente OK ai messaggi durante i test
+		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
 		boolean fastdefault = false;
 		boolean stepdefault = false;
 		boolean verbosedefault = false;
@@ -96,6 +96,9 @@ public class Uniformity_ implements PlugIn {
 			vetBoolSliceT1[i1] = gd1.getNextBoolean();
 			vetBoolSliceT2[i1] = gd1.getNextBoolean();
 		}
+		if (fast)
+			timeout = 2000;
+
 
 		// vado a scrivere i setup nel config file
 		if (prop == null) {
@@ -152,7 +155,7 @@ public class Uniformity_ implements PlugIn {
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log("elaborazione slice T2 numero " + i1);
-				phantomCalculations(sortedListT1[i1], pathReport1, "T2", i1 + 1, step, verbose, timeout);
+				phantomCalculations(sortedListT2[i1], pathReport1, "T2", i1 + 1, step, verbose, timeout);
 			}
 		}
 
@@ -226,9 +229,9 @@ public class Uniformity_ implements PlugIn {
 		// ----------------------------------------------------------------------------
 
 		// estraggo i dati del phantomCircle
-		int xphantom = (int) phantomCircle[0];
-		int yphantom = (int) phantomCircle[1];
-		int dphantom = (int) phantomCircle[2];
+		int xphantom = (int)  Math.round(phantomCircle[0]);
+		int yphantom = (int)  Math.round(phantomCircle[1]);
+		int dphantom = (int)  Math.round(phantomCircle[2]);
 
 		// ------- overlay trasparente per disegni ------------------
 		Overlay over2 = new Overlay();
