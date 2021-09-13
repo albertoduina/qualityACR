@@ -3835,7 +3835,7 @@ public class ACRlocalizer {
 	 * @param verbose
 	 * @param timeout
 	 */
-	public static void staticGridMatrix(ImagePlus imp1, double[] phantomCircle, double angle, boolean step,
+	public static void staticGridMatrix66(ImagePlus imp1, double[] phantomCircle, double angle, boolean step,
 			boolean fast, boolean verbose, int timeout) {
 
 		ImagePlus imp2 = imp1.duplicate();

@@ -121,7 +121,7 @@ public class ACRlocalizerTest {
 		ACRlog.logMatrix(phantomVertices, ACRlog.qui() + "phantomVertices");
 		IJ.log(ACRlog.qui() + "angle= " + angle);
 
-		ACRlocalizer.staticGridMatrix(imp1, phantomCircle, angle, step, fast, verbose, timeout);
+//		ACRlocalizer.staticGridMatrix(imp1, phantomCircle, angle, step, fast, verbose, timeout);
 
 		ACRlog.waitHere();
 

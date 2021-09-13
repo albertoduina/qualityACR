@@ -12,7 +12,10 @@ import ij.gui.GenericDialog;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
+import ij.measure.Calibration;
 import ij.plugin.PlugIn;
+import ij.plugin.Resizer;
+import ij.plugin.Scaler;
 
 public class SpatialResolution implements PlugIn {
 	public static final boolean debug = false;
@@ -187,7 +190,8 @@ public class SpatialResolution implements PlugIn {
 
 		// QUESTO SI CHIAMA BARARE, SIGNOR BARONE......
 		// in pratica se applico le seguenti correzioni ai parametri del cerchio
-		// miglioro la situazione, ovviamente funziona solo per questa immagine, pertanto inutile
+		// miglioro la situazione, ovviamente funziona solo per questa immagine,
+		// pertanto inutile
 
 //		phantomCircle[0] = phantomCircle[0];
 //		phantomCircle[1] = phantomCircle[1] + 1;
@@ -204,7 +208,7 @@ public class SpatialResolution implements PlugIn {
 		ACRutils.zoom(imp3);
 
 		// istruzioni inutili, da eliminare, se non introduco altro
-		imp2.changes = false;   // permette di chiudere l'immagine senza domande da parte del sistema
+		imp2.changes = false; // permette di chiudere l'immagine senza domande da parte del sistema
 		imp2.close();
 		Overlay over3 = new Overlay();
 		imp3.setOverlay(over3);
@@ -226,7 +230,6 @@ public class SpatialResolution implements PlugIn {
 			imp3.killRoi();
 		}
 
-		
 // NON SO COME ANDARE AVANTI, NON HO SUFFICIENTE PRECISIONE		
 //		double[][] resolutionHoles = ACRlocalizer.phantomResolutionHoles(imp2, phantomVertices, step, fast, verbose,
 //				timeout);
@@ -236,5 +239,20 @@ public class SpatialResolution implements PlugIn {
 //		ACRlocalizer.staticGridMatrix(imp2, phantomCircle, angle, step, fast, verbose, timeout);
 
 		return;
+	}
+
+	/**
+	 * Resize the input image to obtain isotropic voxel
+	 * 
+	 * @param imagePlus
+	 * @param rescaleFactor
+	 * @param interpolationOptions "None", "Bilinear", "Bicubic"
+	 * @return
+	 */
+	public static ImagePlus resizeImage(ImagePlus imagePlus, int rescaleFactor, String interpolationOptions) {
+		ImagePlus imagePlusRescale = Scaler.resize(imagePlus, rescaleFactor, rescaleFactor, 1, interpolationOptions);
+
+		return imagePlusRescale;
+
 	}
 }

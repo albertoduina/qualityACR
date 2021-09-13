@@ -65,10 +65,7 @@
 		move1,    
 		jar,
 		zipdistribution, 
-		cond_INS, 
-		cond_OLD, 
-		cond_WIN7, 
-		cond_FIJI">
+		cond_WIN7">
 	</target>
 
 
