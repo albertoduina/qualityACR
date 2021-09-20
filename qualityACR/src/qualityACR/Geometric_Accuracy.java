@@ -40,13 +40,13 @@ public class Geometric_Accuracy implements PlugIn {
 		Properties prop = ACRutils.readConfigACR();
 		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
 		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
-		boolean[] defaults = { false, false, false, false, false, false, false, false, false, false, false, false,
+		boolean[] defaults = { true, true, false, false, true, true, false, false, false, false, false, false,
 				false, false };
 		String[] headings = { "slices T1", "slices T2" };
 		boolean fastdefault = false;
 		boolean stepdefault = false;
 		boolean verbosedefault = false;
-		boolean localizerdefault = false;
+		boolean localizerdefault = true;
 		boolean[] T1 = new boolean[7];
 		boolean[] T2 = new boolean[7];
 
@@ -54,15 +54,15 @@ public class Geometric_Accuracy implements PlugIn {
 			fastdefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.fast"));
 			stepdefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.step"));
 			verbosedefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.verbose"));
-			localizerdefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.geomLocalizer"));
+		//	localizerdefault = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.geomLocalizer"));
 			for (int i1 = 0; i1 < 7; i1++) {
-				T1[i1] = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.SliceT1[" + i1 + "]"));
-				T2[i1] = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.SliceT2[" + i1 + "]"));
+		//		T1[i1] = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.SliceT1[" + i1 + "]"));
+		//		T2[i1] = Boolean.parseBoolean(prop.getProperty("Geometric_Accuracy.SliceT2[" + i1 + "]"));
 			}
 			int count = 0;
 			for (int i1 = 0; i1 < 7; i1++) {
-				defaults[count++] = T1[i1];
-				defaults[count++] = T2[i1];
+		//		defaults[count++] = T1[i1];
+		//		defaults[count++] = T2[i1];
 			}
 		}
 

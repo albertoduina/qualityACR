@@ -70,8 +70,8 @@ public class Uniformity_ implements PlugIn {
 			}
 			int count = 0;
 			for (int i1 = 0; i1 < 7; i1++) {
-				defaults[count++] = T1[i1];
-				defaults[count++] = T2[i1];
+	//			defaults[count++] = T1[i1];
+	//			defaults[count++] = T2[i1];
 			}
 		}
 

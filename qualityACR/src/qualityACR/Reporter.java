@@ -39,6 +39,7 @@ public class Reporter implements PlugIn {
 
 		mainReporter1();
 		mainReporter2();
+		ACRlog.waitHere("FINE REPORTER");
 	}
 
 	/**
@@ -54,45 +55,40 @@ public class Reporter implements PlugIn {
 
 		String[] localizhtml0 = getTemplateFromJAR("templates/", "ReportLocalizer.html");
 		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1A.html");
-		String[] slice5html0 = getTemplateFromJAR("templates/", "ReportSlice5_T1B.html");
+		String[] slice3html0 = getTemplateFromJAR("templates/", "ReportSlice3_T1A.html");
+		String[] slice4html0 = getTemplateFromJAR("templates/", "ReportSlice4_T1B.html");
 
 		String[] localizer = getMeasureReport(reportpath, "ReportLocalizer.txt");
 		String[] thickness = getMeasureReport(reportpath, "ReportThickness_T1S1.txt");
 		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico_T1S1.txt");
 		String[] posizione = getMeasureReport(reportpath, "ReportPosition_T1S1.txt");
-		String[] uniformity = getMeasureReport(reportpath, "ReportUniformity_T1S5.txt");
-		String[] ghosting = getMeasureReport(reportpath, "ReportGhosting_T1S5.txt");
-		
-		
-		
-		
-		
-		ACRlog.logVector(uniformity, "Uniformity");
+		String[] uniformity = getMeasureReport(reportpath, "ReportUniformity_T1S4.txt");
+		String[] ghosting = getMeasureReport(reportpath, "ReportGhosting_T1S4.txt");
+		String[] geometrico3 = getMeasureReport(reportpath, "ReportGeometrico_T1S3.txt");		
 
 		// ----- cancellazione cacchine precedenti -----
 		boolean ok1 = ACRinputOutput.deleteFile(new File(reportpath + "\\ReportLocalizer.html"));
 		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T1S1.html"));
-		boolean ok3 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T1S5.html"));
-		if (!(ok1 && ok2&&ok3))
+		boolean ok3 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T1S4.html"));
+		boolean ok4 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T1S3.html"));
+		if (!(ok1 && ok2&&ok3&&ok4))
 			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
 		// ----------------------------------------------
 
 		String[] localizhtml2 = reporterEngine(localizhtml0, localizer, false);
 		writeTextFile(localizhtml2, "ReportLocalizer.html", reportpath);
+		
 		String[] slice1html1 = reporterEngine(slice1html0, geometrico, false);
 		String[] slice1html2 = reporterEngine(slice1html1, posizione, false);
 		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
 		writeTextFile(slice1html3, "Report_T1S1.html", reportpath);
-		String[] slice5html1 = reporterEngine(slice5html0, uniformity, true);
-		String[] slice5html2 = reporterEngine(slice5html1, ghosting, true);
-
 		
-		ACRlog.logVector(slice5html2, "slice5html2");
-		ACRlog.waitHere("VERIFICARE T1");
-
-		writeTextFile(slice5html2, "Report_T1S5.html", reportpath);
-
-//		String defimage = dummyImage(reportpath);
+		String[] slice3html1 = reporterEngine(slice3html0, geometrico3, false);
+		writeTextFile(slice3html1, "Report_T1S3.html", reportpath);
+		
+		String[] slice4html1 = reporterEngine(slice4html0, uniformity, false);
+		String[] slice4html2 = reporterEngine(slice4html1, ghosting, false);
+		writeTextFile(slice4html2, "Report_T1S4.html", reportpath);
 	}
 
 	public void mainReporter2() {
@@ -101,19 +97,21 @@ public class Reporter implements PlugIn {
 		IJ.log("reportpath= " + reportpath);
 
 		String[] slice1html0 = getTemplateFromJAR("templates/", "ReportSlice1_T1A.html");
-		String[] slice5html0 = getTemplateFromJAR("templates/", "ReportSlice5_T1B.html");
+		String[] slice3html0 = getTemplateFromJAR("templates/", "ReportSlice3_T1A.html");
+		String[] slice4html0 = getTemplateFromJAR("templates/", "ReportSlice4_T1B.html");
 
 		String[] thickness = getMeasureReport(reportpath, "ReportThickness_T2S1.txt");
 		String[] geometrico = getMeasureReport(reportpath, "ReportGeometrico_T2S1.txt");
 		String[] posizione = getMeasureReport(reportpath, "ReportPosition_T2S1.txt");
-		String[] uniformity = getMeasureReport(reportpath, "ReportUniformity_T2S5.txt");
-		String[] ghosting = getMeasureReport(reportpath, "ReportGhosting_T2S5.txt");
-		ACRlog.logVector(uniformity, "Uniformity");
-
+		String[] uniformity = getMeasureReport(reportpath, "ReportUniformity_T2S4.txt");
+		String[] ghosting = getMeasureReport(reportpath, "ReportGhosting_T2S4.txt");
+		String[] geometrico3 = getMeasureReport(reportpath, "ReportGeometrico_T2S3.txt");		
+		
 		// ----- cancellazione cacchine precedenti -----
 		boolean ok2 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S1.html"));
-		boolean ok3 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S5.html"));
-		if (!(ok2&&ok3))
+		boolean ok3 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S4.html"));
+		boolean ok4 = ACRinputOutput.deleteFile(new File(reportpath + "\\Report_T2S3.html"));
+		if (!(ok2&&ok3&&ok4))
 			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
 		// ----------------------------------------------
 
@@ -121,11 +119,14 @@ public class Reporter implements PlugIn {
 		String[] slice1html2 = reporterEngine(slice1html1, posizione, false);
 		String[] slice1html3 = reporterEngine(slice1html2, thickness, false);
 		writeTextFile(slice1html3, "Report_T2S1.html", reportpath);
-		String[] slice5html1 = reporterEngine(slice5html0, uniformity, false);
-		String[] slice5html2 = reporterEngine(slice5html1, ghosting, false);
-		writeTextFile(slice5html2, "Report_T2S5.html", reportpath);
-		ACRlog.logVector(slice5html1, "slice5html1");
-		ACRlog.waitHere("VERIFICARE T1");
+		
+		String[] slice3html1 = reporterEngine(slice3html0, geometrico3, false);
+		writeTextFile(slice3html1, "Report_T2S3.html", reportpath);
+		
+		String[] slice4html1 = reporterEngine(slice4html0, uniformity, false);
+		String[] slice4html2 = reporterEngine(slice4html1, ghosting, false);
+		writeTextFile(slice4html2, "Report_T2S4.html", reportpath);
+		
 	}
 
 	/**

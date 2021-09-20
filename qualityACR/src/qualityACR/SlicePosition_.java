@@ -33,7 +33,7 @@ public class SlicePosition_ implements PlugIn {
 		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
 		IJ.log(ACRlog.qui() + "START");
 		String[] labels = { "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "6", "6", "7", "7" };
-		boolean[] defaults = { true, false, false, false, false, false, false, false, false, false, false, false, false,
+		boolean[] defaults = { true, true, false, false, false, false, false, false, false, false, false, false, false,
 				false };
 		String[] headings = { "slices T1", "slices T2" };
 		boolean fastdefault = false;
@@ -47,13 +47,13 @@ public class SlicePosition_ implements PlugIn {
 			stepdefault = Boolean.parseBoolean(prop.getProperty("Position.step"));
 			verbosedefault = Boolean.parseBoolean(prop.getProperty("Position.verbose"));
 			for (int i1 = 0; i1 < 7; i1++) {
-				T1[i1] = Boolean.parseBoolean(prop.getProperty("Position.SliceT1[" + i1 + "]"));
-				T2[i1] = Boolean.parseBoolean(prop.getProperty("Position.SliceT2[" + i1 + "]"));
+	//			T1[i1] = Boolean.parseBoolean(prop.getProperty("Position.SliceT1[" + i1 + "]"));
+	//			T2[i1] = Boolean.parseBoolean(prop.getProperty("Position.SliceT2[" + i1 + "]"));
 			}
 			int count = 0;
 			for (int i1 = 0; i1 < 7; i1++) {
-				defaults[count++] = T1[i1];
-				defaults[count++] = T2[i1];
+	//			defaults[count++] = T1[i1];
+	//			defaults[count++] = T2[i1];
 			}
 		}
 
