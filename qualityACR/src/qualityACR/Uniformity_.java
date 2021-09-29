@@ -43,10 +43,15 @@ public class Uniformity_ implements PlugIn {
 
 	public void run(String arg) {
 
-		mainUnifor();
+		mainUnifor(arg);
 	}
 
-	public void mainUnifor() {
+	public void mainUnifor(String arg) {
+		// se riceve 1 allora vuol dire che abbiamo l'elaborazione automatica per tutti
+		// i controlli
+		boolean auto = false;
+		if (arg.equals("1"))
+			auto = true;
 
 		Properties prop = ACRutils.readConfigACR();
 		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
@@ -60,7 +65,7 @@ public class Uniformity_ implements PlugIn {
 				false };
 		String[] headings = { "slices T1", "slices T2" };
 
-		if (prop != null) {
+		if (prop != null && !auto) {
 			fastdefault = Boolean.parseBoolean(prop.getProperty("Uniformity.fast"));
 			stepdefault = Boolean.parseBoolean(prop.getProperty("Uniformity.step"));
 			verbosedefault = Boolean.parseBoolean(prop.getProperty("Uniformity.verbose"));
@@ -70,57 +75,74 @@ public class Uniformity_ implements PlugIn {
 			}
 			int count = 0;
 			for (int i1 = 0; i1 < 7; i1++) {
-	//			defaults[count++] = T1[i1];
-	//			defaults[count++] = T2[i1];
+				// defaults[count++] = T1[i1];
+				// defaults[count++] = T2[i1];
 			}
 		}
 
-		GenericDialog gd1 = new GenericDialog("UNIFORMITY");
-		gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
-		gd1.addCheckbox("STEP", stepdefault);
-		gd1.addCheckbox("VERBOSE", verbosedefault);
-		gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
-
-		gd1.showDialog();
-		if (gd1.wasCanceled()) {
-			ACRlog.waitHere("premuto cancel");
-			return;
-		}
-
-		boolean fast = gd1.getNextBoolean();
-		boolean step = gd1.getNextBoolean();
-		boolean verbose = gd1.getNextBoolean();
+		boolean fast;
+		boolean step;
+		boolean verbose;
 		boolean[] vetBoolSliceT1 = new boolean[7];
 		boolean[] vetBoolSliceT2 = new boolean[7];
-		for (int i1 = 0; i1 < 7; i1++) {
-			vetBoolSliceT1[i1] = gd1.getNextBoolean();
-			vetBoolSliceT2[i1] = gd1.getNextBoolean();
-		}
-		if (fast)
-			timeout = 2000;
 
+		if (auto) {
+			timeout = 500;
+			ACRlog.waitHere("UNIFORMITY AUTO", false, timeout);
+			fast = fastdefault;
+			step = stepdefault;
+			verbose = verbosedefault;
+			int count = 0;
+			for (int i1 = 0; i1 < 7; i1++) {
+				vetBoolSliceT1[i1] = defaults[count++];
+				vetBoolSliceT2[i1] = defaults[count++];
+			}
+		} else {
 
-		// vado a scrivere i setup nel config file
-		if (prop == null) {
-			prop = new Properties();
-		}
-		prop.setProperty("Uniformity.fast", "" + fast);
-		prop.setProperty("Uniformity.step", "" + step);
-		prop.setProperty("Uniformity.verbose", "" + verbose);
-		for (int i1 = 0; i1 < 7; i1++) {
-			String aux1 = "Uniformity.SliceT1[" + i1 + "]";
-			String aux2 = "" + vetBoolSliceT1[i1];
-			prop.setProperty(aux1, aux2);
-		}
-		for (int i1 = 0; i1 < 7; i1++) {
-			String aux1 = "Uniformity.SliceT2[" + i1 + "]";
-			String aux2 = "" + vetBoolSliceT2[i1];
-			prop.setProperty(aux1, aux2);
-		}
-		try {
-			ACRutils.writeConfigACR(prop);
-		} catch (IOException e) {
-			e.printStackTrace();
+			GenericDialog gd1 = new GenericDialog("UNIFORMITY");
+			gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
+			gd1.addCheckbox("STEP", stepdefault);
+			gd1.addCheckbox("VERBOSE", verbosedefault);
+			gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
+
+			gd1.showDialog();
+			if (gd1.wasCanceled()) {
+				ACRlog.waitHere("premuto cancel");
+				return;
+			}
+
+			fast = gd1.getNextBoolean();
+			step = gd1.getNextBoolean();
+			verbose = gd1.getNextBoolean();
+			for (int i1 = 0; i1 < 7; i1++) {
+				vetBoolSliceT1[i1] = gd1.getNextBoolean();
+				vetBoolSliceT2[i1] = gd1.getNextBoolean();
+			}
+			if (fast)
+				timeout = 2000;
+
+			// vado a scrivere i setup nel config file
+			if (prop == null) {
+				prop = new Properties();
+			}
+			prop.setProperty("Uniformity.fast", "" + fast);
+			prop.setProperty("Uniformity.step", "" + step);
+			prop.setProperty("Uniformity.verbose", "" + verbose);
+			for (int i1 = 0; i1 < 7; i1++) {
+				String aux1 = "Uniformity.SliceT1[" + i1 + "]";
+				String aux2 = "" + vetBoolSliceT1[i1];
+				prop.setProperty(aux1, aux2);
+			}
+			for (int i1 = 0; i1 < 7; i1++) {
+				String aux1 = "Uniformity.SliceT2[" + i1 + "]";
+				String aux2 = "" + vetBoolSliceT2[i1];
+				prop.setProperty(aux1, aux2);
+			}
+			try {
+				ACRutils.writeConfigACR(prop);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		String uno = "";
 		String due = "";
@@ -158,6 +180,8 @@ public class Uniformity_ implements PlugIn {
 				phantomCalculations(sortedListT2[i1], pathReport1, "T2", i1 + 1, step, verbose, timeout);
 			}
 		}
+
+		ACRlog.waitHere("UNIFORMITY TERMINATA", false, timeout);
 
 	}
 
@@ -229,9 +253,9 @@ public class Uniformity_ implements PlugIn {
 		// ----------------------------------------------------------------------------
 
 		// estraggo i dati del phantomCircle
-		int xphantom = (int)  Math.round(phantomCircle[0]);
-		int yphantom = (int)  Math.round(phantomCircle[1]);
-		int dphantom = (int)  Math.round(phantomCircle[2]);
+		int xphantom = (int) Math.round(phantomCircle[0]);
+		int yphantom = (int) Math.round(phantomCircle[1]);
+		int dphantom = (int) Math.round(phantomCircle[2]);
 
 		// ------- overlay trasparente per disegni ------------------
 		Overlay over2 = new Overlay();
@@ -257,13 +281,10 @@ public class Uniformity_ implements PlugIn {
 		MROIcircle[0] = xphantom;
 		MROIcircle[1] = yphantom;
 		MROIcircle[2] = (int) dmroi;
-		
-		
+
 		imp2.setRoi(new OvalRoi(xphantom - dmroi / 2, yphantom - dmroi / 2, dmroi, dmroi));
 		ImageStatistics stat2 = imp2.getStatistics();
 		double mean2 = stat2.mean;
-	
-		
 
 		//
 		// RICERCA PIXELS MAX E MINIMO E LORO MARCATURA GIALLO E AZZURRO

@@ -23,10 +23,7 @@ public class SliceThickness_ implements PlugIn {
 	public static final boolean debug = true;
 
 	public void run(String arg) {
-
-		ACRlog.waitHere("3 - SliceThickness");
-
-		mainThickness();
+		mainThickness(arg);
 	}
 
 	// 20july2021
@@ -36,7 +33,12 @@ public class SliceThickness_ implements PlugIn {
 	// adattarlo ai double od agli int ed eliminare dalla mia lista di punti
 	// ricavati dalle scansioni fantoccio, tutti i duplicati
 
-	public void mainThickness() {
+	public void mainThickness(String arg) {
+		// se riceve 1 allora vuol dire che abbiamo l'elaborazione automatica per tutti
+		// i controlli
+		boolean auto = false;
+		if (arg.equals("1"))
+			auto = true;
 		Properties prop = ACRutils.readConfigACR();
 		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
 		IJ.log(ACRlog.qui() + "START");
@@ -53,77 +55,97 @@ public class SliceThickness_ implements PlugIn {
 		boolean[] T1 = new boolean[7];
 		boolean[] T2 = new boolean[7];
 
-		if (prop != null) {
+		if (prop != null && !auto) {
 			fastdefault = Boolean.parseBoolean(prop.getProperty("Thickness.fast"));
 			stepdefault = Boolean.parseBoolean(prop.getProperty("Thickness.step"));
 			verbosedefault = Boolean.parseBoolean(prop.getProperty("Thickness.verbose"));
 			for (int i1 = 0; i1 < 7; i1++) {
-	//			T1[i1] = Boolean.parseBoolean(prop.getProperty("Thickness.SliceT1[" + i1 + "]"));
-	//			T2[i1] = Boolean.parseBoolean(prop.getProperty("Thickness.SliceT2[" + i1 + "]"));
+				// T1[i1] = Boolean.parseBoolean(prop.getProperty("Thickness.SliceT1[" + i1 +
+				// "]"));
+				// T2[i1] = Boolean.parseBoolean(prop.getProperty("Thickness.SliceT2[" + i1 +
+				// "]"));
 			}
 			int count = 0;
 			for (int i1 = 0; i1 < 7; i1++) {
-	//			defaults[count++] = T1[i1];
-	//			defaults[count++] = T2[i1];
+				// defaults[count++] = T1[i1];
+				// defaults[count++] = T2[i1];
 			}
 		}
 
-		GenericDialog gd1 = new GenericDialog("SLICE THICKNESS");
-		gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
-		gd1.addCheckbox("STEP", stepdefault);
-		gd1.addCheckbox("VERBOSE", verbosedefault);
-		gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
-
-		gd1.showDialog();
-		if (gd1.wasCanceled()) {
-			ACRlog.waitHere("premuto cancel");
-			return;
-		}
-
-		IJ.log(" ");
-		Frame f1 = WindowManager.getFrame("Log");
-		if (f1 != null) {
-			f1.setSize(100, 400);
-			f1.setLocation(10, 10);
-		}
-//		String str1 = gd1.getNextRadioButton();
-		boolean fast = gd1.getNextBoolean();
-		boolean step = gd1.getNextBoolean();
-		boolean verbose = gd1.getNextBoolean();
+		boolean fast;
+		boolean step;
+		boolean verbose;
 		boolean[] vetBoolSliceT1 = new boolean[7];
 		boolean[] vetBoolSliceT2 = new boolean[7];
-		for (int i1 = 0; i1 < 7; i1++) {
-			vetBoolSliceT1[i1] = gd1.getNextBoolean();
-			vetBoolSliceT2[i1] = gd1.getNextBoolean();
-		}
 
-		if (fast)
-			timeout = 200;
-		else
-			timeout = 0;
+		if (auto) {
+			timeout = 500;
+			ACRlog.waitHere("SLICE THICKNESS AUTO", false, timeout);
+			fast = fastdefault;
+			step = stepdefault;
+			verbose = verbosedefault;
+			int count = 0;
+			for (int i1 = 0; i1 < 7; i1++) {
+				vetBoolSliceT1[i1] = defaults[count++];
+				vetBoolSliceT2[i1] = defaults[count++];
+			}
+		} else {
 
-		// vado a scrivere i setup nel config file
-		if (prop == null)
-			prop = new Properties();
-		prop.setProperty("Thickness.fast", "" + fast);
-		prop.setProperty("Thickness.step", "" + step);
-		prop.setProperty("Thickness.verbose", "" + verbose);
-		for (int i1 = 0; i1 < 7; i1++) {
-			String aux1 = "Thickness.SliceT1[" + i1 + "]";
-			String aux2 = "" + vetBoolSliceT1[i1];
-			prop.setProperty(aux1, aux2);
-		}
-		for (int i1 = 0; i1 < 7; i1++) {
-			String aux1 = "Thickness.SliceT2[" + i1 + "]";
-			String aux2 = "" + vetBoolSliceT2[i1];
-			prop.setProperty(aux1, aux2);
-		}
+			GenericDialog gd1 = new GenericDialog("SLICE THICKNESS");
+			gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
+			gd1.addCheckbox("STEP", stepdefault);
+			gd1.addCheckbox("VERBOSE", verbosedefault);
+			gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
 
-		try {
-			ACRutils.writeConfigACR(prop);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			gd1.showDialog();
+			if (gd1.wasCanceled()) {
+				ACRlog.waitHere("premuto cancel");
+				return;
+			}
+
+			IJ.log(" ");
+			Frame f1 = WindowManager.getFrame("Log");
+			if (f1 != null) {
+				f1.setSize(100, 400);
+				f1.setLocation(10, 10);
+			}
+//		String str1 = gd1.getNextRadioButton();
+			fast = gd1.getNextBoolean();
+			step = gd1.getNextBoolean();
+			verbose = gd1.getNextBoolean();
+			for (int i1 = 0; i1 < 7; i1++) {
+				vetBoolSliceT1[i1] = gd1.getNextBoolean();
+				vetBoolSliceT2[i1] = gd1.getNextBoolean();
+			}
+
+			if (fast)
+				timeout = 200;
+			else
+				timeout = 0;
+
+			// vado a scrivere i setup nel config file
+			if (prop == null)
+				prop = new Properties();
+			prop.setProperty("Thickness.fast", "" + fast);
+			prop.setProperty("Thickness.step", "" + step);
+			prop.setProperty("Thickness.verbose", "" + verbose);
+			for (int i1 = 0; i1 < 7; i1++) {
+				String aux1 = "Thickness.SliceT1[" + i1 + "]";
+				String aux2 = "" + vetBoolSliceT1[i1];
+				prop.setProperty(aux1, aux2);
+			}
+			for (int i1 = 0; i1 < 7; i1++) {
+				String aux1 = "Thickness.SliceT2[" + i1 + "]";
+				String aux2 = "" + vetBoolSliceT2[i1];
+				prop.setProperty(aux1, aux2);
+			}
+
+			try {
+				ACRutils.writeConfigACR(prop);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		// leggo i nomi di tutti i 15 file presenti
 		String pathLocalizer = "";
@@ -149,22 +171,24 @@ public class SliceThickness_ implements PlugIn {
 		// elaborare solo i file selezionati
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
-				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + (i1+1));
-				evalThickness(sortedListT1[i1], pathReport, "T1", i1+1, step, verbose, timeout);
+				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + (i1 + 1));
+				evalThickness(sortedListT1[i1], pathReport, "T1", i1 + 1, step, verbose, timeout);
 			}
 		}
 
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
-				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + (i1+1));
-				evalThickness(sortedListT2[i1], pathReport, "T2", i1+1, step, verbose, timeout);
+				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + (i1 + 1));
+				evalThickness(sortedListT2[i1], pathReport, "T2", i1 + 1, step, verbose, timeout);
 			}
 		}
-		ACRlog.waitHere("SLICE THICKNESS TERMINATA");
+
+		ACRlog.waitHere("SLICE THICKNESS TERMINATA", false, timeout);
 	}
 
-	public void evalThickness(String path1, String pathReport, String group,  int slice, boolean step, boolean verbose, int timeout) {
+	public void evalThickness(String path1, String pathReport, String group, int slice, boolean step, boolean verbose,
+			int timeout) {
 
 		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
 		// apertura immagine, display, zoom
@@ -175,13 +199,13 @@ public class SliceThickness_ implements PlugIn {
 		double mintolerance = 4.3;
 		double maxtolerance = 5.7;
 		String aux1 = "_" + group + "S" + slice;
-		String namepathReport = pathReport + "\\ReportThickness"+aux1+".txt";
-		String imageName1 = "thickness910"+aux1+".jpg";
+		String namepathReport = pathReport + "\\ReportThickness" + aux1 + ".txt";
+		String imageName1 = "thickness910" + aux1 + ".jpg";
 		String namepathImage1 = pathReport + "\\" + imageName1;
-		String profileName1 = "greenprofile912"+aux1+".jpg";
+		String profileName1 = "greenprofile912" + aux1 + ".jpg";
 		String namepathProfile1 = pathReport + "\\" + profileName1;
 
-		String profileName2 = "yellowprofile911"+aux1+".jpg";
+		String profileName2 = "yellowprofile911" + aux1 + ".jpg";
 		String namepathProfile2 = pathReport + "\\" + profileName2;
 
 		// ----- cancellazione cacchine precedenti -----
@@ -371,20 +395,11 @@ public class SliceThickness_ implements PlugIn {
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "thickPass: #205#" + response);
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "phantomAngleDegrees: #206#" + IJ.d2s(angle, 4));
 		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
-		
-		
-		
-		
+
 		imp2.changes = false;
 		imp2.close();
 		imp3.changes = false;
 		imp3.close();
-		
-		
-		
-		
-		
-		
 
 		return;
 	}

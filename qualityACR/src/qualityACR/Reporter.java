@@ -39,7 +39,7 @@ public class Reporter implements PlugIn {
 
 		mainReporter1();
 		mainReporter2();
-		ACRlog.waitHere("FINE REPORTER");
+		ACRlog.waitHere("FINE LAVORO");
 	}
 
 	/**

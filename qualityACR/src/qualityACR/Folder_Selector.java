@@ -48,13 +48,14 @@ public class Folder_Selector implements PlugIn {
 		IJ.log("startingDir3= " + startingDir3);
 		if (startingDir3 == null)
 			return;
-		GenericDialog gd1 = new GenericDialog("REPORT");
-		gd1.addMessage("DEVO INIZIALIZZARE/CANCELLARE LA CARTELLA REPORTS, procedo?");
-		gd1.enableYesNoCancel("Continua", "No");
-		gd1.hideCancelButton();
-		gd1.showDialog();
+//		GenericDialog gd1 = new GenericDialog("REPORT");
+//		gd1.addMessage("DEVO INIZIALIZZARE/CANCELLARE LA CARTELLA REPORTS, procedo?");
+//		gd1.enableYesNoCancel("Continua", "No");
+//		gd1.hideCancelButton();
+//		gd1.showDialog();
 		String outDir = "";
-		if (gd1.wasOKed()) {
+//		if (gd1.wasOKed()) {
+		if (true) {
 			String root1 = startingDir1.substring(0, startingDir1.lastIndexOf("\\"));
 			String root = root1.substring(0, root1.lastIndexOf("\\"));
 			int aux1 = startingDir1.lastIndexOf("\\");
@@ -116,7 +117,7 @@ public class Folder_Selector implements PlugIn {
 			list3[j1++] = file3.getPath();
 			name3[j2++] = file3.getName();
 		}
-		IJ.log("La certella immaginiT2 contiene " + name3.length + " files");
+		IJ.log("La cartella immaginiT2 contiene " + name3.length + " files");
 
 		// Inserisco i path delle cartelle in un file temporaneo, che sara'letto dagli
 		// altri plugins
@@ -133,6 +134,22 @@ public class Folder_Selector implements PlugIn {
 		ACRlog.appendLog(completePath, linea);
 		linea = "OUT_DIR#" + outDir;
 		ACRlog.appendLog(completePath, linea);
+
+		GenericDialog gd2 = new GenericDialog("ELABORAZIONE");
+		gd2.addMessage("FASO TUTO MI?");
+		gd2.enableYesNoCancel("Continua", "No");
+		gd2.hideCancelButton();
+		gd2.showDialog();
+		if (gd2.wasOKed()) {
+			IJ.runPlugIn("qualityACR.Geometric_Accuracy", "1");
+			IJ.runPlugIn("qualityACR.SliceThickness_", "1");
+			IJ.runPlugIn("qualityACR.SlicePosition_", "1");
+			IJ.runPlugIn("qualityACR.Uniformity_", "1");
+			IJ.runPlugIn("qualityACR.Ghosting_", "1");
+			IJ.runPlugIn("qualityACR.Reporter", "1");
+		} else
+			return;
+
 		ACRlog.waitHere("FINE SELEZIONE");
 	}
 

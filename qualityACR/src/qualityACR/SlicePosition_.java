@@ -22,13 +22,17 @@ public class SlicePosition_ implements PlugIn {
 
 	public void run(String arg) {
 
-		ACRlog.waitHere("4 - Slice position accuracy");
-
-		mainSlicePositionAccuracy();
+		mainSlicePositionAccuracy(arg);
 
 	}
 
-	public void mainSlicePositionAccuracy() {
+	public void mainSlicePositionAccuracy(String arg) {
+		// se riceve 1 allora vuol dire che abbiamo l'elaborazione automatica per tutti
+		// i controlli
+		boolean auto = false;
+		if (arg.equals("1"))
+			auto = true;
+
 		Properties prop = ACRutils.readConfigACR();
 		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
 		IJ.log(ACRlog.qui() + "START");
@@ -42,76 +46,96 @@ public class SlicePosition_ implements PlugIn {
 		boolean[] T1 = new boolean[7];
 		boolean[] T2 = new boolean[7];
 
-		if (prop != null) {
+		if (prop != null && !auto) {
 			fastdefault = Boolean.parseBoolean(prop.getProperty("Position.fast"));
 			stepdefault = Boolean.parseBoolean(prop.getProperty("Position.step"));
 			verbosedefault = Boolean.parseBoolean(prop.getProperty("Position.verbose"));
 			for (int i1 = 0; i1 < 7; i1++) {
-	//			T1[i1] = Boolean.parseBoolean(prop.getProperty("Position.SliceT1[" + i1 + "]"));
-	//			T2[i1] = Boolean.parseBoolean(prop.getProperty("Position.SliceT2[" + i1 + "]"));
+				// T1[i1] = Boolean.parseBoolean(prop.getProperty("Position.SliceT1[" + i1 +
+				// "]"));
+				// T2[i1] = Boolean.parseBoolean(prop.getProperty("Position.SliceT2[" + i1 +
+				// "]"));
 			}
 			int count = 0;
 			for (int i1 = 0; i1 < 7; i1++) {
-	//			defaults[count++] = T1[i1];
-	//			defaults[count++] = T2[i1];
+				// defaults[count++] = T1[i1];
+				// defaults[count++] = T2[i1];
 			}
 		}
 
-		GenericDialog gd1 = new GenericDialog("SLICE Position");
-		gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
-		gd1.addCheckbox("STEP", stepdefault);
-		gd1.addCheckbox("VERBOSE", verbosedefault);
-		gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
-
-		gd1.showDialog();
-		if (gd1.wasCanceled()) {
-			ACRlog.waitHere("premuto cancel");
-			return;
-		}
-
-		IJ.log(" ");
-		Frame f1 = WindowManager.getFrame("Log");
-		if (f1 != null) {
-			f1.setSize(100, 400);
-			f1.setLocation(10, 10);
-		}
-		boolean fast = gd1.getNextBoolean();
-		boolean step = gd1.getNextBoolean();
-		boolean verbose = gd1.getNextBoolean();
+		boolean fast;
+		boolean step;
+		boolean verbose;
 		boolean[] vetBoolSliceT1 = new boolean[7];
 		boolean[] vetBoolSliceT2 = new boolean[7];
-		for (int i1 = 0; i1 < 7; i1++) {
-			vetBoolSliceT1[i1] = gd1.getNextBoolean();
-			vetBoolSliceT2[i1] = gd1.getNextBoolean();
-		}
 
-		if (fast)
-			timeout = 200;
-		else
-			timeout = 0;
+		if (auto) {
+			timeout = 500;
+			ACRlog.waitHere("SLICE POSITION AUTO", false, timeout);
+			fast = fastdefault;
+			step = stepdefault;
+			verbose = verbosedefault;
+			int count = 0;
+			for (int i1 = 0; i1 < 7; i1++) {
+				vetBoolSliceT1[i1] = defaults[count++];
+				vetBoolSliceT2[i1] = defaults[count++];
+			}
+		} else {
 
-		// vado a scrivere i setup nel config file
-		if (prop == null)
-			prop = new Properties();
-		prop.setProperty("Position.fast", "" + fast);
-		prop.setProperty("Position.step", "" + step);
-		prop.setProperty("Position.verbose", "" + verbose);
-		for (int i1 = 0; i1 < 7; i1++) {
-			String aux1 = "Position.SliceT1[" + i1 + "]";
-			String aux2 = "" + vetBoolSliceT1[i1];
-			prop.setProperty(aux1, aux2);
-		}
-		for (int i1 = 0; i1 < 7; i1++) {
-			String aux1 = "Position.SliceT2[" + i1 + "]";
-			String aux2 = "" + vetBoolSliceT2[i1];
-			prop.setProperty(aux1, aux2);
-		}
+			GenericDialog gd1 = new GenericDialog("SLICE Position");
+			gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
+			gd1.addCheckbox("STEP", stepdefault);
+			gd1.addCheckbox("VERBOSE", verbosedefault);
+			gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
 
-		try {
-			ACRutils.writeConfigACR(prop);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			gd1.showDialog();
+			if (gd1.wasCanceled()) {
+				ACRlog.waitHere("premuto cancel");
+				return;
+			}
+
+			IJ.log(" ");
+			Frame f1 = WindowManager.getFrame("Log");
+			if (f1 != null) {
+				f1.setSize(100, 400);
+				f1.setLocation(10, 10);
+			}
+			fast = gd1.getNextBoolean();
+			step = gd1.getNextBoolean();
+			verbose = gd1.getNextBoolean();
+			for (int i1 = 0; i1 < 7; i1++) {
+				vetBoolSliceT1[i1] = gd1.getNextBoolean();
+				vetBoolSliceT2[i1] = gd1.getNextBoolean();
+			}
+
+			if (fast)
+				timeout = 200;
+			else
+				timeout = 0;
+
+			// vado a scrivere i setup nel config file
+			if (prop == null)
+				prop = new Properties();
+			prop.setProperty("Position.fast", "" + fast);
+			prop.setProperty("Position.step", "" + step);
+			prop.setProperty("Position.verbose", "" + verbose);
+			for (int i1 = 0; i1 < 7; i1++) {
+				String aux1 = "Position.SliceT1[" + i1 + "]";
+				String aux2 = "" + vetBoolSliceT1[i1];
+				prop.setProperty(aux1, aux2);
+			}
+			for (int i1 = 0; i1 < 7; i1++) {
+				String aux1 = "Position.SliceT2[" + i1 + "]";
+				String aux2 = "" + vetBoolSliceT2[i1];
+				prop.setProperty(aux1, aux2);
+			}
+
+			try {
+				ACRutils.writeConfigACR(prop);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		// leggo i nomi di tutti i 15 file presenti
 		String pathLocalizer = "";
@@ -138,7 +162,7 @@ public class SlicePosition_ implements PlugIn {
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log(ACRlog.qui() + "elaborazione slice T1 numero " + i1);
-				evalPosition(sortedListT1[i1], pathReport,"T1", i1+1, step, verbose, timeout);
+				evalPosition(sortedListT1[i1], pathReport, "T1", i1 + 1, step, verbose, timeout);
 			}
 		}
 
@@ -146,13 +170,14 @@ public class SlicePosition_ implements PlugIn {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log(ACRlog.qui() + "==================");
 				IJ.log(ACRlog.qui() + "elaborazione slice T2 numero " + i1);
-				evalPosition(sortedListT2[i1], pathReport, "T2", i1+1, step, verbose, timeout);
+				evalPosition(sortedListT2[i1], pathReport, "T2", i1 + 1, step, verbose, timeout);
 			}
 		}
-		ACRlog.waitHere("SLICE Position TERMINATA");
+		ACRlog.waitHere("SLICE POSITION TERMINATA", false, timeout);
 	}
 
-	public void evalPosition(String path1, String pathReport, String group, int slice, boolean step, boolean verbose, int timeout) {
+	public void evalPosition(String path1, String pathReport, String group, int slice, boolean step, boolean verbose,
+			int timeout) {
 
 		IJ.log(ACRlog.qui() + "START>");
 		// questa dovrebbe essere l'apertura comune a tutte le main delle varie classi
@@ -160,13 +185,13 @@ public class SlicePosition_ implements PlugIn {
 		// chiamata prima subroutine passando l'immagine pronta
 		// eccetraz ecceteraz
 		String aux1 = "_" + group + "S" + slice;
-		String namepathReport = pathReport + "\\ReportPosition"+aux1+".txt";
-		String imageName1 = "position920"+aux1+".jpg";
+		String namepathReport = pathReport + "\\ReportPosition" + aux1 + ".txt";
+		String imageName1 = "position920" + aux1 + ".jpg";
 		String namepathImage1 = pathReport + "\\" + imageName1;
-		String profileName1 = "greenprofile921"+aux1+".jpg";
+		String profileName1 = "greenprofile921" + aux1 + ".jpg";
 		String namepathProfile1 = pathReport + "\\" + profileName1;
 
-		String profileName2 = "yellowprofile922"+aux1+".jpg";
+		String profileName2 = "yellowprofile922" + aux1 + ".jpg";
 		String namepathProfile2 = pathReport + "\\" + profileName2;
 
 		// ----- cancellazione cacchine precedenti -----
@@ -339,7 +364,7 @@ public class SlicePosition_ implements PlugIn {
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "difference_mm: #304#" + IJ.d2s(difflimitmm, 4));
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "passafail: #305#" + passfail);
 
-	//	ACRlog.waitHere("fwhm1pixel= " + fwhm1pixel + " fwhm2pixel= " + fwhm2pixel);
+		// ACRlog.waitHere("fwhm1pixel= " + fwhm1pixel + " fwhm2pixel= " + fwhm2pixel);
 		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
 		imp2.changes = false;
 		imp2.close();

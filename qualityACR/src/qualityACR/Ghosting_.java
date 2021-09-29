@@ -20,10 +20,15 @@ public class Ghosting_ implements PlugIn {
 	private static final boolean debug = true;
 
 	public void run(String arg) {
-		mainGhosting();
+		mainGhosting(arg);
 	}
 
-	public void mainGhosting() {
+	public void mainGhosting(String arg) {
+		// se riceve 1 allora vuol dire che abbiamo l'elaborazione automatica per tutti
+		// i controlli
+		boolean auto = false;
+		if (arg.equals("1"))
+			auto = true;
 
 		Properties prop = ACRutils.readConfigACR();
 		int timeout = 0; // preme automaticamente OK ai messaggi durante i test
@@ -38,18 +43,20 @@ public class Ghosting_ implements PlugIn {
 				false };
 		String[] headings = { "slices T1", "slices T2" };
 
-		if (prop != null) {
+		if (prop != null && !auto) {
 			fastdefault = Boolean.parseBoolean(prop.getProperty("Ghosting.fast"));
 			stepdefault = Boolean.parseBoolean(prop.getProperty("Ghosting.step"));
 			verbosedefault = Boolean.parseBoolean(prop.getProperty("Ghosting.verbose"));
 			for (int i1 = 0; i1 < 7; i1++) {
-	//			T1[i1] = Boolean.parseBoolean(prop.getProperty("Ghosting.SliceT1[" + i1 + "]"));
-	//			T2[i1] = Boolean.parseBoolean(prop.getProperty("Ghosting.SliceT2[" + i1 + "]"));
+				// T1[i1] = Boolean.parseBoolean(prop.getProperty("Ghosting.SliceT1[" + i1 +
+				// "]"));
+				// T2[i1] = Boolean.parseBoolean(prop.getProperty("Ghosting.SliceT2[" + i1 +
+				// "]"));
 			}
 			int count = 0;
 			for (int i1 = 0; i1 < 7; i1++) {
-	//			defaults[count++] = T1[i1];
-	//			defaults[count++] = T2[i1];
+				// defaults[count++] = T1[i1];
+				// defaults[count++] = T2[i1];
 			}
 		}
 
@@ -61,54 +68,70 @@ public class Ghosting_ implements PlugIn {
 			IJ.log("" + i1 + " " + vetPath0[i1]);
 
 		}
-
-		GenericDialog gd1 = new GenericDialog("GHOSTING0");
-		gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
-		gd1.addCheckbox("STEP", stepdefault);
-		gd1.addCheckbox("VERBOSE", verbosedefault);
-		gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
-
-		gd1.showDialog();
-		if (gd1.wasCanceled()) {
-			ACRlog.waitHere("premuto cancel");
-			return;
-		}
-
-		boolean fast = gd1.getNextBoolean();
-		boolean step = gd1.getNextBoolean();
-		boolean verbose = gd1.getNextBoolean();
-//		boolean geomLocalizer = gd1.getNextBoolean();
+		boolean fast;
+		boolean step;
+		boolean verbose;
 		boolean[] vetBoolSliceT1 = new boolean[7];
 		boolean[] vetBoolSliceT2 = new boolean[7];
-		for (int i1 = 0; i1 < 7; i1++) {
-			vetBoolSliceT1[i1] = gd1.getNextBoolean();
-			vetBoolSliceT2[i1] = gd1.getNextBoolean();
-		}
 
-		if (fast)
-			ACRlog.waitHere("perche'mette fast????");
+		if (auto) {
+			timeout = 500;
+			ACRlog.waitHere("GHOSTING AUTO", false, timeout);
+			fast = fastdefault;
+			step = stepdefault;
+			verbose = verbosedefault;
+			int count = 0;
+			for (int i1 = 0; i1 < 7; i1++) {
+				vetBoolSliceT1[i1] = defaults[count++];
+				vetBoolSliceT2[i1] = defaults[count++];
+			}
+		} else {
 
-		// vado a scrivere i setup nel config file
-		if (prop == null) {
-			prop = new Properties();
-		}
-		prop.setProperty("Ghosting.fast", "" + fast);
-		prop.setProperty("Ghosting.step", "" + step);
-		prop.setProperty("Ghosting.verbose", "" + verbose);
-		for (int i1 = 0; i1 < 7; i1++) {
-			String aux1 = "Ghosting.SliceT1[" + i1 + "]";
-			String aux2 = "" + vetBoolSliceT1[i1];
-			prop.setProperty(aux1, aux2);
-		}
-		for (int i1 = 0; i1 < 7; i1++) {
-			String aux1 = "Ghosting.SliceT2[" + i1 + "]";
-			String aux2 = "" + vetBoolSliceT2[i1];
-			prop.setProperty(aux1, aux2);
-		}
-		try {
-			ACRutils.writeConfigACR(prop);
-		} catch (IOException e) {
-			e.printStackTrace();
+			GenericDialog gd1 = new GenericDialog("GHOSTING0");
+			gd1.addCheckbox("ANIMAZIONE 2 sec", fastdefault);
+			gd1.addCheckbox("STEP", stepdefault);
+			gd1.addCheckbox("VERBOSE", verbosedefault);
+			gd1.addCheckboxGroup(7, 2, labels, defaults, headings);
+
+			gd1.showDialog();
+			if (gd1.wasCanceled()) {
+				ACRlog.waitHere("premuto cancel");
+				return;
+			}
+
+			fast = gd1.getNextBoolean();
+			step = gd1.getNextBoolean();
+			verbose = gd1.getNextBoolean();
+			for (int i1 = 0; i1 < 7; i1++) {
+				vetBoolSliceT1[i1] = gd1.getNextBoolean();
+				vetBoolSliceT2[i1] = gd1.getNextBoolean();
+			}
+
+			if (fast)
+				ACRlog.waitHere("perche'mette fast????");
+
+			// vado a scrivere i setup nel config file
+			if (prop == null) {
+				prop = new Properties();
+			}
+			prop.setProperty("Ghosting.fast", "" + fast);
+			prop.setProperty("Ghosting.step", "" + step);
+			prop.setProperty("Ghosting.verbose", "" + verbose);
+			for (int i1 = 0; i1 < 7; i1++) {
+				String aux1 = "Ghosting.SliceT1[" + i1 + "]";
+				String aux2 = "" + vetBoolSliceT1[i1];
+				prop.setProperty(aux1, aux2);
+			}
+			for (int i1 = 0; i1 < 7; i1++) {
+				String aux1 = "Ghosting.SliceT2[" + i1 + "]";
+				String aux2 = "" + vetBoolSliceT2[i1];
+				prop.setProperty(aux1, aux2);
+			}
+			try {
+				ACRutils.writeConfigACR(prop);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		String uno = "";
 		String due = "";
@@ -141,15 +164,17 @@ public class Ghosting_ implements PlugIn {
 		for (int i1 = 0; i1 < vetBoolSliceT1.length; i1++) {
 			if (vetBoolSliceT1[i1]) {
 				IJ.log("elaborazione slice T1 numero " + i1);
-				roiGhost(sortedListT1[i1], pathReport1, "T1", i1+1, step, verbose, timeout);
+				roiGhost(sortedListT1[i1], pathReport1, "T1", i1 + 1, step, verbose, timeout);
 			}
 		}
 		for (int i1 = 0; i1 < vetBoolSliceT2.length; i1++) {
 			if (vetBoolSliceT2[i1]) {
 				IJ.log("elaborazione slice T2 numero " + i1);
-				roiGhost(sortedListT2[i1], pathReport1, "T2", i1+1, step, verbose, timeout);
+				roiGhost(sortedListT2[i1], pathReport1, "T2", i1 + 1, step, verbose, timeout);
 			}
 		}
+
+		ACRlog.waitHere("GHOSTING TERMINATA", false, timeout);
 
 	}
 
@@ -226,7 +251,7 @@ public class Ghosting_ implements PlugIn {
 		boolean ok3 = ACRinputOutput.deleteFile(new File(namepathImage3));
 		IJ.log(ACRlog.qui());
 
-		if (!(ok1 && ok2 ))
+		if (!(ok1 && ok2))
 			ACRlog.waitHere("PROBLEMA CANCELLAZIONE");
 		// ----- inizializzazione report----------------
 		ACRlog.appendLog(namepathReport, "< calculated " + LocalDate.now() + " @ " + LocalTime.now() + " >");
@@ -271,7 +296,8 @@ public class Ghosting_ implements PlugIn {
 		over2.addElement(imp2.getRoi());
 		imp2.killRoi();
 
-		if (step) ACRlog.waitHere(ACRlog.qui() + "cerchio esterno blu, involucro esterno fantoccio", step, timeout);
+		if (step)
+			ACRlog.waitHere(ACRlog.qui() + "cerchio esterno blu, involucro esterno fantoccio", step, timeout);
 
 		// -----------------------------------------------------------------
 		// Visualizzo sull'immagine il posizionamento che verra' utilizzato
@@ -307,10 +333,9 @@ public class Ghosting_ implements PlugIn {
 		MROIcircle[0] = xmroi;
 		MROIcircle[1] = ymroi;
 		MROIcircle[2] = dmroi;
-		
+
 //		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #906#" + namepathImage2);
 //		IJ.saveAs(imp2, "jpg", namepathImage2);
-
 
 		// disegno 4 ROI rettangolari ai bordi dell'immagine, tale ROI deve avere un
 		// area di 3 cmq ed un rapporto lunghezza/larghezza 8:1
@@ -404,16 +429,14 @@ public class Ghosting_ implements PlugIn {
 
 		double ghostingratio = Math.abs((uproimean - dwroimean) - (sxroimean + dxroimean) / (2 * MROImean));
 
-		
 		String[] info1 = ACRutils.imageInformation(imp1);
 		for (int i1 = 0; i1 < info1.length; i1++) {
 			ACRlog.appendLog(namepathReport, ACRlog.qui() + "#" + String.format("%03d", i1) + "#  " + info1[i1]);
 		}
-		
+
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "imageName: #920#" + namepathImage3);
 		IJ.saveAs(imp2, "jpg", namepathImage3);
 
-		
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "Ghosting Ratio: #301#" + IJ.d2s(ghostingratio, 4));
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "maxtolerance: #302#" + IJ.d2s(maxtolerance, 4));
 		boolean failmin = (Double.compare(ghostingratio, maxtolerance) >= 0);
@@ -432,7 +455,7 @@ public class Ghosting_ implements PlugIn {
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "BOT Area: #404#" + statdwroi.area);
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "BOT Mean: #405#" + statdwroi.mean);
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "BOT SD: #406#" + statdwroi.stdDev);
-		
+
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "LEFT Area: #407#" + statsxroi.area);
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "LEFT Mean: #408#" + statsxroi.mean);
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "LEFT SD: #409#" + statsxroi.stdDev);
@@ -445,11 +468,9 @@ public class Ghosting_ implements PlugIn {
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "MROI Mean: #414#" + statMROI.mean);
 		ACRlog.appendLog(namepathReport, ACRlog.qui() + "MROI SD: #415#" + statMROI.stdDev);
 		ACRlog.appendLog(namepathReport, "< finished " + LocalDate.now() + " @ " + LocalTime.now() + " >");
-		
+
 		imp2.changes = false;
 		imp2.close();
-	
-		
 
 	}
 
